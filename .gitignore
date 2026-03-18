@@ -1,0 +1,27 @@
+  # Dependencies
+  node_modules/
+  /backend/node_modules/
+  /mobile/node_modules/
+  /web/node_modules/
+
+  # Build
+  dist/
+  build/
+  .next/
+  out/
+  .expo/
+
+  # Environment
+  .env
+  .env.local
+
+  # IDE
+  .vscode/
+  .idea/
+  *.swp
+
+  # OS
+  .DS_Store
+
+  # Logs
+  npm-debug.log

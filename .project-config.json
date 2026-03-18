@@ -1,0 +1,16 @@
+cat > .project-config.json << 'EOF'
+  {
+    "project": {
+      "name": "onMyWay",
+      "description": "Real-time arrival notification system with live queue management"
+    },
+    "github": {
+      "owner": "MarcosMatsuda",
+      "repo": "onMyWay",
+      "full_repo": "MarcosMatsuda/onMyWay",
+      "base_branch": "develop"
+    },
+    "local": {
+      "workspace_path": "/Users/marcosmatsuda/openclaw/workspaces/onMyWay"
+    }
+  }
