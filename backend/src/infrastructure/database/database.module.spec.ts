@@ -57,7 +57,7 @@ describe('DatabaseModule (Tests)', () => {
       expect(typeormConfig.entities).toBeDefined();
       expect(Array.isArray(typeormConfig.entities)).toBe(true);
       const entitiesPath = typeormConfig.entities[0] as string;
-      expect(entitiesPath).toContain('entities');
+      expect(entitiesPath).toContain('models');
     });
 
     it('should configure migrations path correctly', () => {
