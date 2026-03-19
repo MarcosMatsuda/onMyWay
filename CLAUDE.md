@@ -173,6 +173,56 @@ docker-compose up -d  # Sobe PostgreSQL + PostGIS
 - `singleQuote: true`, `trailingComma: 'all'`
 - `--max-warnings 0`
 
+## Pipeline de Qualidade
+
+### Testes obrigatórios
+
+- **Use cases** → unit tests (`.spec.ts`)
+- **Repositories** → integration tests com `@nestjs/testing` (`.spec.ts`)
+- **Controllers** → e2e tests com Supertest
+- **Services** (OSRM, geofence) → unit tests com mocks
+- Novos módulos **devem ter testes** antes de abrir PR
+
+### Checklist de PR
+
+1. `npm run lint` passa (0 warnings)
+2. `npx tsc --noEmit` passa
+3. `npm test` passa
+4. Segue Clean Architecture (ver seção Regras de dependência)
+5. Domain não importa de outras camadas
+6. DTOs com `class-validator` decorators para input validation
+7. PR referencia issue: `Closes #N`
+
+### CI automático (`backend-ci.yml` — PRs para develop/main)
+
+Pipeline: Security Audit → Lint + TypeScript (paralelo) → Tests (com PostgreSQL + PostGIS real)
+
+- CI sobe container `postgis/postgis:15-3.3` para testes
+- Se qualquer step falhar, comenta automaticamente no PR com link para os logs
+- Corrigir antes de pedir review
+
+### Labels de status
+
+| Label | Significado |
+|-------|-------------|
+| `task` | Nova tarefa criada |
+| `wip` | Trabalho em andamento |
+| `needs-tests` | Precisa de testes antes de review |
+| `needs-fix` | Bug ou correção necessária |
+| `tests-ready` | Testes escritos e passando |
+| `qa-approved` | QA aprovou — pronto para merge |
+| `qa-changes-requested` | QA encontrou problemas — ver comentários |
+
+### QA verifica
+
+- Funcionalidade conforme a issue/task
+- Edge cases (inputs inválidos, autenticação, permissões)
+- Conformidade com Clean Architecture (sem violações de camada)
+- Multi-tenant isolation (dados de School A não vazam para School B)
+- Validação de DTOs (class-validator cobrindo todos os inputs)
+- Segurança: JWT válido, bcrypt para senhas, sanitização de inputs
+- Performance: queries PostGIS com índices GIST, sem N+1
+
 ## Conformidade
 
 - **LGPD nativa** — localização é dado sensível
