@@ -1,8 +1,8 @@
 import { DatabaseModule } from './database.module';
 import typeormConfig, { AppDataSource } from './typeorm.config';
 import { config } from 'dotenv';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Load env vars for testing
 config({ path: '.env.example' });
