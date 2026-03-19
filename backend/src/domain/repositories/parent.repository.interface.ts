@@ -10,4 +10,5 @@ export interface IParentRepository {
     data: Omit<Parent, 'id' | 'createdAt'> & { passwordHash: string },
   ): Promise<Parent>;
   update(id: string, data: Partial<Parent>): Promise<Parent>;
+  validateCredentials(email: string, password: string): Promise<Parent | null>;
 }
