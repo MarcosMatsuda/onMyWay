@@ -1,7 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseModule } from './database.module';
-import typeormConfig from './typeorm.config';
+import typeormConfig, { AppDataSource } from './typeorm.config';
 import { config } from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
 // Load env vars for testing
 config({ path: '.env.example' });
@@ -97,20 +98,17 @@ describe('DatabaseModule (Tests)', () => {
 
   describe('DataSource Export', () => {
     it('should export AppDataSource for migrations', () => {
-      const { AppDataSource } = require('./typeorm.config');
       expect(AppDataSource).toBeDefined();
       expect(AppDataSource.options).toBeDefined();
       expect(AppDataSource.options.type).toBe('postgres');
     });
 
     it('should have migration configuration in AppDataSource', () => {
-      const { AppDataSource } = require('./typeorm.config');
       expect(AppDataSource.options.migrations).toBeDefined();
       expect(Array.isArray(AppDataSource.options.migrations)).toBe(true);
     });
 
     it('should have entity configuration in AppDataSource', () => {
-      const { AppDataSource } = require('./typeorm.config');
       expect(AppDataSource.options.entities).toBeDefined();
       expect(Array.isArray(AppDataSource.options.entities)).toBe(true);
     });
@@ -157,16 +155,16 @@ describe('DatabaseModule (Tests)', () => {
     });
 
     it('should have docker-compose configuration available', async () => {
-      const fs = require('fs');
-      const path = require('path');
-      const dockerComposePath = path.join(__dirname, '../../..', 'docker-compose.yml');
+      const dockerComposePath = path.join(
+        __dirname,
+        '../../..',
+        'docker-compose.yml',
+      );
       const exists = fs.existsSync(dockerComposePath);
       expect(exists).toBe(true);
     });
 
     it('should have .env.example properly configured', async () => {
-      const fs = require('fs');
-      const path = require('path');
       const envExamplePath = path.join(__dirname, '../../..', '.env.example');
       const exists = fs.existsSync(envExamplePath);
       expect(exists).toBe(true);
