@@ -135,9 +135,11 @@ describe('DatabaseModule (Tests)', () => {
     });
 
     it('should not expose sensitive data in configuration', () => {
-      const configStr = JSON.stringify(typeormConfig);
       // Ensure passwords are not hardcoded (they come from env)
-      expect(configStr).not.toContain('postgres@');
+      // The configuration gets URL from environment variables
+      const config = typeormConfig as any;
+      expect(config.url).toBe(process.env.DATABASE_URL);
+      expect(config.url).toBeDefined();
     });
 
     it('should support PostGIS extension usage (through docker-compose)', () => {

@@ -1,7 +1,11 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { config } from 'dotenv';
 
-config();
+// Load environment variables from .env or fall back to .env.example for development
+config({ path: '.env' });
+if (!process.env.DATABASE_URL) {
+  config({ path: '.env.example' });
+}
 
 const typeormConfig: DataSourceOptions = {
   type: 'postgres',
