@@ -10,7 +10,7 @@ if (!process.env.DATABASE_URL) {
 const typeormConfig: DataSourceOptions = {
   type: 'postgres',
   url: process.env.DATABASE_URL,
-  entities: [__dirname + '/../../data/models/*.model{.ts,.js}'],
+  entities: [__dirname + '/../../domain/entities/*.entity{.ts,.js}'],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: process.env.NODE_ENV === 'development',
   logging: process.env.NODE_ENV === 'development',
