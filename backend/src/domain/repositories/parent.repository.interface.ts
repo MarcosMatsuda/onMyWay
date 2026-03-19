@@ -6,6 +6,8 @@ export interface IParentRepository {
   findById(id: string): Promise<Parent | null>;
   findByEmail(email: string): Promise<Parent | null>;
   findBySchoolId(schoolId: string): Promise<Parent[]>;
-  create(data: Omit<Parent, 'id' | 'createdAt'> & { passwordHash: string }): Promise<Parent>;
+  create(
+    data: Omit<Parent, 'id' | 'createdAt'> & { passwordHash: string },
+  ): Promise<Parent>;
   update(id: string, data: Partial<Parent>): Promise<Parent>;
 }
