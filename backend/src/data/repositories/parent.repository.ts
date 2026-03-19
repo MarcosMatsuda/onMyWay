@@ -4,10 +4,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ParentModel } from '../models/parent.model';
 import { ParentMapper } from '../mappers/parent.mapper';
-import {
-  IParentRepository,
-  PARENT_REPOSITORY,
-} from '../../domain/repositories/parent.repository.interface';
+import { IParentRepository } from '../../domain/repositories/parent.repository.interface';
 import { Parent } from '../../domain/entities/parent.entity';
 
 @Injectable()
