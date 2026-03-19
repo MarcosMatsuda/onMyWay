@@ -47,6 +47,10 @@ export class ParentRepository implements IParentRepository {
     return ParentMapper.toDomain(updatedModel);
   }
 
+  async delete(id: string): Promise<void> {
+    await this.parentRepository.delete(id);
+  }
+
   async validateCredentials(
     email: string,
     password: string,
