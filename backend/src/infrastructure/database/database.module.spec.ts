@@ -41,14 +41,14 @@ describe('DatabaseModule (Tests)', () => {
       expect(url.protocol).toBe('postgresql:');
       expect(url.hostname).toBe('localhost');
       expect(url.port).toBe('5432');
-      expect(url.pathname).toBe('/onmyway');
+      expect(url.pathname).toBe('/onmyway_test');
     });
 
     it('should have DATABASE_URL pointing to correct database', () => {
       const dbUrl = process.env.DATABASE_URL;
       expect(dbUrl).toContain('postgres:postgres');
       expect(dbUrl).toContain('localhost:5432');
-      expect(dbUrl).toContain('onmyway');
+      expect(dbUrl).toContain('onmyway_test');
     });
   });
 
