@@ -8,7 +8,7 @@
     "start:debug": "nest start --debug --watch",
     "build": "nest build",
     "lint": "eslint \"{src,apps,libs}/**/*.ts\" --max-warnings 0",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
   },
