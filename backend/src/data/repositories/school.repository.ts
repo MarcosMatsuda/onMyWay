@@ -1,0 +1,45 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { SchoolModel } from '../models/school.model';
+import { SchoolMapper } from '../mappers/school.mapper';
+import { ISchoolRepository } from '../../domain/repositories/school.repository.interface';
+import { School } from '../../domain/entities/school.entity';
+
+@Injectable()
+export class SchoolRepository implements ISchoolRepository {
+  constructor(
+    @InjectRepository(SchoolModel)
+    private readonly schoolRepository: Repository<SchoolModel>,
+  ) {}
+
+  async findById(id: string): Promise<School | null> {
+    const model = await this.schoolRepository.findOne({ where: { id } });
+    return model ? SchoolMapper.toDomain(model) : null;
+  }
+
+  async create(data: Omit<School, 'id' | 'createdAt'>): Promise<School> {
+    const modelData = SchoolMapper.toPersistence(data);
+    const model = this.schoolRepository.create(modelData);
+    const savedModel = await this.schoolRepository.save(model);
+    return SchoolMapper.toDomain(savedModel);
+  }
+
+  async findAll(): Promise<School[]> {
+    const models = await this.schoolRepository.find();
+    return models.map(SchoolMapper.toDomain);
+  }
+
+  async update(id: string, data: Partial<School>): Promise<School> {
+    await this.schoolRepository.update(id, data);
+    const updatedModel = await this.schoolRepository.findOne({ where: { id } });
+    if (!updatedModel) {
+      throw new Error(`School with id ${id} not found after update`);
+    }
+    return SchoolMapper.toDomain(updatedModel);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.schoolRepository.delete(id);
+  }
+}

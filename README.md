@@ -1,6 +1,11 @@
 # onMyWay
 
-  Real-time arrival notification system with live queue management.
+[![WIP](https://img.shields.io/badge/status-WIP-yellow?style=flat-square)](https://github.com/MarcosMatsuda/onMyWay)
+[![Phase](https://img.shields.io/badge/phase-0%20Setup-blue?style=flat-square)](https://github.com/MarcosMatsuda/onMyWay/blob/develop/IMPLEMENTATION-ROADMAP.md)
+
+Real-time arrival notification system with live queue management.
+
+> **🚧 Work In Progress** — Currently in Phase 0 (Project Setup). See [IMPLEMENTATION-ROADMAP.md](./IMPLEMENTATION-ROADMAP.md) for timeline.
 
   ## 📚 Documentation
 
