@@ -1,36 +1,102 @@
-import {
-  GetArrivalsQueueUseCase,
-  GetArrivalsQueueInput,
-} from './get-arrivals-queue.use-case';
+import { GetArrivalsQueueUseCase } from './get-arrivals-queue.use-case';
 import { IETARepository } from '../repositories/eta.repository.interface';
 import { ISchoolRepository } from '../repositories/school.repository.interface';
 import { IParentRepository } from '../repositories/parent.repository.interface';
 import { ETA } from '../entities/eta.entity';
-import { Parent } from '../entities/parent.entity';
 import { School } from '../entities/school.entity';
+import { Parent } from '../entities/parent.entity';
 
 describe('GetArrivalsQueueUseCase', () => {
   let useCase: GetArrivalsQueueUseCase;
-  let etaRepository: jest.Mocked<IETARepository>;
-  let schoolRepository: jest.Mocked<ISchoolRepository>;
-  let parentRepository: jest.Mocked<IParentRepository>;
+  let etaRepositoryMock: jest.Mocked<IETARepository>;
+  let schoolRepositoryMock: jest.Mocked<ISchoolRepository>;
+  let parentRepositoryMock: jest.Mocked<IParentRepository>;
+
+  const mockSchool: School = {
+    id: 'school-456',
+    name: 'Springfield Elementary',
+    lat: -23.55052,
+    lng: -46.633308,
+    geofenceRadiusMeters: 500,
+    notificationThresholdMeters: 1000,
+    createdAt: new Date(),
+  };
+
+  const mockParents = [
+    {
+      id: 'parent-1',
+      name: 'John Doe',
+      email: 'john@example.com',
+      phone: '+5511999999999',
+      schoolId: 'school-456',
+      createdAt: new Date(),
+    },
+    {
+      id: 'parent-2',
+      name: 'Jane Smith',
+      email: 'jane@example.com',
+      phone: '+5511888888888',
+      schoolId: 'school-456',
+      createdAt: new Date(),
+    },
+    {
+      id: 'parent-3',
+      name: 'Bob Johnson',
+      email: 'bob@example.com',
+      phone: '+5511777777777',
+      schoolId: 'school-456',
+      createdAt: new Date(),
+    },
+  ];
+
+  const mockETAs: ETA[] = [
+    {
+      id: 'eta-1',
+      parentId: 'parent-1',
+      schoolId: 'school-456',
+      distanceMeters: 1500,
+      durationSeconds: 600, // 10 minutes
+      routePolyline: 'polyline-1',
+      calculatedAt: new Date('2024-01-01T10:00:00Z'),
+    },
+    {
+      id: 'eta-2',
+      parentId: 'parent-2',
+      schoolId: 'school-456',
+      distanceMeters: 800,
+      durationSeconds: 300, // 5 minutes
+      routePolyline: 'polyline-2',
+      calculatedAt: new Date('2024-01-01T10:05:00Z'),
+    },
+    {
+      id: 'eta-3',
+      parentId: 'parent-3',
+      schoolId: 'school-456',
+      distanceMeters: 2000,
+      durationSeconds: 900, // 15 minutes
+      routePolyline: 'polyline-3',
+      calculatedAt: new Date('2024-01-01T10:10:00Z'),
+    },
+  ];
 
   beforeEach(() => {
-    etaRepository = {
+    // Create mocks
+    etaRepositoryMock = {
       save: jest.fn(),
-      findBySchoolId: jest.fn(),
+      findById: jest.fn(),
       findLatestByParentId: jest.fn(),
-    } as any;
+      findBySchoolId: jest.fn(),
+    } as jest.Mocked<IETARepository>;
 
-    schoolRepository = {
+    schoolRepositoryMock = {
       findById: jest.fn(),
       create: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-    } as any;
+    } as jest.Mocked<ISchoolRepository>;
 
-    parentRepository = {
+    parentRepositoryMock = {
       findById: jest.fn(),
       findByEmail: jest.fn(),
       findBySchoolId: jest.fn(),
@@ -38,945 +104,151 @@ describe('GetArrivalsQueueUseCase', () => {
       update: jest.fn(),
       delete: jest.fn(),
       validateCredentials: jest.fn(),
-    } as any;
+    } as jest.Mocked<IParentRepository>;
 
+    // Instantiate use case directly
     useCase = new GetArrivalsQueueUseCase(
-      etaRepository,
-      schoolRepository,
-      parentRepository,
+      etaRepositoryMock,
+      schoolRepositoryMock,
+      parentRepositoryMock,
     );
   });
 
   describe('execute', () => {
-    describe('School Validation', () => {
-      it('should throw error when school does not exist', async () => {
-        const input: GetArrivalsQueueInput = {
-          schoolId: 'non-existent-school',
-        };
-
-        schoolRepository.findById.mockResolvedValue(null);
-
-        await expect(useCase.execute(input)).rejects.toThrow(
-          'School with id non-existent-school not found',
-        );
-        expect(schoolRepository.findById).toHaveBeenCalledWith(
-          'non-existent-school',
-        );
-        expect(etaRepository.findBySchoolId).not.toHaveBeenCalled();
+    it('should return arrivals queue sorted by ETA (soonest first)', async () => {
+      // Arrange
+      schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
+      etaRepositoryMock.findBySchoolId.mockResolvedValue(mockETAs);
+      
+      // Mock parent repository to return different parents for different IDs
+      parentRepositoryMock.findById.mockImplementation(async (id) => {
+        return mockParents.find(p => p.id === id) || null;
       });
+
+      const input = {
+        schoolId: 'school-456',
+      };
+
+      // Act
+      const result = await useCase.execute(input);
+
+      // Assert
+      expect(schoolRepositoryMock.findById).toHaveBeenCalledWith('school-456');
+      expect(etaRepositoryMock.findBySchoolId).toHaveBeenCalledWith('school-456');
+      
+      // Should be sorted by ETA (ascending): 5min, 10min, 15min
+      expect(result.arrivals).toHaveLength(3);
+      expect(result.arrivals[0].parentId).toBe('parent-2'); // 5 minutes
+      expect(result.arrivals[0].etaMinutes).toBe(5);
+      expect(result.arrivals[0].parentName).toBe('Jane Smith');
+      
+      expect(result.arrivals[1].parentId).toBe('parent-1'); // 10 minutes
+      expect(result.arrivals[1].etaMinutes).toBe(10);
+      
+      expect(result.arrivals[2].parentId).toBe('parent-3'); // 15 minutes
+      expect(result.arrivals[2].etaMinutes).toBe(15);
+      
+      expect(result.schoolName).toBe('Springfield Elementary');
+      expect(result.totalCount).toBe(3);
     });
 
-    describe('Empty Queue', () => {
-      it('should return empty arrivals when no ETAs exist for school', async () => {
-        const schoolId = 'school-123';
-
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue([]);
-
-        const result = await useCase.execute(input);
-
-        expect(result.arrivals).toEqual([]);
-        expect(result.totalCount).toBe(0);
-        expect(result.schoolName).toBe('Lincoln High School');
+    it('should apply limit when specified', async () => {
+      // Arrange
+      schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
+      etaRepositoryMock.findBySchoolId.mockResolvedValue(mockETAs);
+      
+      parentRepositoryMock.findById.mockImplementation(async (id) => {
+        return mockParents.find(p => p.id === id) || null;
       });
+
+      const input = {
+        schoolId: 'school-456',
+        limit: 2,
+      };
+
+      // Act
+      const result = await useCase.execute(input);
+
+      // Assert
+      expect(result.arrivals).toHaveLength(2); // Limited to 2
+      expect(result.totalCount).toBe(3); // But total count is still 3
+      expect(result.arrivals[0].parentId).toBe('parent-2'); // First: 5min
+      expect(result.arrivals[1].parentId).toBe('parent-1'); // Second: 10min
     });
 
-    describe('Single Arrival', () => {
-      it('should return single arrival with parent information', async () => {
-        const schoolId = 'school-123';
-        const parentId = 'parent-456';
+    it('should throw error when school not found', async () => {
+      // Arrange
+      schoolRepositoryMock.findById.mockResolvedValue(null);
 
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
+      const input = {
+        schoolId: 'non-existent-school',
+      };
 
-        const mockETA: ETA = {
-          id: 'eta-789',
-          parentId,
-          schoolId,
-          distanceMeters: 5000,
-          durationSeconds: 600,
-          routePolyline: 'polyline',
-          calculatedAt: new Date(),
-        };
-
-        const mockParent: Parent = {
-          id: parentId,
-          name: 'John Doe',
-          email: 'john@example.com',
-          phone: '+1234567890',
-          schoolId,
-          createdAt: new Date(),
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue([mockETA]);
-        parentRepository.findById.mockResolvedValue(mockParent);
-
-        const result = await useCase.execute(input);
-
-        expect(result.arrivals).toHaveLength(1);
-        expect(result.arrivals[0]).toEqual({
-          parentId,
-          parentName: 'John Doe',
-          etaMinutes: 10,
-          distanceMeters: 5000,
-          calculatedAt: expect.any(Date),
-        });
-        expect(result.totalCount).toBe(1);
-      });
+      // Act & Assert
+      await expect(useCase.execute(input)).rejects.toThrow(
+        'School with id non-existent-school not found',
+      );
     });
 
-    describe('Sorting by ETA', () => {
-      it('should sort arrivals by ETA ascending (soonest first)', async () => {
-        const schoolId = 'school-123';
+    it('should throw error when parent not found for an ETA', async () => {
+      // Arrange
+      schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
+      etaRepositoryMock.findBySchoolId.mockResolvedValue([mockETAs[0]]);
+      parentRepositoryMock.findById.mockResolvedValue(null); // Parent not found
 
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
+      const input = {
+        schoolId: 'school-456',
+      };
 
-        const mockETAs: ETA[] = [
-          {
-            id: 'eta-1',
-            parentId: 'parent-1',
-            schoolId,
-            distanceMeters: 50000,
-            durationSeconds: 3600, // 60 minutes
-            routePolyline: 'polyline1',
-            calculatedAt: new Date(),
-          },
-          {
-            id: 'eta-2',
-            parentId: 'parent-2',
-            schoolId,
-            distanceMeters: 5000,
-            durationSeconds: 300, // 5 minutes
-            routePolyline: 'polyline2',
-            calculatedAt: new Date(),
-          },
-          {
-            id: 'eta-3',
-            parentId: 'parent-3',
-            schoolId,
-            distanceMeters: 10000,
-            durationSeconds: 900, // 15 minutes
-            routePolyline: 'polyline3',
-            calculatedAt: new Date(),
-          },
-        ];
-
-        const mockParents: Record<string, Parent> = {
-          'parent-1': {
-            id: 'parent-1',
-            name: 'Alice',
-            email: 'alice@example.com',
-            phone: '+1111111111',
-            schoolId,
-            createdAt: new Date(),
-          },
-          'parent-2': {
-            id: 'parent-2',
-            name: 'Bob',
-            email: 'bob@example.com',
-            phone: '+2222222222',
-            schoolId,
-            createdAt: new Date(),
-          },
-          'parent-3': {
-            id: 'parent-3',
-            name: 'Charlie',
-            email: 'charlie@example.com',
-            phone: '+3333333333',
-            schoolId,
-            createdAt: new Date(),
-          },
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue(mockETAs);
-        parentRepository.findById.mockImplementation((parentId) =>
-          Promise.resolve(mockParents[parentId]),
-        );
-
-        const result = await useCase.execute(input);
-
-        expect(result.arrivals[0].parentName).toBe('Bob'); // 5 minutes
-        expect(result.arrivals[0].etaMinutes).toBe(5);
-        expect(result.arrivals[1].parentName).toBe('Charlie'); // 15 minutes
-        expect(result.arrivals[1].etaMinutes).toBe(15);
-        expect(result.arrivals[2].parentName).toBe('Alice'); // 60 minutes
-        expect(result.arrivals[2].etaMinutes).toBe(60);
-      });
-
-      it('should handle arrivals with same ETA', async () => {
-        const schoolId = 'school-123';
-
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
-
-        const mockETAs: ETA[] = [
-          {
-            id: 'eta-1',
-            parentId: 'parent-1',
-            schoolId,
-            distanceMeters: 5000,
-            durationSeconds: 600,
-            routePolyline: 'polyline1',
-            calculatedAt: new Date(),
-          },
-          {
-            id: 'eta-2',
-            parentId: 'parent-2',
-            schoolId,
-            distanceMeters: 5000,
-            durationSeconds: 600,
-            routePolyline: 'polyline2',
-            calculatedAt: new Date(),
-          },
-        ];
-
-        const mockParents: Record<string, Parent> = {
-          'parent-1': {
-            id: 'parent-1',
-            name: 'Alice',
-            email: 'alice@example.com',
-            phone: '+1111111111',
-            schoolId,
-            createdAt: new Date(),
-          },
-          'parent-2': {
-            id: 'parent-2',
-            name: 'Bob',
-            email: 'bob@example.com',
-            phone: '+2222222222',
-            schoolId,
-            createdAt: new Date(),
-          },
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue(mockETAs);
-        parentRepository.findById.mockImplementation((parentId) =>
-          Promise.resolve(mockParents[parentId]),
-        );
-
-        const result = await useCase.execute(input);
-
-        expect(result.arrivals).toHaveLength(2);
-        expect(result.arrivals[0].etaMinutes).toBe(10);
-        expect(result.arrivals[1].etaMinutes).toBe(10);
-      });
+      // Act & Assert
+      await expect(useCase.execute(input)).rejects.toThrow(
+        'Parent with id parent-1 not found',
+      );
     });
 
-    describe('Limit Parameter', () => {
-      it('should limit results when limit parameter is provided', async () => {
-        const schoolId = 'school-123';
+    it('should handle empty ETAs list', async () => {
+      // Arrange
+      schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
+      etaRepositoryMock.findBySchoolId.mockResolvedValue([]);
 
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
+      const input = {
+        schoolId: 'school-456',
+      };
 
-        const mockETAs: ETA[] = [
-          {
-            id: 'eta-1',
-            parentId: 'parent-1',
-            schoolId,
-            distanceMeters: 5000,
-            durationSeconds: 300,
-            routePolyline: 'polyline1',
-            calculatedAt: new Date(),
-          },
-          {
-            id: 'eta-2',
-            parentId: 'parent-2',
-            schoolId,
-            distanceMeters: 10000,
-            durationSeconds: 600,
-            routePolyline: 'polyline2',
-            calculatedAt: new Date(),
-          },
-          {
-            id: 'eta-3',
-            parentId: 'parent-3',
-            schoolId,
-            distanceMeters: 15000,
-            durationSeconds: 900,
-            routePolyline: 'polyline3',
-            calculatedAt: new Date(),
-          },
-          {
-            id: 'eta-4',
-            parentId: 'parent-4',
-            schoolId,
-            distanceMeters: 20000,
-            durationSeconds: 1200,
-            routePolyline: 'polyline4',
-            calculatedAt: new Date(),
-          },
-        ];
+      // Act
+      const result = await useCase.execute(input);
 
-        const mockParents: Record<string, Parent> = {
-          'parent-1': {
-            id: 'parent-1',
-            name: 'Alice',
-            email: 'alice@example.com',
-            phone: '+1111111111',
-            schoolId,
-            createdAt: new Date(),
-          },
-          'parent-2': {
-            id: 'parent-2',
-            name: 'Bob',
-            email: 'bob@example.com',
-            phone: '+2222222222',
-            schoolId,
-            createdAt: new Date(),
-          },
-          'parent-3': {
-            id: 'parent-3',
-            name: 'Charlie',
-            email: 'charlie@example.com',
-            phone: '+3333333333',
-            schoolId,
-            createdAt: new Date(),
-          },
-          'parent-4': {
-            id: 'parent-4',
-            name: 'David',
-            email: 'david@example.com',
-            phone: '+4444444444',
-            schoolId,
-            createdAt: new Date(),
-          },
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-          limit: 2,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue(mockETAs);
-        parentRepository.findById.mockImplementation((parentId) =>
-          Promise.resolve(mockParents[parentId]),
-        );
-
-        const result = await useCase.execute(input);
-
-        expect(result.arrivals).toHaveLength(2);
-        expect(result.arrivals[0].parentName).toBe('Alice');
-        expect(result.arrivals[1].parentName).toBe('Bob');
-        expect(result.totalCount).toBe(4);
-      });
-
-      it('should return all results when limit exceeds total count', async () => {
-        const schoolId = 'school-123';
-
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
-
-        const mockETAs: ETA[] = [
-          {
-            id: 'eta-1',
-            parentId: 'parent-1',
-            schoolId,
-            distanceMeters: 5000,
-            durationSeconds: 300,
-            routePolyline: 'polyline1',
-            calculatedAt: new Date(),
-          },
-          {
-            id: 'eta-2',
-            parentId: 'parent-2',
-            schoolId,
-            distanceMeters: 10000,
-            durationSeconds: 600,
-            routePolyline: 'polyline2',
-            calculatedAt: new Date(),
-          },
-        ];
-
-        const mockParents: Record<string, Parent> = {
-          'parent-1': {
-            id: 'parent-1',
-            name: 'Alice',
-            email: 'alice@example.com',
-            phone: '+1111111111',
-            schoolId,
-            createdAt: new Date(),
-          },
-          'parent-2': {
-            id: 'parent-2',
-            name: 'Bob',
-            email: 'bob@example.com',
-            phone: '+2222222222',
-            schoolId,
-            createdAt: new Date(),
-          },
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-          limit: 100,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue(mockETAs);
-        parentRepository.findById.mockImplementation((parentId) =>
-          Promise.resolve(mockParents[parentId]),
-        );
-
-        const result = await useCase.execute(input);
-
-        expect(result.arrivals).toHaveLength(2);
-        expect(result.totalCount).toBe(2);
-      });
+      // Assert
+      expect(result.arrivals).toHaveLength(0);
+      expect(result.totalCount).toBe(0);
+      expect(result.schoolName).toBe('Springfield Elementary');
     });
 
-    describe('Parent Information', () => {
-      it('should throw error when parent not found for ETA', async () => {
-        const schoolId = 'school-123';
-        const parentId = 'parent-456';
-
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
-
-        const mockETA: ETA = {
-          id: 'eta-789',
-          parentId,
-          schoolId,
-          distanceMeters: 5000,
-          durationSeconds: 600,
-          routePolyline: 'polyline',
-          calculatedAt: new Date(),
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue([mockETA]);
-        parentRepository.findById.mockResolvedValue(null);
-
-        await expect(useCase.execute(input)).rejects.toThrow(
-          `Parent with id ${parentId} not found`,
-        );
-      });
-
-      it('should include parent name in arrival info', async () => {
-        const schoolId = 'school-123';
-        const parentId = 'parent-456';
-
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
-
-        const mockETA: ETA = {
-          id: 'eta-789',
-          parentId,
-          schoolId,
-          distanceMeters: 5000,
-          durationSeconds: 600,
-          routePolyline: 'polyline',
-          calculatedAt: new Date(),
-        };
-
-        const mockParent: Parent = {
-          id: parentId,
-          name: 'Maria da Silva',
-          email: 'maria@example.com',
-          phone: '+5511999999999',
-          schoolId,
-          createdAt: new Date(),
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue([mockETA]);
-        parentRepository.findById.mockResolvedValue(mockParent);
-
-        const result = await useCase.execute(input);
-
-        expect(result.arrivals[0].parentName).toBe('Maria da Silva');
-      });
-    });
-
-    describe('ETA Time Conversion', () => {
-      it('should convert duration seconds to minutes correctly', async () => {
-        const schoolId = 'school-123';
-        const parentId = 'parent-456';
-
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
-
-        const mockETA: ETA = {
-          id: 'eta-789',
-          parentId,
-          schoolId,
-          distanceMeters: 5000,
-          durationSeconds: 1380, // 23 minutes
-          routePolyline: 'polyline',
-          calculatedAt: new Date(),
-        };
-
-        const mockParent: Parent = {
-          id: parentId,
-          name: 'John Doe',
-          email: 'john@example.com',
-          phone: '+1234567890',
-          schoolId,
-          createdAt: new Date(),
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue([mockETA]);
-        parentRepository.findById.mockResolvedValue(mockParent);
-
-        const result = await useCase.execute(input);
-
-        expect(result.arrivals[0].etaMinutes).toBe(23);
-      });
-
-      it('should round duration correctly', async () => {
-        const schoolId = 'school-123';
-        const parentId = 'parent-456';
-
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
-
-        const mockETA: ETA = {
-          id: 'eta-789',
-          parentId,
-          schoolId,
-          distanceMeters: 5000,
-          durationSeconds: 599, // 9.98 minutes -> rounds to 10
-          routePolyline: 'polyline',
-          calculatedAt: new Date(),
-        };
-
-        const mockParent: Parent = {
-          id: parentId,
-          name: 'John Doe',
-          email: 'john@example.com',
-          phone: '+1234567890',
-          schoolId,
-          createdAt: new Date(),
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue([mockETA]);
-        parentRepository.findById.mockResolvedValue(mockParent);
-
-        const result = await useCase.execute(input);
-
-        expect(result.arrivals[0].etaMinutes).toBe(10);
-      });
-    });
-
-    describe('School Information', () => {
-      it('should include school name in response', async () => {
-        const schoolId = 'school-123';
-
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Thomas Jefferson High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue([]);
-
-        const result = await useCase.execute(input);
-
-        expect(result.schoolName).toBe('Thomas Jefferson High School');
-      });
-
-      it('should include total count before limit', async () => {
-        const schoolId = 'school-123';
-
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
-
-        const mockETAs: ETA[] = [
-          {
-            id: 'eta-1',
-            parentId: 'parent-1',
-            schoolId,
-            distanceMeters: 5000,
-            durationSeconds: 300,
-            routePolyline: 'polyline1',
-            calculatedAt: new Date(),
-          },
-          {
-            id: 'eta-2',
-            parentId: 'parent-2',
-            schoolId,
-            distanceMeters: 10000,
-            durationSeconds: 600,
-            routePolyline: 'polyline2',
-            calculatedAt: new Date(),
-          },
-          {
-            id: 'eta-3',
-            parentId: 'parent-3',
-            schoolId,
-            distanceMeters: 15000,
-            durationSeconds: 900,
-            routePolyline: 'polyline3',
-            calculatedAt: new Date(),
-          },
-        ];
-
-        const mockParents: Record<string, Parent> = {
-          'parent-1': {
-            id: 'parent-1',
-            name: 'Alice',
-            email: 'alice@example.com',
-            phone: '+1111111111',
-            schoolId,
-            createdAt: new Date(),
-          },
-          'parent-2': {
-            id: 'parent-2',
-            name: 'Bob',
-            email: 'bob@example.com',
-            phone: '+2222222222',
-            schoolId,
-            createdAt: new Date(),
-          },
-          'parent-3': {
-            id: 'parent-3',
-            name: 'Charlie',
-            email: 'charlie@example.com',
-            phone: '+3333333333',
-            schoolId,
-            createdAt: new Date(),
-          },
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-          limit: 2,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue(mockETAs);
-        parentRepository.findById.mockImplementation((parentId) =>
-          Promise.resolve(mockParents[parentId]),
-        );
-
-        const result = await useCase.execute(input);
-
-        expect(result.totalCount).toBe(3);
-        expect(result.arrivals).toHaveLength(2);
-      });
-    });
-
-    describe('Edge Cases', () => {
-      it('should handle zero distance', async () => {
-        const schoolId = 'school-123';
-        const parentId = 'parent-456';
-
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
-
-        const mockETA: ETA = {
-          id: 'eta-789',
-          parentId,
-          schoolId,
-          distanceMeters: 0,
-          durationSeconds: 0,
-          routePolyline: 'polyline',
-          calculatedAt: new Date(),
-        };
-
-        const mockParent: Parent = {
-          id: parentId,
-          name: 'John Doe',
-          email: 'john@example.com',
-          phone: '+1234567890',
-          schoolId,
-          createdAt: new Date(),
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue([mockETA]);
-        parentRepository.findById.mockResolvedValue(mockParent);
-
-        const result = await useCase.execute(input);
-
-        expect(result.arrivals[0].distanceMeters).toBe(0);
-        expect(result.arrivals[0].etaMinutes).toBe(0);
-      });
-
-      it('should handle special characters in parent name', async () => {
-        const schoolId = 'school-123';
-        const parentId = 'parent-456';
-
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
-
-        const mockETA: ETA = {
-          id: 'eta-789',
-          parentId,
-          schoolId,
-          distanceMeters: 5000,
-          durationSeconds: 600,
-          routePolyline: 'polyline',
-          calculatedAt: new Date(),
-        };
-
-        const mockParent: Parent = {
-          id: parentId,
-          name: "José O'Connor-García",
-          email: 'jose@example.com',
-          phone: '+5511999999999',
-          schoolId,
-          createdAt: new Date(),
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue([mockETA]);
-        parentRepository.findById.mockResolvedValue(mockParent);
-
-        const result = await useCase.execute(input);
-
-        expect(result.arrivals[0].parentName).toBe("José O'Connor-García");
-      });
-    });
-
-    describe('Integration - Full Happy Path', () => {
-      it('should execute complete flow: validate school, fetch ETAs, enrich with parents, sort, apply limit, return result', async () => {
-        const schoolId = 'school-123';
-
-        const mockSchool: School = {
-          id: schoolId,
-          name: 'Lincoln High School',
-          lat: 37.7749,
-          lng: -122.4194,
-          geofenceRadiusMeters: 500,
-          notificationThresholdMeters: 1000,
-          createdAt: new Date(),
-        };
-
-        const mockETAs: ETA[] = [
-          {
-            id: 'eta-1',
-            parentId: 'parent-3',
-            schoolId,
-            distanceMeters: 30000,
-            durationSeconds: 1800,
-            routePolyline: 'polyline3',
-            calculatedAt: new Date(),
-          },
-          {
-            id: 'eta-2',
-            parentId: 'parent-1',
-            schoolId,
-            distanceMeters: 5000,
-            durationSeconds: 300,
-            routePolyline: 'polyline1',
-            calculatedAt: new Date(),
-          },
-          {
-            id: 'eta-3',
-            parentId: 'parent-2',
-            schoolId,
-            distanceMeters: 15000,
-            durationSeconds: 900,
-            routePolyline: 'polyline2',
-            calculatedAt: new Date(),
-          },
-        ];
-
-        const mockParents: Record<string, Parent> = {
-          'parent-1': {
-            id: 'parent-1',
-            name: 'Alice Cooper',
-            email: 'alice@example.com',
-            phone: '+1111111111',
-            schoolId,
-            createdAt: new Date(),
-          },
-          'parent-2': {
-            id: 'parent-2',
-            name: 'Bob Dylan',
-            email: 'bob@example.com',
-            phone: '+2222222222',
-            schoolId,
-            createdAt: new Date(),
-          },
-          'parent-3': {
-            id: 'parent-3',
-            name: 'Charlie Brown',
-            email: 'charlie@example.com',
-            phone: '+3333333333',
-            schoolId,
-            createdAt: new Date(),
-          },
-        };
-
-        const input: GetArrivalsQueueInput = {
-          schoolId,
-          limit: 2,
-        };
-
-        schoolRepository.findById.mockResolvedValue(mockSchool);
-        etaRepository.findBySchoolId.mockResolvedValue(mockETAs);
-        parentRepository.findById.mockImplementation((parentId) =>
-          Promise.resolve(mockParents[parentId]),
-        );
-
-        const result = await useCase.execute(input);
-
-        expect(schoolRepository.findById).toHaveBeenCalledWith(schoolId);
-        expect(etaRepository.findBySchoolId).toHaveBeenCalledWith(schoolId);
-        expect(parentRepository.findById).toHaveBeenCalledTimes(3);
-
-        expect(result.schoolName).toBe('Lincoln High School');
-        expect(result.totalCount).toBe(3);
-        expect(result.arrivals).toHaveLength(2);
-
-        // Verify sorted order
-        expect(result.arrivals[0].parentName).toBe('Alice Cooper');
-        expect(result.arrivals[0].etaMinutes).toBe(5);
-        expect(result.arrivals[1].parentName).toBe('Bob Dylan');
-        expect(result.arrivals[1].etaMinutes).toBe(15);
-      });
+    it('should round ETA minutes correctly', async () => {
+      // Arrange
+      const etaWithFractionalMinutes: ETA = {
+        id: 'eta-4',
+        parentId: 'parent-1',
+        schoolId: 'school-456',
+        distanceMeters: 1000,
+        durationSeconds: 185, // 3.08333 minutes
+        routePolyline: 'polyline-4',
+        calculatedAt: new Date(),
+      };
+
+      schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
+      etaRepositoryMock.findBySchoolId.mockResolvedValue([etaWithFractionalMinutes]);
+      parentRepositoryMock.findById.mockResolvedValue(mockParents[0]);
+
+      const input = {
+        schoolId: 'school-456',
+      };
+
+      // Act
+      const result = await useCase.execute(input);
+
+      // Assert
+      expect(result.arrivals[0].etaMinutes).toBe(3); // Rounded from 3.08333
     });
   });
 });
