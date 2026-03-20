@@ -34,6 +34,14 @@ export class LocationRepository implements ILocationRepository {
     return model ? LocationMapper.toDomain(model) : null;
   }
 
+  async findByParentId(parentId: string): Promise<Location[]> {
+    const models = await this.repository.find({
+      where: { parentId },
+      order: { timestamp: 'DESC' },
+    });
+    return models.map((model) => LocationMapper.toDomain(model));
+  }
+
   async findParentsNearSchool(schoolId: string): Promise<string[]> {
     // This is a simplified implementation for MVP
     // In production, use PostGIS or similar for spatial queries
