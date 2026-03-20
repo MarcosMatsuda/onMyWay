@@ -1,7 +1,5 @@
 import { Module, Global } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { OSRMService } from './osrm.service';
-import { OSRMServiceAdapter } from './osrm-service.adapter';
 import { OSRMConfig } from './osrm.types';
 
 /**
@@ -12,18 +10,13 @@ import { OSRMConfig } from './osrm.types';
   providers: [
     {
       provide: 'OSRM_CONFIG',
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService): OSRMConfig => ({
-        baseUrl: configService.get<string>('OSRM_BASE_URL'),
-        timeout: parseInt(
-          configService.get<string>('OSRM_TIMEOUT_MS') || '10000',
-          10,
-        ),
+      useFactory: (): OSRMConfig => ({
+        baseUrl: process.env.OSRM_BASE_URL || 'http://router.project-osrm.org',
+        timeout: parseInt(process.env.OSRM_TIMEOUT_MS || '10000', 10),
       }),
     },
     OSRMService,
-    OSRMServiceAdapter,
   ],
-  exports: [OSRMService, OSRMServiceAdapter],
+  exports: [OSRMService],
 })
 export class OSRMModule {}

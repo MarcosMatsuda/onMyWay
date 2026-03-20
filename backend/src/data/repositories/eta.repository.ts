@@ -13,7 +13,7 @@ export class ETARepository implements IETARepository {
     private readonly repository: Repository<ETAModel>,
   ) {}
 
-  async save(eta: ETA | Omit<ETA, 'id'>): Promise<ETA> {
+  async save(eta: Omit<ETA, 'id'>): Promise<ETA> {
     const model = this.repository.create(ETAMapper.toPersistence(eta));
     const saved = await this.repository.save(model);
     return ETAMapper.toDomain(saved);
@@ -38,34 +38,5 @@ export class ETARepository implements IETARepository {
       order: { calculatedAt: 'DESC' },
     });
     return models.map(ETAMapper.toDomain);
-  }
-
-  async findLatestBulkByParentIds(
-    parentIds: string[],
-  ): Promise<Map<string, ETA>> {
-    if (parentIds.length === 0) {
-      return new Map();
-    }
-
-    // Get latest ETA per parent ID using raw SQL for efficiency
-    const models = await this.repository
-      .createQueryBuilder('eta')
-      .where('eta.parentId IN (:...parentIds)', { parentIds })
-      .orderBy('eta.parentId', 'ASC')
-      .addOrderBy('eta.calculatedAt', 'DESC')
-      .getMany();
-
-    // Group by parentId, keeping only the latest (first) per parent
-    const resultMap = new Map<string, ETA>();
-    const seenParentIds = new Set<string>();
-
-    for (const model of models) {
-      if (!seenParentIds.has(model.parentId)) {
-        resultMap.set(model.parentId, ETAMapper.toDomain(model));
-        seenParentIds.add(model.parentId);
-      }
-    }
-
-    return resultMap;
   }
 }

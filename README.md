@@ -1,9 +1,11 @@
 # onMyWay
 
 [![WIP](https://img.shields.io/badge/status-WIP-yellow?style=flat-square)](https://github.com/MarcosMatsuda/onMyWay)
-[![Phase](https://img.shields.io/badge/phase-2%20Mobile-blue?style=flat-square)](https://github.com/MarcosMatsuda/onMyWay/blob/develop/IMPLEMENTATION-ROADMAP.md)
-[![Backend](https://img.shields.io/badge/backend-complete-brightgreen?style=flat-square)](#)
-[![Mobile](https://img.shields.io/badge/mobile-in%20progress-orange?style=flat-square)](#)
+[![Phase](https://img.shields.io/badge/phase-0%20Setup-blue?style=flat-square)](https://github.com/MarcosMatsuda/onMyWay/blob/develop/IMPLEMENTATION-ROADMAP.md)
+
+Real-time arrival notification system with live queue management.
+
+> **🚧 Work In Progress** — Currently in Phase 0 (Project Setup). See [IMPLEMENTATION-ROADMAP.md](./IMPLEMENTATION-ROADMAP.md) for timeline.
 
 Real-time arrival notification system with live queue management.
 

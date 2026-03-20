@@ -14,13 +14,13 @@ export class LocationMapper {
   }
 
   static toPersistence(
-    entity: Location | Omit<Location, 'id'>,
-  ): Partial<LocationModel> {
+    entity: Omit<Location, 'id'>,
+  ): Omit<LocationModel, 'id'> {
     return {
-      id: 'id' in entity ? entity.id : undefined,
       parentId: entity.parentId,
       lat: entity.lat,
       lng: entity.lng,
+      point: `POINT(${entity.lng} ${entity.lat})`,
       accuracy: entity.accuracy,
       timestamp: entity.timestamp,
     };

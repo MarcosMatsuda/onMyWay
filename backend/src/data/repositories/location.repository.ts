@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository } from 'typeorm';
 import { LocationModel } from '../models/location.model';
 import { LocationMapper } from '../mappers/location.mapper';
 import { Location } from '../../domain/entities/location.entity';
@@ -11,28 +11,14 @@ export class LocationRepository implements ILocationRepository {
   constructor(
     @InjectRepository(LocationModel)
     private readonly repository: Repository<LocationModel>,
-    private readonly dataSource: DataSource,
   ) {}
 
-  async save(location: Location | Omit<Location, 'id'>): Promise<Location> {
-    const id = 'id' in location ? location.id : crypto.randomUUID();
-    await this.dataSource.query(
-      `INSERT INTO locations (id, parent_id, lat, lng, accuracy, timestamp) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [
-        id,
-        location.parentId,
-        location.lat,
-        location.lng,
-        location.accuracy ?? 0,
-        location.timestamp,
-      ],
+  async save(location: Omit<Location, 'id'>): Promise<Location> {
+    const model = this.repository.create(
+      LocationMapper.toPersistence(location),
     );
-    return { ...location, id };
-  }
-
-  async findById(id: string): Promise<Location | null> {
-    const model = await this.repository.findOne({ where: { id } });
-    return model ? LocationMapper.toDomain(model) : null;
+    const saved = await this.repository.save(model);
+    return LocationMapper.toDomain(saved);
   }
 
   async findLatestByParentId(parentId: string): Promise<Location | null> {
@@ -43,64 +29,54 @@ export class LocationRepository implements ILocationRepository {
     return model ? LocationMapper.toDomain(model) : null;
   }
 
-  async findByParentId(parentId: string): Promise<Location[]> {
-    const models = await this.repository.find({
-      where: { parentId },
-      order: { timestamp: 'DESC' },
-    });
-    return models.map((model) => LocationMapper.toDomain(model));
-  }
-
-  async findParentsNearSchool(schoolId: string): Promise<string[]> {
-    // Use PostGIS to find parents whose latest location is within school's geofence radius
-    const query = `
-      SELECT DISTINCT l.parent_id
-      FROM locations l
-      JOIN parents p ON l.parent_id = p.id
-      JOIN schools s ON p.school_id = s.id
-      WHERE s.id = $1
-        AND ST_Distance(
-          ST_MakePoint(l.lng, l.lat)::geography,
-          ST_MakePoint(s.lng, s.lat)::geography
-        ) <= s.geofence_radius_meters
-        AND l.timestamp = (
-          SELECT MAX(l2.timestamp)
-          FROM locations l2
-          WHERE l2.parent_id = l.parent_id
-        )
-      ORDER BY l.parent_id
+  async findParentsNearSchool(
+    schoolId: string,
+    radiusMeters: number,
+  ): Promise<string[]> {
+    // Use PostGIS to find parents within radius of school
+    // First get school location
+    const schoolQuery = `
+      SELECT location
+      FROM schools
+      WHERE id = $1
     `;
 
-    const result = await this.dataSource.query(query, [schoolId]);
+    const schoolResult = await this.repository.query(schoolQuery, [schoolId]);
+
+    if (
+      !schoolResult ||
+      schoolResult.length === 0 ||
+      !schoolResult[0].location
+    ) {
+      return [];
+    }
+
+    // Find latest location for each parent within radius
+    const query = `
+      WITH latest_locations AS (
+        SELECT DISTINCT ON (parent_id) 
+          parent_id,
+          point,
+          timestamp
+        FROM locations
+        WHERE point IS NOT NULL
+        ORDER BY parent_id, timestamp DESC
+      )
+      SELECT DISTINCT ll.parent_id
+      FROM latest_locations ll
+      WHERE ST_DWithin(
+        ll.point::geography,
+        $1::geography,
+        $2
+      )
+      ORDER BY ll.timestamp DESC
+      LIMIT 100
+    `;
+
+    const result = await this.repository.query(query, [
+      schoolResult[0].location,
+      radiusMeters,
+    ]);
     return result.map((row: any) => row.parent_id);
-  }
-
-  async findLatestBulkByParentIds(
-    parentIds: string[],
-  ): Promise<Map<string, Location>> {
-    if (parentIds.length === 0) {
-      return new Map();
-    }
-
-    // Get latest location per parent ID
-    const models = await this.repository
-      .createQueryBuilder('location')
-      .where('location.parentId IN (:...parentIds)', { parentIds })
-      .orderBy('location.parentId', 'ASC')
-      .addOrderBy('location.timestamp', 'DESC')
-      .getMany();
-
-    // Group by parentId, keeping only the latest (first) per parent
-    const resultMap = new Map<string, Location>();
-    const seenParentIds = new Set<string>();
-
-    for (const model of models) {
-      if (!seenParentIds.has(model.parentId)) {
-        resultMap.set(model.parentId, LocationMapper.toDomain(model));
-        seenParentIds.add(model.parentId);
-      }
-    }
-
-    return resultMap;
   }
 }

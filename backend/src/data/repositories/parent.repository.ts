@@ -67,21 +67,4 @@ export class ParentRepository implements IParentRepository {
 
     return ParentMapper.toDomain(model);
   }
-
-  async findByIds(ids: string[]): Promise<Map<string, Parent>> {
-    if (ids.length === 0) {
-      return new Map();
-    }
-
-    const models = await this.parentRepository.find({
-      where: ids.map((id) => ({ id })),
-    });
-
-    const resultMap = new Map<string, Parent>();
-    for (const model of models) {
-      resultMap.set(model.id, ParentMapper.toDomain(model));
-    }
-
-    return resultMap;
-  }
 }
