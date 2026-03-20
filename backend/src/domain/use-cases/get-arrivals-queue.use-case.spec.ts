@@ -4,7 +4,6 @@ import { ISchoolRepository } from '../repositories/school.repository.interface';
 import { IParentRepository } from '../repositories/parent.repository.interface';
 import { ETA } from '../entities/eta.entity';
 import { School } from '../entities/school.entity';
-import { Parent } from '../entities/parent.entity';
 
 describe('GetArrivalsQueueUseCase', () => {
   let useCase: GetArrivalsQueueUseCase;
@@ -119,10 +118,10 @@ describe('GetArrivalsQueueUseCase', () => {
       // Arrange
       schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
       etaRepositoryMock.findBySchoolId.mockResolvedValue(mockETAs);
-      
+
       // Mock parent repository to return different parents for different IDs
       parentRepositoryMock.findById.mockImplementation(async (id) => {
-        return mockParents.find(p => p.id === id) || null;
+        return mockParents.find((p) => p.id === id) || null;
       });
 
       const input = {
@@ -134,20 +133,22 @@ describe('GetArrivalsQueueUseCase', () => {
 
       // Assert
       expect(schoolRepositoryMock.findById).toHaveBeenCalledWith('school-456');
-      expect(etaRepositoryMock.findBySchoolId).toHaveBeenCalledWith('school-456');
-      
+      expect(etaRepositoryMock.findBySchoolId).toHaveBeenCalledWith(
+        'school-456',
+      );
+
       // Should be sorted by ETA (ascending): 5min, 10min, 15min
       expect(result.arrivals).toHaveLength(3);
       expect(result.arrivals[0].parentId).toBe('parent-2'); // 5 minutes
       expect(result.arrivals[0].etaMinutes).toBe(5);
       expect(result.arrivals[0].parentName).toBe('Jane Smith');
-      
+
       expect(result.arrivals[1].parentId).toBe('parent-1'); // 10 minutes
       expect(result.arrivals[1].etaMinutes).toBe(10);
-      
+
       expect(result.arrivals[2].parentId).toBe('parent-3'); // 15 minutes
       expect(result.arrivals[2].etaMinutes).toBe(15);
-      
+
       expect(result.schoolName).toBe('Springfield Elementary');
       expect(result.totalCount).toBe(3);
     });
@@ -156,9 +157,9 @@ describe('GetArrivalsQueueUseCase', () => {
       // Arrange
       schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
       etaRepositoryMock.findBySchoolId.mockResolvedValue(mockETAs);
-      
+
       parentRepositoryMock.findById.mockImplementation(async (id) => {
-        return mockParents.find(p => p.id === id) || null;
+        return mockParents.find((p) => p.id === id) || null;
       });
 
       const input = {
@@ -237,7 +238,9 @@ describe('GetArrivalsQueueUseCase', () => {
       };
 
       schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
-      etaRepositoryMock.findBySchoolId.mockResolvedValue([etaWithFractionalMinutes]);
+      etaRepositoryMock.findBySchoolId.mockResolvedValue([
+        etaWithFractionalMinutes,
+      ]);
       parentRepositoryMock.findById.mockResolvedValue(mockParents[0]);
 
       const input = {

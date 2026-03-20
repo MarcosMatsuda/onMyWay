@@ -113,7 +113,9 @@ describe('CalculateETAUseCase', () => {
       // Arrange
       parentRepositoryMock.findById.mockResolvedValue(mockParent);
       schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
-      locationRepositoryMock.findLatestByParentId.mockResolvedValue(mockLocation);
+      locationRepositoryMock.findLatestByParentId.mockResolvedValue(
+        mockLocation,
+      );
       osrmServiceMock.calculateRoute.mockResolvedValue(mockRoute);
       etaRepositoryMock.save.mockResolvedValue(mockETA);
 
@@ -127,7 +129,9 @@ describe('CalculateETAUseCase', () => {
       // Assert
       expect(parentRepositoryMock.findById).toHaveBeenCalledWith('parent-123');
       expect(schoolRepositoryMock.findById).toHaveBeenCalledWith('school-456');
-      expect(locationRepositoryMock.findLatestByParentId).toHaveBeenCalledWith('parent-123');
+      expect(locationRepositoryMock.findLatestByParentId).toHaveBeenCalledWith(
+        'parent-123',
+      );
       expect(osrmServiceMock.calculateRoute).toHaveBeenCalledWith(
         mockLocation.lat,
         mockLocation.lng,
@@ -189,22 +193,30 @@ describe('CalculateETAUseCase', () => {
       // Arrange
       parentRepositoryMock.findById.mockResolvedValue(mockParent);
       schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
-      locationRepositoryMock.findLatestByParentId.mockResolvedValue(mockLocation);
-      osrmServiceMock.calculateRoute.mockRejectedValue(new Error('OSRM service unavailable'));
+      locationRepositoryMock.findLatestByParentId.mockResolvedValue(
+        mockLocation,
+      );
+      osrmServiceMock.calculateRoute.mockRejectedValue(
+        new Error('OSRM service unavailable'),
+      );
 
       const input = {
         parentId: 'parent-123',
       };
 
       // Act & Assert
-      await expect(useCase.execute(input)).rejects.toThrow('OSRM service unavailable');
+      await expect(useCase.execute(input)).rejects.toThrow(
+        'OSRM service unavailable',
+      );
     });
 
     it('should round duration minutes correctly', async () => {
       // Arrange
       parentRepositoryMock.findById.mockResolvedValue(mockParent);
       schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
-      locationRepositoryMock.findLatestByParentId.mockResolvedValue(mockLocation);
+      locationRepositoryMock.findLatestByParentId.mockResolvedValue(
+        mockLocation,
+      );
       osrmServiceMock.calculateRoute.mockResolvedValue({
         ...mockRoute,
         durationSeconds: 185, // 3.08333 minutes

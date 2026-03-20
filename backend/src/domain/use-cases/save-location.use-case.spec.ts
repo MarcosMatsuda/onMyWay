@@ -105,13 +105,13 @@ describe('SaveLocationUseCase', () => {
       schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
       locationRepositoryMock.save.mockResolvedValue({
         ...mockLocation,
-        lat: -23.5600, // Further away (~1.1km)
+        lat: -23.56, // Further away (~1.1km)
         lng: -46.6333,
       });
 
       const input = {
         parentId: 'parent-123',
-        lat: -23.5600,
+        lat: -23.56,
         lng: -46.6333,
       };
 
@@ -159,11 +159,11 @@ describe('SaveLocationUseCase', () => {
       // Arrange
       parentRepositoryMock.findById.mockResolvedValue(mockParent);
       schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
-      
+
       // Mock should return location with accuracy 0
       locationRepositoryMock.save.mockImplementation(async (locationData) => {
         return {
-          ...locationData as Location,
+          ...(locationData as Location),
           id: 'location-789',
           timestamp: new Date(),
         };
