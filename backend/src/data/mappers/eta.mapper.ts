@@ -14,8 +14,9 @@ export class ETAMapper {
     };
   }
 
-  static toPersistence(entity: Omit<ETA, 'id'>): Omit<ETAModel, 'id'> {
+  static toPersistence(entity: ETA | Omit<ETA, 'id'>): Partial<ETAModel> {
     return {
+      id: 'id' in entity ? entity.id : undefined,
       parentId: entity.parentId,
       schoolId: entity.schoolId,
       distanceMeters: entity.distanceMeters,

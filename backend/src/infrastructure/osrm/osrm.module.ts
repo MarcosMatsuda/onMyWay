@@ -1,5 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { OSRMService } from './osrm.service';
+import { OSRMServiceAdapter } from './osrm-service.adapter';
 import { OSRMConfig } from './osrm.types';
 
 /**
@@ -16,7 +17,8 @@ import { OSRMConfig } from './osrm.types';
       }),
     },
     OSRMService,
+    OSRMServiceAdapter,
   ],
-  exports: [OSRMService],
+  exports: [OSRMService, OSRMServiceAdapter],
 })
 export class OSRMModule {}

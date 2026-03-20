@@ -13,7 +13,7 @@ export class ETARepository implements IETARepository {
     private readonly repository: Repository<ETAModel>,
   ) {}
 
-  async save(eta: Omit<ETA, 'id'>): Promise<ETA> {
+  async save(eta: ETA | Omit<ETA, 'id'>): Promise<ETA> {
     const model = this.repository.create(ETAMapper.toPersistence(eta));
     const saved = await this.repository.save(model);
     return ETAMapper.toDomain(saved);

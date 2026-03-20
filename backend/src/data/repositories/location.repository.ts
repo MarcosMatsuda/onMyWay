@@ -13,12 +13,17 @@ export class LocationRepository implements ILocationRepository {
     private readonly repository: Repository<LocationModel>,
   ) {}
 
-  async save(location: Omit<Location, 'id'>): Promise<Location> {
+  async save(location: Location | Omit<Location, 'id'>): Promise<Location> {
     const model = this.repository.create(
       LocationMapper.toPersistence(location),
     );
     const saved = await this.repository.save(model);
     return LocationMapper.toDomain(saved);
+  }
+
+  async findById(id: string): Promise<Location | null> {
+    const model = await this.repository.findOne({ where: { id } });
+    return model ? LocationMapper.toDomain(model) : null;
   }
 
   async findLatestByParentId(parentId: string): Promise<Location | null> {
@@ -29,54 +34,19 @@ export class LocationRepository implements ILocationRepository {
     return model ? LocationMapper.toDomain(model) : null;
   }
 
-  async findParentsNearSchool(
-    schoolId: string,
-    radiusMeters: number,
-  ): Promise<string[]> {
-    // Use PostGIS to find parents within radius of school
-    // First get school location
-    const schoolQuery = `
-      SELECT location
-      FROM schools
-      WHERE id = $1
-    `;
-
-    const schoolResult = await this.repository.query(schoolQuery, [schoolId]);
-
-    if (
-      !schoolResult ||
-      schoolResult.length === 0 ||
-      !schoolResult[0].location
-    ) {
-      return [];
-    }
-
-    // Find latest location for each parent within radius
+  async findParentsNearSchool(schoolId: string): Promise<string[]> {
+    // This is a simplified implementation for MVP
+    // In production, use PostGIS or similar for spatial queries
     const query = `
-      WITH latest_locations AS (
-        SELECT DISTINCT ON (parent_id) 
-          parent_id,
-          point,
-          timestamp
-        FROM locations
-        WHERE point IS NOT NULL
-        ORDER BY parent_id, timestamp DESC
-      )
-      SELECT DISTINCT ll.parent_id
-      FROM latest_locations ll
-      WHERE ST_DWithin(
-        ll.point::geography,
-        $1::geography,
-        $2
-      )
-      ORDER BY ll.timestamp DESC
+      SELECT DISTINCT l.parent_id
+      FROM locations l
+      JOIN parents p ON l.parent_id = p.id
+      WHERE p.school_id = $1
+      ORDER BY l.timestamp DESC
       LIMIT 100
     `;
 
-    const result = await this.repository.query(query, [
-      schoolResult[0].location,
-      radiusMeters,
-    ]);
+    const result = await this.repository.query(query, [schoolId]);
     return result.map((row: any) => row.parent_id);
   }
 }

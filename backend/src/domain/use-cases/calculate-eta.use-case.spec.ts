@@ -68,16 +68,12 @@ describe('CalculateETAUseCase', () => {
       findById: jest.fn(),
       findLatestByParentId: jest.fn(),
       findBySchoolId: jest.fn(),
-      findLatestBulkByParentIds: jest.fn(),
     } as jest.Mocked<IETARepository>;
 
     locationRepositoryMock = {
       save: jest.fn(),
-      findById: jest.fn(),
       findLatestByParentId: jest.fn(),
-      findByParentId: jest.fn(),
       findParentsNearSchool: jest.fn(),
-      findLatestBulkByParentIds: jest.fn(),
     } as jest.Mocked<ILocationRepository>;
 
     schoolRepositoryMock = {
@@ -86,14 +82,12 @@ describe('CalculateETAUseCase', () => {
       findAll: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-      findParentsWithinGeofence: jest.fn(),
     } as jest.Mocked<ISchoolRepository>;
 
     parentRepositoryMock = {
       findById: jest.fn(),
       findByEmail: jest.fn(),
       findBySchoolId: jest.fn(),
-      findByIds: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
