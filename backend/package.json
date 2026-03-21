@@ -13,7 +13,11 @@
     "test:coverage": "jest --selectProjects unit --coverage",
     "test:integration": "jest --selectProjects integration",
     "test:all": "jest",
-    "test:watch": "jest --selectProjects unit --watch"
+    "test:watch": "jest --selectProjects unit --watch",
+    "migration:generate": "typeorm migration:generate",
+    "migration:create": "typeorm migration:create",
+    "migration:run": "typeorm migration:run -d src/infrastructure/database/data-source.ts",
+    "migration:revert": "typeorm migration:revert -d src/infrastructure/database/data-source.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
