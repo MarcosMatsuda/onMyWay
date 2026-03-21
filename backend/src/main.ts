@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import helmet from 'helmet';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { HttpExceptionFilter } from './infrastructure/filters/http-exception.filter';
@@ -40,6 +41,28 @@ async function bootstrap() {
 
   // Global validation pipe
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+
+  // Configure Swagger documentation (development only)
+  const nodeEnv = configService.get<string>('NODE_ENV') || 'development';
+  if (nodeEnv !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('onMyWay API')
+      .setDescription(
+        'Real-time arrival notification API for schools and parents',
+      )
+      .setVersion('0.1.0')
+      .addBearerAuth()
+      .addServer('http://localhost:3000', 'Local development')
+      .addServer('http://localhost:5000', 'Local (Docker)')
+      .addTag('auth', 'Authentication endpoints')
+      .addTag('locations', 'Location tracking endpoints')
+      .addTag('schools', 'School endpoints')
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+    logger.log('Swagger documentation available at /api/docs');
+  }
 
   const port = configService.get<number>('PORT') || 3000;
   const logLevel = configService.get<string>('LOG_LEVEL') || 'info';

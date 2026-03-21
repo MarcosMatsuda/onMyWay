@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import {
   CalculateETAUseCase,
   CalculateETAInput,
@@ -26,6 +27,7 @@ import { CreateLocationDto } from './dtos/create-location.dto';
 import { LocationResponseDto } from './dtos/location-response.dto';
 import { LocationsService } from './locations.service';
 
+@ApiTags('locations')
 @Controller('locations')
 export class LocationsController {
   constructor(
@@ -35,6 +37,11 @@ export class LocationsController {
   ) {}
 
   @Post()
+  @ApiOperation({
+    summary: 'Save parent location',
+    description: 'Update parent location coordinates',
+  })
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   async saveLocation(
@@ -46,6 +53,11 @@ export class LocationsController {
   }
 
   @Get('me')
+  @ApiOperation({
+    summary: 'Get my latest location',
+    description: 'Retrieve current location and ETA information',
+  })
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   async getMyLatestLocation(
     @Request() req: { user: JwtPayload },
