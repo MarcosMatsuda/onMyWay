@@ -184,9 +184,9 @@ describe('LocationsService', () => {
       etaRepositoryMock.findLatestByParentId.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.saveLocation(parentId, createLocationDto)).rejects.toThrow(
-        `Cannot determine school for parent ${parentId}`,
-      );
+      await expect(
+        service.saveLocation(parentId, createLocationDto),
+      ).rejects.toThrow(`Cannot determine school for parent ${parentId}`);
 
       expect(saveLocationWithETAUseCaseMock.execute).not.toHaveBeenCalled();
       expect(notifySchoolUseCaseMock.execute).not.toHaveBeenCalled();
