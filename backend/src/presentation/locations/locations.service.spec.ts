@@ -10,24 +10,16 @@ import {
   IETARepository,
   ETA_REPOSITORY,
 } from '../../domain/repositories/eta.repository.interface';
-import {
-  IParentRepository,
-  PARENT_REPOSITORY,
-} from '../../domain/repositories/parent.repository.interface';
 import { CreateLocationDto } from './dtos/create-location.dto';
 import { Location } from '../../domain/entities/location.entity';
 import { ETA } from '../../domain/entities/eta.entity';
-import { Parent } from '../../domain/entities/parent.entity';
-import { ArrivalsGateway } from '../../infrastructure/websocket/arrivals.gateway';
 
 describe('LocationsService', () => {
   let service: LocationsService;
   let saveLocationUseCaseMock: jest.Mocked<SaveLocationUseCase>;
   let calculateETAUseCaseMock: jest.Mocked<CalculateETAUseCase>;
-  let arrivalsGatewayMock: jest.Mocked<ArrivalsGateway>;
   let locationRepositoryMock: jest.Mocked<ILocationRepository>;
   let etaRepositoryMock: jest.Mocked<IETARepository>;
-  let parentRepositoryMock: jest.Mocked<IParentRepository>;
 
   const mockLocation: Location = {
     id: 'location-123',
