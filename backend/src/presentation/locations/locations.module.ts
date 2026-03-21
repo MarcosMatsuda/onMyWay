@@ -5,6 +5,7 @@ import { SaveLocationUseCase } from '../../domain/use-cases/save-location.use-ca
 import { CalculateETAUseCase } from '../../domain/use-cases/calculate-eta.use-case';
 import { GetArrivalsQueueUseCase } from '../../domain/use-cases/get-arrivals-queue.use-case';
 import { GetSchoolArrivalsUseCase } from '../../domain/use-cases/get-school-arrivals.use-case';
+import { NotifySchoolUseCase } from '../../domain/use-cases/notify-school.use-case';
 import { DataModule } from '../../data/data.module';
 import { OSRMModule } from '../../infrastructure/osrm/osrm.module';
 import { WebSocketModule } from '../../infrastructure/websocket/websocket.module';
@@ -19,6 +20,7 @@ import { OSRMServiceAdapter } from '../../infrastructure/osrm/osrm-service.adapt
     CalculateETAUseCase,
     GetArrivalsQueueUseCase,
     GetSchoolArrivalsUseCase,
+    NotifySchoolUseCase,
     {
       provide: 'IOSRMServiceAdapter',
       useClass: OSRMServiceAdapter,

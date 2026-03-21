@@ -8,10 +8,8 @@ import {
   CalculateETAInput,
   CalculateETAOutput,
 } from '../../domain/use-cases/calculate-eta.use-case';
-import {
-  GetSchoolArrivalsUseCase,
-  GetSchoolArrivalsInput,
-} from '../../domain/use-cases/get-school-arrivals.use-case';
+import { GetSchoolArrivalsUseCase } from '../../domain/use-cases/get-school-arrivals.use-case';
+import { NotifySchoolUseCase } from '../../domain/use-cases/notify-school.use-case';
 import { ILocationRepository } from '../../domain/repositories/location.repository.interface';
 import { IETARepository } from '../../domain/repositories/eta.repository.interface';
 import { IParentRepository } from '../../domain/repositories/parent.repository.interface';
@@ -32,6 +30,7 @@ export class LocationsService {
     private readonly saveLocationUseCase: SaveLocationUseCase,
     private readonly calculateETAUseCase: CalculateETAUseCase,
     private readonly getSchoolArrivalsUseCase: GetSchoolArrivalsUseCase,
+    private readonly notifySchoolUseCase: NotifySchoolUseCase,
     @Inject(LOCATION_REPOSITORY)
     private readonly locationRepository: ILocationRepository,
     @Inject(ETA_REPOSITORY)
@@ -113,37 +112,25 @@ export class LocationsService {
     schoolId: string,
   ): Promise<void> {
     try {
-      // Get parent info to verify schoolId
-      const parent = await this.parentRepository.findById(parentId);
-      if (!parent) {
-        this.logger.warn(`Parent ${parentId} not found for WebSocket emit`);
+      // Get latest ETA for the parent
+      const eta = await this.etaRepository.findLatestByParentId(parentId);
+      if (!eta) {
+        this.logger.warn(`No ETA found for parent ${parentId}`);
         return;
       }
 
-      // Get school info
-      const school = await this.schoolRepository.findById(schoolId);
-      if (!school) {
-        this.logger.warn(`School ${schoolId} not found for WebSocket emit`);
-        return;
-      }
-
-      // Get current arrivals queue
-      const arrivalsInput: GetSchoolArrivalsInput = { schoolId };
-      const arrivalsOutput =
-        await this.getSchoolArrivalsUseCase.execute(arrivalsInput);
-
-      // Emit to WebSocket room
-      this.arrivalsGateway.emitArrivalsUpdated(
+      // Use NotifySchoolUseCase to encapsulate the notification business logic
+      await this.notifySchoolUseCase.execute({
         schoolId,
-        arrivalsOutput.arrivals,
-        school.name,
-      );
+        parentId,
+        eta,
+      });
 
       this.logger.debug(
-        `Emitted arrivals update for school ${schoolId} (${arrivalsOutput.arrivals.length} arrivals)`,
+        `Notified school ${schoolId} about location update from parent ${parentId}`,
       );
     } catch (error) {
-      this.logger.error(`Failed to emit arrivals update: ${error.message}`);
+      this.logger.error(`Failed to notify school: ${error.message}`);
       // Don't throw - this is a side effect and shouldn't break the location save
     }
   }
