@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { AuthModule } from './presentation/auth/auth.module';
@@ -18,6 +19,10 @@ import { validationSchema } from './infrastructure/config/validation.schema';
         allowUnknown: true,
         abortEarly: true,
       },
+    }),
+    // Global rate limiting: 100 requests per 60 seconds
+    ThrottlerModule.forRoot({
+      throttlers: [{ limit: 100, ttl: 60000 }],
     }),
     DatabaseModule,
     AuthModule,

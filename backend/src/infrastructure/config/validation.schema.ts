@@ -17,4 +17,10 @@ export const validationSchema = Joi.object({
     'any.required': 'OSRM_BASE_URL is required (e.g., http://osrm:5000)',
     'string.uri': 'OSRM_BASE_URL must be a valid URI',
   }),
+  ALLOWED_ORIGINS: Joi.string()
+    .default('http://localhost:3000,http://localhost:5000')
+    .messages({
+      'string.base':
+        'ALLOWED_ORIGINS must be comma-separated list of origins (e.g., http://localhost:3000,https://example.com)',
+    }),
 });
