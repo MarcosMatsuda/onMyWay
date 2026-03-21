@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LocationsService } from './locations.service';
 import { SaveLocationUseCase } from '../../domain/use-cases/save-location.use-case';
 import { CalculateETAUseCase } from '../../domain/use-cases/calculate-eta.use-case';
+import { GetSchoolArrivalsUseCase } from '../../domain/use-cases/get-school-arrivals.use-case';
 import {
   ILocationRepository,
   LOCATION_REPOSITORY,
@@ -10,16 +11,29 @@ import {
   IETARepository,
   ETA_REPOSITORY,
 } from '../../domain/repositories/eta.repository.interface';
+import {
+  IParentRepository,
+  PARENT_REPOSITORY,
+} from '../../domain/repositories/parent.repository.interface';
+import {
+  ISchoolRepository,
+  SCHOOL_REPOSITORY,
+} from '../../domain/repositories/school.repository.interface';
 import { CreateLocationDto } from './dtos/create-location.dto';
 import { Location } from '../../domain/entities/location.entity';
 import { ETA } from '../../domain/entities/eta.entity';
+import { ArrivalsGateway } from '../../infrastructure/websocket/arrivals.gateway';
 
 describe('LocationsService', () => {
   let service: LocationsService;
   let saveLocationUseCaseMock: jest.Mocked<SaveLocationUseCase>;
   let calculateETAUseCaseMock: jest.Mocked<CalculateETAUseCase>;
+  let getSchoolArrivalsUseCaseMock: jest.Mocked<GetSchoolArrivalsUseCase>;
   let locationRepositoryMock: jest.Mocked<ILocationRepository>;
   let etaRepositoryMock: jest.Mocked<IETARepository>;
+  let parentRepositoryMock: jest.Mocked<IParentRepository>;
+  let schoolRepositoryMock: jest.Mocked<ISchoolRepository>;
+  let arrivalsGatewayMock: jest.Mocked<ArrivalsGateway>;
 
   const mockLocation: Location = {
     id: 'location-123',
@@ -66,6 +80,10 @@ describe('LocationsService', () => {
       execute: jest.fn(),
     } as any;
 
+    getSchoolArrivalsUseCaseMock = {
+      execute: jest.fn(),
+    } as any;
+
     locationRepositoryMock = {
       save: jest.fn(),
       findById: jest.fn(),
@@ -80,6 +98,27 @@ describe('LocationsService', () => {
       findBySchoolId: jest.fn(),
     } as any;
 
+    parentRepositoryMock = {
+      findById: jest.fn(),
+      create: jest.fn(),
+      findAll: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    } as any;
+
+    schoolRepositoryMock = {
+      findById: jest.fn(),
+      create: jest.fn(),
+      findAll: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      findParentsWithinGeofence: jest.fn(),
+    } as any;
+
+    arrivalsGatewayMock = {
+      emitArrivalsUpdated: jest.fn(),
+    } as any;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LocationsService,
@@ -92,12 +131,28 @@ describe('LocationsService', () => {
           useValue: calculateETAUseCaseMock,
         },
         {
+          provide: GetSchoolArrivalsUseCase,
+          useValue: getSchoolArrivalsUseCaseMock,
+        },
+        {
           provide: LOCATION_REPOSITORY,
           useValue: locationRepositoryMock,
         },
         {
           provide: ETA_REPOSITORY,
           useValue: etaRepositoryMock,
+        },
+        {
+          provide: PARENT_REPOSITORY,
+          useValue: parentRepositoryMock,
+        },
+        {
+          provide: SCHOOL_REPOSITORY,
+          useValue: schoolRepositoryMock,
+        },
+        {
+          provide: ArrivalsGateway,
+          useValue: arrivalsGatewayMock,
         },
       ],
     }).compile();

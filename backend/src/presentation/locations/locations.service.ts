@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import {
   SaveLocationUseCase,
   SaveLocationInput,
@@ -8,22 +8,39 @@ import {
   CalculateETAInput,
   CalculateETAOutput,
 } from '../../domain/use-cases/calculate-eta.use-case';
+import {
+  GetSchoolArrivalsUseCase,
+  GetSchoolArrivalsInput,
+} from '../../domain/use-cases/get-school-arrivals.use-case';
 import { ILocationRepository } from '../../domain/repositories/location.repository.interface';
 import { IETARepository } from '../../domain/repositories/eta.repository.interface';
+import { IParentRepository } from '../../domain/repositories/parent.repository.interface';
+import { ISchoolRepository } from '../../domain/repositories/school.repository.interface';
 import { CreateLocationDto } from './dtos/create-location.dto';
 import { LocationResponseDto } from './dtos/location-response.dto';
 import { LOCATION_REPOSITORY } from '../../domain/repositories/location.repository.interface';
 import { ETA_REPOSITORY } from '../../domain/repositories/eta.repository.interface';
+import { PARENT_REPOSITORY } from '../../domain/repositories/parent.repository.interface';
+import { SCHOOL_REPOSITORY } from '../../domain/repositories/school.repository.interface';
+import { ArrivalsGateway } from '../../infrastructure/websocket/arrivals.gateway';
 
 @Injectable()
 export class LocationsService {
+  private readonly logger = new Logger(LocationsService.name);
+
   constructor(
     private readonly saveLocationUseCase: SaveLocationUseCase,
     private readonly calculateETAUseCase: CalculateETAUseCase,
+    private readonly getSchoolArrivalsUseCase: GetSchoolArrivalsUseCase,
     @Inject(LOCATION_REPOSITORY)
     private readonly locationRepository: ILocationRepository,
     @Inject(ETA_REPOSITORY)
     private readonly etaRepository: IETARepository,
+    @Inject(PARENT_REPOSITORY)
+    private readonly parentRepository: IParentRepository,
+    @Inject(SCHOOL_REPOSITORY)
+    private readonly schoolRepository: ISchoolRepository,
+    private readonly arrivalsGateway: ArrivalsGateway,
   ) {}
 
   async saveLocation(
@@ -50,7 +67,7 @@ export class LocationsService {
         await this.calculateETAUseCase.execute(calculateETAInput);
     } catch (error) {
       // ETA calculation might fail if school not found or OSRM service unavailable
-      console.warn('ETA calculation failed:', error.message);
+      this.logger.warn('ETA calculation failed:', error.message);
     }
 
     // Build response
@@ -72,9 +89,52 @@ export class LocationsService {
         routePolyline: calculateETAOutput.eta.routePolyline,
         calculatedAt: calculateETAOutput.eta.calculatedAt,
       };
+
+      // Emit WebSocket event if ETA calculation succeeded
+      await this.emitArrivalsUpdate(parentId, calculateETAOutput.eta.schoolId);
     }
 
     return response;
+  }
+
+  private async emitArrivalsUpdate(
+    parentId: string,
+    schoolId: string,
+  ): Promise<void> {
+    try {
+      // Get parent info to verify schoolId
+      const parent = await this.parentRepository.findById(parentId);
+      if (!parent) {
+        this.logger.warn(`Parent ${parentId} not found for WebSocket emit`);
+        return;
+      }
+
+      // Get school info
+      const school = await this.schoolRepository.findById(schoolId);
+      if (!school) {
+        this.logger.warn(`School ${schoolId} not found for WebSocket emit`);
+        return;
+      }
+
+      // Get current arrivals queue
+      const arrivalsInput: GetSchoolArrivalsInput = { schoolId };
+      const arrivalsOutput =
+        await this.getSchoolArrivalsUseCase.execute(arrivalsInput);
+
+      // Emit to WebSocket room
+      this.arrivalsGateway.emitArrivalsUpdated(
+        schoolId,
+        arrivalsOutput.arrivals,
+        school.name,
+      );
+
+      this.logger.debug(
+        `Emitted arrivals update for school ${schoolId} (${arrivalsOutput.arrivals.length} arrivals)`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to emit arrivals update: ${error.message}`);
+      // Don't throw - this is a side effect and shouldn't break the location save
+    }
   }
 
   async getMyLatestLocation(
