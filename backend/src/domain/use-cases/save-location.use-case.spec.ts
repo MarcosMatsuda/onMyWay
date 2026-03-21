@@ -48,6 +48,7 @@ describe('SaveLocationUseCase', () => {
       findLatestByParentId: jest.fn(),
       findByParentId: jest.fn(),
       findParentsNearSchool: jest.fn(),
+      findLatestBulkByParentIds: jest.fn(),
     } as jest.Mocked<ILocationRepository>;
 
     schoolRepositoryMock = {
@@ -63,6 +64,7 @@ describe('SaveLocationUseCase', () => {
       findById: jest.fn(),
       findByEmail: jest.fn(),
       findBySchoolId: jest.fn(),
+      findByIds: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),

@@ -66,4 +66,33 @@ export class LocationRepository implements ILocationRepository {
     const result = await this.dataSource.query(query, [schoolId]);
     return result.map((row: any) => row.parent_id);
   }
+
+  async findLatestBulkByParentIds(
+    parentIds: string[],
+  ): Promise<Map<string, Location>> {
+    if (parentIds.length === 0) {
+      return new Map();
+    }
+
+    // Get latest location per parent ID
+    const models = await this.repository
+      .createQueryBuilder('location')
+      .where('location.parentId IN (:...parentIds)', { parentIds })
+      .orderBy('location.parentId', 'ASC')
+      .addOrderBy('location.timestamp', 'DESC')
+      .getMany();
+
+    // Group by parentId, keeping only the latest (first) per parent
+    const resultMap = new Map<string, Location>();
+    const seenParentIds = new Set<string>();
+
+    for (const model of models) {
+      if (!seenParentIds.has(model.parentId)) {
+        resultMap.set(model.parentId, LocationMapper.toDomain(model));
+        seenParentIds.add(model.parentId);
+      }
+    }
+
+    return resultMap;
+  }
 }

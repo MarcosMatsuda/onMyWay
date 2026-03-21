@@ -35,37 +35,55 @@ export class GetSchoolArrivalsUseCase {
   async execute(
     input: GetSchoolArrivalsInput,
   ): Promise<GetSchoolArrivalsOutput> {
-    // Validate school exists
+    // Query 1: Validate school exists
     const school = await this.schoolRepository.findById(input.schoolId);
     if (!school) {
       throw new Error(`School with id ${input.schoolId} not found`);
     }
 
-    // Get parents within geofence
+    // Query 2: Get parents within geofence
     const parentIdsWithinGeofence =
       await this.schoolRepository.findParentsWithinGeofence(input.schoolId);
 
-    // Get ETAs for these parents
+    if (parentIdsWithinGeofence.length === 0) {
+      return {
+        arrivals: [],
+        schoolName: school.name,
+        totalCount: 0,
+      };
+    }
+
+    // Query 3: Get bulk ETAs for all parents (single query instead of N)
+    const etas = await this.etaRepository.findLatestBulkByParentIds(
+      parentIdsWithinGeofence,
+    );
+
+    // Query 4: Get bulk locations for all parents (single query instead of N)
+    const locations = await this.locationRepository.findLatestBulkByParentIds(
+      parentIdsWithinGeofence,
+    );
+
+    // Query 5: Get bulk parent data for all parents (single query instead of N)
+    const parents = await this.parentRepository.findByIds(
+      parentIdsWithinGeofence,
+    );
+
+    // Build arrivals array from bulk query results
     const arrivals: ArrivalInfo[] = [];
 
     for (const parentId of parentIdsWithinGeofence) {
-      // Get latest ETA for this parent
-      const eta = await this.etaRepository.findLatestByParentId(parentId);
-      if (!eta || eta.schoolId !== input.schoolId) {
-        continue; // Skip if no ETA or wrong school
+      const eta = etas.get(parentId);
+      const location = locations.get(parentId);
+      const parent = parents.get(parentId);
+
+      // Skip if any required data is missing
+      if (!eta || !location || !parent) {
+        continue;
       }
 
-      // Get parent information
-      const parent = await this.parentRepository.findById(parentId);
-      if (!parent) {
-        continue; // Skip if parent not found
-      }
-
-      // Get latest location for parent
-      const location =
-        await this.locationRepository.findLatestByParentId(parentId);
-      if (!location) {
-        continue; // Skip if no location
+      // Skip if ETA is for a different school
+      if (eta.schoolId !== input.schoolId) {
+        continue;
       }
 
       arrivals.push({
