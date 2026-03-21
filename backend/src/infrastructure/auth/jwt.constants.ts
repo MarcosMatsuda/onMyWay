@@ -1,5 +1,5 @@
 // Parse JWT expiration time from env (e.g., '7d' -> 604800 seconds)
-function parseJwtExpiresIn(expiresIn: string | undefined): number {
+export function parseJwtExpiresIn(expiresIn: string | undefined): number {
   if (!expiresIn) return 60 * 60 * 24 * 7; // 7 days in seconds
 
   // Try to parse as number first
@@ -27,7 +27,5 @@ function parseJwtExpiresIn(expiresIn: string | undefined): number {
   }
 }
 
-export const JWT_CONSTANTS = {
-  secret: process.env.JWT_SECRET || 'change-this-to-a-secure-random-string',
-  expiresIn: parseJwtExpiresIn(process.env.JWT_EXPIRES_IN),
-};
+// JWT_CONSTANTS now computed from ConfigService in auth.module.ts
+// See: presentation/auth/auth.module.ts
