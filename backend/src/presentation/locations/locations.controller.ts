@@ -6,12 +6,10 @@ import {
   Param,
   Query,
   UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
-import {
-  SaveLocationUseCase,
-  SaveLocationInput,
-  SaveLocationOutput,
-} from '../../domain/use-cases/save-location.use-case';
 import {
   CalculateETAUseCase,
   CalculateETAInput,
@@ -23,24 +21,41 @@ import {
   GetArrivalsQueueOutput,
 } from '../../domain/use-cases/get-arrivals-queue.use-case';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
+import { JwtPayload } from '../../infrastructure/auth/jwt-payload.interface';
+import { CreateLocationDto } from './dtos/create-location.dto';
+import { LocationResponseDto } from './dtos/location-response.dto';
+import { LocationsService } from './locations.service';
 
 @Controller('locations')
-@UseGuards(JwtAuthGuard)
 export class LocationsController {
   constructor(
-    private readonly saveLocationUseCase: SaveLocationUseCase,
+    private readonly locationsService: LocationsService,
     private readonly calculateETAUseCase: CalculateETAUseCase,
     private readonly getArrivalsQueueUseCase: GetArrivalsQueueUseCase,
   ) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
   async saveLocation(
-    @Body() input: SaveLocationInput,
-  ): Promise<SaveLocationOutput> {
-    return this.saveLocationUseCase.execute(input);
+    @Request() req: { user: JwtPayload },
+    @Body() createLocationDto: CreateLocationDto,
+  ): Promise<LocationResponseDto> {
+    const parentId = req.user.sub;
+    return this.locationsService.saveLocation(parentId, createLocationDto);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getMyLatestLocation(
+    @Request() req: { user: JwtPayload },
+  ): Promise<LocationResponseDto | null> {
+    const parentId = req.user.sub;
+    return this.locationsService.getMyLatestLocation(parentId);
   }
 
   @Post(':parentId/calculate-eta')
+  @UseGuards(JwtAuthGuard)
   async calculateETA(
     @Param('parentId') parentId: string,
   ): Promise<CalculateETAOutput> {
@@ -49,6 +64,7 @@ export class LocationsController {
   }
 
   @Get('schools/:schoolId/arrivals-queue')
+  @UseGuards(JwtAuthGuard)
   async getArrivalsQueue(
     @Param('schoolId') schoolId: string,
     @Query('limit') limit?: number,

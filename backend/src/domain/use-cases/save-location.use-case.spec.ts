@@ -44,7 +44,9 @@ describe('SaveLocationUseCase', () => {
     // Create mocks
     locationRepositoryMock = {
       save: jest.fn(),
+      findById: jest.fn(),
       findLatestByParentId: jest.fn(),
+      findByParentId: jest.fn(),
       findParentsNearSchool: jest.fn(),
     } as jest.Mocked<ILocationRepository>;
 
