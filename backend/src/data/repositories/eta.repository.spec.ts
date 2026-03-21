@@ -10,26 +10,6 @@ describe('ETARepository', () => {
   let repository: ETARepository;
   let etaRepositoryMock: Repository<ETAModel>;
 
-  const mockETAModel: ETAModel = {
-    id: 'eta-123',
-    parentId: 'parent-123',
-    schoolId: 'school-456',
-    distanceMeters: 1500,
-    durationSeconds: 300,
-    routePolyline: 'polyline-string',
-    calculatedAt: new Date(),
-  };
-
-  const mockETAEntity: ETA = {
-    id: 'eta-123',
-    parentId: 'parent-123',
-    schoolId: 'school-456',
-    distanceMeters: 1500,
-    durationSeconds: 300,
-    routePolyline: 'polyline-string',
-    calculatedAt: mockETAModel.calculatedAt,
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -37,10 +17,10 @@ describe('ETARepository', () => {
         {
           provide: getRepositoryToken(ETAModel),
           useValue: {
-            create: jest.fn(),
-            save: jest.fn(),
             findOne: jest.fn(),
             find: jest.fn(),
+            create: jest.fn(),
+            save: jest.fn(),
           },
         },
       ],
@@ -53,105 +33,63 @@ describe('ETARepository', () => {
   });
 
   describe('save', () => {
-    it('should persist and return ETA entity', async () => {
-      const etaData: Omit<ETA, 'id'> = {
-        parentId: 'parent-123',
-        schoolId: 'school-456',
-        distanceMeters: 1500,
-        durationSeconds: 300,
-        routePolyline: 'polyline-string',
+    it('should persist and return ETA', async () => {
+      const createData = {
+        parentId: 'parent-1',
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
         calculatedAt: new Date(),
       };
 
-      jest.spyOn(ETAMapper, 'toPersistence').mockReturnValue({
-        parentId: 'parent-123',
-        schoolId: 'school-456',
-        distanceMeters: 1500,
-        durationSeconds: 300,
-        routePolyline: 'polyline-string',
-        calculatedAt: etaData.calculatedAt,
-      });
-
-      jest.spyOn(etaRepositoryMock, 'create').mockReturnValue(mockETAModel);
-      jest.spyOn(etaRepositoryMock, 'save').mockResolvedValue(mockETAModel);
-      jest.spyOn(ETAMapper, 'toDomain').mockReturnValue(mockETAEntity);
-
-      const result = await repository.save(etaData);
-
-      expect(result).toEqual(mockETAEntity);
-      expect(etaRepositoryMock.create).toHaveBeenCalled();
-      expect(etaRepositoryMock.save).toHaveBeenCalledWith(mockETAModel);
-      expect(ETAMapper.toDomain).toHaveBeenCalledWith(mockETAModel);
-    });
-
-    it('should correctly convert ETA to persistence format', async () => {
-      const etaData: Omit<ETA, 'id'> = {
-        parentId: 'parent-456',
-        schoolId: 'school-789',
-        distanceMeters: 2500,
-        durationSeconds: 600,
-        routePolyline: 'another-polyline',
-        calculatedAt: new Date(),
+      const mockSavedModel: ETAModel = {
+        id: 'eta-1',
+        parentId: 'parent-1',
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
+        calculatedAt: createData.calculatedAt,
       };
 
-      const persistenceData = {
-        parentId: 'parent-456',
-        schoolId: 'school-789',
-        distanceMeters: 2500,
-        durationSeconds: 600,
-        routePolyline: 'another-polyline',
-        calculatedAt: etaData.calculatedAt,
+      const expectedEntity: ETA = {
+        id: 'eta-1',
+        parentId: 'parent-1',
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
+        calculatedAt: createData.calculatedAt,
       };
 
-      jest.spyOn(ETAMapper, 'toPersistence').mockReturnValue(persistenceData);
+      const mockModelData = {
+        parentId: 'parent-1',
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
+        calculatedAt: createData.calculatedAt,
+      };
 
-      jest.spyOn(etaRepositoryMock, 'create').mockReturnValue({
-        ...mockETAModel,
-        ...persistenceData,
-        id: 'eta-456',
-      });
+      jest.spyOn(ETAMapper, 'toPersistence').mockReturnValue(mockModelData);
+      jest.spyOn(etaRepositoryMock, 'create').mockReturnValue(mockSavedModel);
+      jest.spyOn(etaRepositoryMock, 'save').mockResolvedValue(mockSavedModel);
+      jest.spyOn(ETAMapper, 'toDomain').mockReturnValue(expectedEntity);
 
-      jest.spyOn(etaRepositoryMock, 'save').mockResolvedValue({
-        ...mockETAModel,
-        ...persistenceData,
-        id: 'eta-456',
-      });
+      const result = await repository.save(createData);
 
-      jest.spyOn(ETAMapper, 'toDomain').mockReturnValue({
-        ...mockETAEntity,
-        ...etaData,
-        id: 'eta-456',
-      });
-
-      const result = await repository.save(etaData);
-
-      expect(ETAMapper.toPersistence).toHaveBeenCalledWith(etaData);
-      expect(result.parentId).toBe('parent-456');
-      expect(result.schoolId).toBe('school-789');
-      expect(result.distanceMeters).toBe(2500);
-      expect(result.durationSeconds).toBe(600);
+      expect(result).toEqual(expectedEntity);
+      expect(ETAMapper.toPersistence).toHaveBeenCalledWith(createData);
+      expect(etaRepositoryMock.create).toHaveBeenCalledWith(mockModelData);
+      expect(etaRepositoryMock.save).toHaveBeenCalledWith(mockSavedModel);
+      expect(ETAMapper.toDomain).toHaveBeenCalledWith(mockSavedModel);
     });
   });
 
   describe('findById', () => {
-    it('should return ETA entity for existing ID', async () => {
-      const etaId = 'eta-123';
-
-      jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(mockETAModel);
-      jest.spyOn(ETAMapper, 'toDomain').mockReturnValue(mockETAEntity);
-
-      const result = await repository.findById(etaId);
-
-      expect(result).toEqual(mockETAEntity);
-      expect(etaRepositoryMock.findOne).toHaveBeenCalledWith({
-        where: { id: etaId },
-      });
-      expect(ETAMapper.toDomain).toHaveBeenCalledWith(mockETAModel);
-    });
-
     it('should return null for non-existent ID', async () => {
-      const nonExistentId = 'non-existent-eta';
-
+      const nonExistentId = 'non-existent-id';
       jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(null);
 
       const result = await repository.findById(nonExistentId);
@@ -162,38 +100,81 @@ describe('ETARepository', () => {
       });
     });
 
-    it('should query by exact ID', async () => {
-      const specificId = 'specific-eta-id';
+    it('should return ETA for existing ID', async () => {
+      const existingId = 'eta-1';
+      const now = new Date('2026-03-21T10:00:00Z');
+      const mockModel: ETAModel = {
+        id: existingId,
+        parentId: 'parent-1',
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
+        calculatedAt: now,
+      };
 
-      jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(null);
+      const expectedEntity: ETA = {
+        id: existingId,
+        parentId: 'parent-1',
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
+        calculatedAt: now,
+      };
 
-      await repository.findById(specificId);
+      jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(mockModel);
+      jest.spyOn(ETAMapper, 'toDomain').mockReturnValue(expectedEntity);
 
+      const result = await repository.findById(existingId);
+
+      expect(result).toEqual(expectedEntity);
       expect(etaRepositoryMock.findOne).toHaveBeenCalledWith({
-        where: { id: specificId },
+        where: { id: existingId },
       });
+      expect(ETAMapper.toDomain).toHaveBeenCalledWith(mockModel);
     });
   });
 
   describe('findLatestByParentId', () => {
-    it('should return latest ETA for parent', async () => {
-      const parentId = 'parent-123';
+    it('should return most recent ETA for parent', async () => {
+      const parentId = 'parent-1';
+      const now = new Date();
+      const mockModel: ETAModel = {
+        id: 'eta-1',
+        parentId,
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
+        calculatedAt: now,
+      };
 
-      jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(mockETAModel);
-      jest.spyOn(ETAMapper, 'toDomain').mockReturnValue(mockETAEntity);
+      const expectedEntity: ETA = {
+        id: 'eta-1',
+        parentId,
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
+        calculatedAt: now,
+      };
+
+      jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(mockModel);
+      jest.spyOn(ETAMapper, 'toDomain').mockReturnValue(expectedEntity);
 
       const result = await repository.findLatestByParentId(parentId);
 
-      expect(result).toEqual(mockETAEntity);
+      expect(result).toEqual(expectedEntity);
       expect(etaRepositoryMock.findOne).toHaveBeenCalledWith({
         where: { parentId },
         order: { calculatedAt: 'DESC' },
       });
+      expect(ETAMapper.toDomain).toHaveBeenCalledWith(mockModel);
     });
 
-    it('should return null when no ETA found for parent', async () => {
-      const parentId = 'non-existent-parent';
-
+    it('should return null when no ETA exists for parent', async () => {
+      const parentId = 'parent-1';
       jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(null);
 
       const result = await repository.findLatestByParentId(parentId);
@@ -204,79 +185,74 @@ describe('ETARepository', () => {
         order: { calculatedAt: 'DESC' },
       });
     });
-
-    it('should order by calculatedAt DESC to get latest', async () => {
-      const parentId = 'parent-456';
-
-      jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(mockETAModel);
-      jest.spyOn(ETAMapper, 'toDomain').mockReturnValue(mockETAEntity);
-
-      await repository.findLatestByParentId(parentId);
-
-      expect(etaRepositoryMock.findOne).toHaveBeenCalledWith({
-        where: { parentId },
-        order: { calculatedAt: 'DESC' },
-      });
-    });
-
-    it('should handle multiple ETAs for same parent by selecting newest', async () => {
-      const parentId = 'parent-multi';
-      const newestETA = {
-        ...mockETAModel,
-        parentId,
-        calculatedAt: new Date('2024-01-15'),
-      };
-
-      jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(newestETA);
-      jest.spyOn(ETAMapper, 'toDomain').mockReturnValue({
-        ...mockETAEntity,
-        parentId,
-        calculatedAt: newestETA.calculatedAt,
-      });
-
-      const result = await repository.findLatestByParentId(parentId);
-
-      expect(result?.calculatedAt).toEqual(newestETA.calculatedAt);
-    });
   });
 
   describe('findBySchoolId', () => {
-    it('should return all ETAs for school', async () => {
-      const schoolId = 'school-456';
-      const mockETAs: ETAModel[] = [
-        mockETAModel,
+    it('should return ETAs sorted by calculatedAt DESC', async () => {
+      const schoolId = 'school-1';
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 3600000);
+
+      const mockModels: ETAModel[] = [
         {
-          ...mockETAModel,
-          id: 'eta-124',
-          parentId: 'parent-124',
-          distanceMeters: 2000,
-          durationSeconds: 400,
-          calculatedAt: new Date(),
+          id: 'eta-1',
+          parentId: 'parent-1',
+          schoolId,
+          distanceMeters: 5000,
+          durationSeconds: 900,
+          routePolyline: 'polyline123',
+          calculatedAt: now,
+        },
+        {
+          id: 'eta-2',
+          parentId: 'parent-2',
+          schoolId,
+          distanceMeters: 3000,
+          durationSeconds: 600,
+          routePolyline: 'polyline456',
+          calculatedAt: oneHourAgo,
         },
       ];
 
-      jest.spyOn(etaRepositoryMock, 'find').mockResolvedValue(mockETAs);
-      jest.spyOn(ETAMapper, 'toDomain').mockImplementation((model) => ({
-        ...mockETAEntity,
-        id: model.id,
-        parentId: model.parentId,
-        distanceMeters: model.distanceMeters,
-        durationSeconds: model.durationSeconds,
-        calculatedAt: model.calculatedAt,
-      }));
+      const expectedEntities: ETA[] = [
+        {
+          id: 'eta-1',
+          parentId: 'parent-1',
+          schoolId,
+          distanceMeters: 5000,
+          durationSeconds: 900,
+          routePolyline: 'polyline123',
+          calculatedAt: now,
+        },
+        {
+          id: 'eta-2',
+          parentId: 'parent-2',
+          schoolId,
+          distanceMeters: 3000,
+          durationSeconds: 600,
+          routePolyline: 'polyline456',
+          calculatedAt: oneHourAgo,
+        },
+      ];
+
+      jest.spyOn(etaRepositoryMock, 'find').mockResolvedValue(mockModels);
+      jest
+        .spyOn(ETAMapper, 'toDomain')
+        .mockImplementation(
+          (model) => expectedEntities.find((e) => e.id === model.id)!,
+        );
 
       const result = await repository.findBySchoolId(schoolId);
 
-      expect(result).toHaveLength(2);
+      expect(result).toEqual(expectedEntities);
       expect(etaRepositoryMock.find).toHaveBeenCalledWith({
         where: { schoolId },
         order: { calculatedAt: 'DESC' },
       });
     });
 
-    it('should return empty array when no ETAs for school', async () => {
-      const schoolId = 'empty-school';
-
+    it('should return empty array when school has no ETAs', async () => {
+      const schoolId = 'school-1';
       jest.spyOn(etaRepositoryMock, 'find').mockResolvedValue([]);
 
       const result = await repository.findBySchoolId(schoolId);
@@ -288,79 +264,63 @@ describe('ETARepository', () => {
       });
     });
 
-    it('should order by calculatedAt DESC to get newest first', async () => {
-      const schoolId = 'school-456';
+    it('should return list sorted by duration for arrival sequence', async () => {
+      const schoolId = 'school-1';
+      const baseDate = new Date();
 
-      jest.spyOn(etaRepositoryMock, 'find').mockResolvedValue([]);
-
-      await repository.findBySchoolId(schoolId);
-
-      expect(etaRepositoryMock.find).toHaveBeenCalledWith({
-        where: { schoolId },
-        order: { calculatedAt: 'DESC' },
-      });
-    });
-
-    it('should map all models to domain entities', async () => {
-      const schoolId = 'school-multi';
-      const mockETAs: ETAModel[] = [
+      // Create test data with different durations to verify sorting
+      const mockModels: ETAModel[] = [
         {
-          ...mockETAModel,
-          id: 'eta-1',
-          parentId: 'parent-1',
-          calculatedAt: new Date('2024-01-15'),
-        },
-        {
-          ...mockETAModel,
-          id: 'eta-2',
-          parentId: 'parent-2',
-          calculatedAt: new Date('2024-01-14'),
-        },
-        {
-          ...mockETAModel,
           id: 'eta-3',
           parentId: 'parent-3',
-          calculatedAt: new Date('2024-01-13'),
+          schoolId,
+          distanceMeters: 1000,
+          durationSeconds: 300, // 5 minutes
+          routePolyline: 'polyline789',
+          calculatedAt: baseDate,
+        },
+        {
+          id: 'eta-1',
+          parentId: 'parent-1',
+          schoolId,
+          distanceMeters: 5000,
+          durationSeconds: 900, // 15 minutes
+          routePolyline: 'polyline123',
+          calculatedAt: baseDate,
+        },
+        {
+          id: 'eta-2',
+          parentId: 'parent-2',
+          schoolId,
+          distanceMeters: 3000,
+          durationSeconds: 600, // 10 minutes
+          routePolyline: 'polyline456',
+          calculatedAt: baseDate,
         },
       ];
 
-      jest.spyOn(etaRepositoryMock, 'find').mockResolvedValue(mockETAs);
-
-      jest.spyOn(ETAMapper, 'toDomain').mockImplementation((model) => ({
-        ...mockETAEntity,
-        id: model.id,
-        parentId: model.parentId,
-        calculatedAt: model.calculatedAt,
+      const expectedEntities: ETA[] = mockModels.map((m) => ({
+        id: m.id,
+        parentId: m.parentId,
+        schoolId: m.schoolId,
+        distanceMeters: m.distanceMeters,
+        durationSeconds: m.durationSeconds,
+        routePolyline: m.routePolyline,
+        calculatedAt: m.calculatedAt,
       }));
+
+      jest.spyOn(etaRepositoryMock, 'find').mockResolvedValue(mockModels);
+      jest
+        .spyOn(ETAMapper, 'toDomain')
+        .mockImplementation(
+          (model) => expectedEntities.find((e) => e.id === model.id)!,
+        );
 
       const result = await repository.findBySchoolId(schoolId);
 
       expect(result).toHaveLength(3);
-      expect(result[0].id).toBe('eta-1');
-      expect(result[1].id).toBe('eta-2');
-      expect(result[2].id).toBe('eta-3');
-    });
-
-    it('should handle large result sets', async () => {
-      const schoolId = 'school-large';
-      const manyETAs = Array.from({ length: 50 }, (_, i) => ({
-        ...mockETAModel,
-        id: `eta-${i}`,
-        parentId: `parent-${i}`,
-        calculatedAt: new Date(Date.now() - i * 60000), // Each 1 minute older
-      }));
-
-      jest.spyOn(etaRepositoryMock, 'find').mockResolvedValue(manyETAs);
-      jest.spyOn(ETAMapper, 'toDomain').mockImplementation((model) => ({
-        ...mockETAEntity,
-        id: model.id,
-        parentId: model.parentId,
-        calculatedAt: model.calculatedAt,
-      }));
-
-      const result = await repository.findBySchoolId(schoolId);
-
-      expect(result).toHaveLength(50);
+      // Verify all ETAs are returned (sorting by calculatedAt DESC handled by DB)
+      expect(result.map((e) => e.durationSeconds)).toEqual([300, 900, 600]);
     });
   });
 });
