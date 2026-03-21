@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { AuthModule } from './presentation/auth/auth.module';
@@ -6,9 +7,18 @@ import { OSRMModule } from './infrastructure/osrm/osrm.module';
 import { LocationsModule } from './presentation/locations/locations.module';
 import { SchoolsModule } from './presentation/schools/schools.module';
 import { WebSocketModule } from './infrastructure/websocket/websocket.module';
+import { validationSchema } from './infrastructure/config/validation.schema';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema,
+      validationOptions: {
+        allowUnknown: true,
+        abortEarly: true,
+      },
+    }),
     DatabaseModule,
     AuthModule,
     OSRMModule,
