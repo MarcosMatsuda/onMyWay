@@ -82,6 +82,7 @@ describe('CalculateETAUseCase', () => {
       findAll: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      findParentsWithinGeofence: jest.fn(),
     } as jest.Mocked<ISchoolRepository>;
 
     parentRepositoryMock = {
