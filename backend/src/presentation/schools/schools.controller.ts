@@ -23,21 +23,73 @@ import {
   UpdateSchoolConfigUseCase,
   UpdateSchoolConfigInput,
 } from '../../domain/use-cases/update-school-config.use-case';
+import {
+  CreateSchoolUseCase,
+  CreateSchoolInput,
+} from '../../domain/use-cases/create-school.use-case';
+import { ListSchoolsUseCase } from '../../domain/use-cases/list-schools.use-case';
 import { ArrivalsResponseDto } from './dtos/arrival.dto';
 import { SchoolStatsDto, SchoolConfigDto } from './dtos/school-config.dto';
+import { CreateSchoolDto } from './dtos/create-school.dto';
+import {
+  SchoolResponseDto,
+  SchoolListResponseDto,
+} from './dtos/school-response.dto';
 
 @ApiTags('schools')
-@ApiBearerAuth()
 @Controller('schools')
-@UseGuards(JwtAuthGuard)
 export class SchoolsController {
   constructor(
     private readonly getSchoolArrivalsUseCase: GetSchoolArrivalsUseCase,
     private readonly getSchoolStatsUseCase: GetSchoolStatsUseCase,
     private readonly updateSchoolConfigUseCase: UpdateSchoolConfigUseCase,
+    private readonly createSchoolUseCase: CreateSchoolUseCase,
+    private readonly listSchoolsUseCase: ListSchoolsUseCase,
   ) {}
 
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.CREATED)
+  async createSchool(
+    @Body() createSchoolDto: CreateSchoolDto,
+  ): Promise<SchoolResponseDto> {
+    const input: CreateSchoolInput = {
+      name: createSchoolDto.name,
+      lat: createSchoolDto.lat,
+      lng: createSchoolDto.lng,
+      geofenceRadiusMeters: createSchoolDto.geofenceRadiusMeters,
+      notificationThresholdMeters: createSchoolDto.notificationThresholdMeters,
+    };
+
+    const result = await this.createSchoolUseCase.execute(input);
+
+    return {
+      id: result.id,
+      name: result.name,
+      lat: result.lat,
+      lng: result.lng,
+      geofenceRadiusMeters: result.geofenceRadiusMeters,
+      notificationThresholdMeters: result.notificationThresholdMeters,
+      createdAt: result.createdAt,
+    };
+  }
+
+  @Get()
+  async listSchools(): Promise<SchoolListResponseDto[]> {
+    const result = await this.listSchoolsUseCase.execute();
+
+    return result.schools.map((school) => ({
+      id: school.id,
+      name: school.name,
+      lat: school.lat,
+      lng: school.lng,
+    }));
+  }
+
   @Get(':id/arrivals')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   async getArrivals(
     @Param('id') schoolId: string,
     @Query('limit') limit?: number,
@@ -66,6 +118,8 @@ export class SchoolsController {
   }
 
   @Get(':id/stats')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   async getStats(@Param('id') schoolId: string): Promise<SchoolStatsDto> {
     const input: GetSchoolStatsInput = { schoolId };
     const result = await this.getSchoolStatsUseCase.execute(input);
@@ -80,6 +134,8 @@ export class SchoolsController {
   }
 
   @Post(':id/config')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   async updateConfig(
     @Param('id') schoolId: string,

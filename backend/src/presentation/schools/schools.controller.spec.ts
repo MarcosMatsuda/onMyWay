@@ -3,6 +3,8 @@ import { SchoolsController } from './schools.controller';
 import { GetSchoolArrivalsUseCase } from '../../domain/use-cases/get-school-arrivals.use-case';
 import { GetSchoolStatsUseCase } from '../../domain/use-cases/get-school-stats.use-case';
 import { UpdateSchoolConfigUseCase } from '../../domain/use-cases/update-school-config.use-case';
+import { CreateSchoolUseCase } from '../../domain/use-cases/create-school.use-case';
+import { ListSchoolsUseCase } from '../../domain/use-cases/list-schools.use-case';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
 
 describe('SchoolsController', () => {
@@ -10,6 +12,8 @@ describe('SchoolsController', () => {
   let getArrivalsUseCaseMock: jest.Mocked<GetSchoolArrivalsUseCase>;
   let getStatsUseCaseMock: jest.Mocked<GetSchoolStatsUseCase>;
   let updateConfigUseCaseMock: jest.Mocked<UpdateSchoolConfigUseCase>;
+  let createSchoolUseCaseMock: jest.Mocked<CreateSchoolUseCase>;
+  let listSchoolsUseCaseMock: jest.Mocked<ListSchoolsUseCase>;
 
   const mockArrivalsOutput = {
     schoolName: 'Springfield Elementary',
@@ -52,6 +56,39 @@ describe('SchoolsController', () => {
     updatedAt: new Date('2024-03-20T10:00:00Z'),
   };
 
+  const mockCreateSchoolOutput = {
+    id: 'school-789',
+    name: 'Springfield Elementary',
+    lat: -23.5505,
+    lng: -46.6333,
+    geofenceRadiusMeters: 1000,
+    notificationThresholdMeters: 500,
+    createdAt: new Date('2024-03-20T10:00:00Z'),
+  };
+
+  const mockListSchoolsOutput = {
+    schools: [
+      {
+        id: 'school-1',
+        name: 'School A',
+        lat: -23.5505,
+        lng: -46.6333,
+        geofenceRadiusMeters: 1000,
+        notificationThresholdMeters: 500,
+        createdAt: new Date('2024-03-20T10:00:00Z'),
+      },
+      {
+        id: 'school-2',
+        name: 'School B',
+        lat: -23.551,
+        lng: -46.634,
+        geofenceRadiusMeters: 1000,
+        notificationThresholdMeters: 500,
+        createdAt: new Date('2024-03-20T10:00:00Z'),
+      },
+    ],
+  };
+
   beforeEach(async () => {
     getArrivalsUseCaseMock = {
       execute: jest.fn(),
@@ -62,6 +99,14 @@ describe('SchoolsController', () => {
     } as any;
 
     updateConfigUseCaseMock = {
+      execute: jest.fn(),
+    } as any;
+
+    createSchoolUseCaseMock = {
+      execute: jest.fn(),
+    } as any;
+
+    listSchoolsUseCaseMock = {
       execute: jest.fn(),
     } as any;
 
@@ -79,6 +124,14 @@ describe('SchoolsController', () => {
         {
           provide: UpdateSchoolConfigUseCase,
           useValue: updateConfigUseCaseMock,
+        },
+        {
+          provide: CreateSchoolUseCase,
+          useValue: createSchoolUseCaseMock,
+        },
+        {
+          provide: ListSchoolsUseCase,
+          useValue: listSchoolsUseCaseMock,
         },
       ],
     })
@@ -453,6 +506,131 @@ describe('SchoolsController', () => {
       // Assert - The controller should return the result without throwing
       expect(result).toBeDefined();
       expect(updateConfigUseCaseMock.execute).toHaveBeenCalled();
+    });
+  });
+
+  describe('createSchool', () => {
+    it('should create a new school with valid input', async () => {
+      // Arrange
+      const createSchoolDto = {
+        name: 'Springfield Elementary',
+        lat: -23.5505,
+        lng: -46.6333,
+        geofenceRadiusMeters: 1000,
+        notificationThresholdMeters: 500,
+      };
+      createSchoolUseCaseMock.execute.mockResolvedValue(mockCreateSchoolOutput);
+
+      // Act
+      const result = await controller.createSchool(createSchoolDto);
+
+      // Assert
+      expect(result).toEqual({
+        id: mockCreateSchoolOutput.id,
+        name: mockCreateSchoolOutput.name,
+        lat: mockCreateSchoolOutput.lat,
+        lng: mockCreateSchoolOutput.lng,
+        geofenceRadiusMeters: mockCreateSchoolOutput.geofenceRadiusMeters,
+        notificationThresholdMeters:
+          mockCreateSchoolOutput.notificationThresholdMeters,
+        createdAt: mockCreateSchoolOutput.createdAt,
+      });
+      expect(createSchoolUseCaseMock.execute).toHaveBeenCalledWith({
+        name: createSchoolDto.name,
+        lat: createSchoolDto.lat,
+        lng: createSchoolDto.lng,
+        geofenceRadiusMeters: createSchoolDto.geofenceRadiusMeters,
+        notificationThresholdMeters:
+          createSchoolDto.notificationThresholdMeters,
+      });
+    });
+
+    it('should create school with default geofence and threshold values', async () => {
+      // Arrange
+      const createSchoolDto = {
+        name: 'Lincoln High School',
+        lat: -23.5,
+        lng: -46.6,
+      };
+      const outputWithDefaults = {
+        ...mockCreateSchoolOutput,
+        geofenceRadiusMeters: 1000,
+        notificationThresholdMeters: 500,
+      };
+      createSchoolUseCaseMock.execute.mockResolvedValue(outputWithDefaults);
+
+      // Act
+      const result = await controller.createSchool(createSchoolDto);
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(result.geofenceRadiusMeters).toBe(1000);
+      expect(result.notificationThresholdMeters).toBe(500);
+    });
+
+    it('should throw error if school creation fails', async () => {
+      // Arrange
+      const createSchoolDto = {
+        name: 'Test School',
+        lat: -23.5505,
+        lng: -46.6333,
+      };
+      const error = new Error('Database error');
+      createSchoolUseCaseMock.execute.mockRejectedValue(error);
+
+      // Act & Assert
+      await expect(controller.createSchool(createSchoolDto)).rejects.toThrow(
+        'Database error',
+      );
+    });
+  });
+
+  describe('listSchools', () => {
+    it('should return list of all schools', async () => {
+      // Arrange
+      listSchoolsUseCaseMock.execute.mockResolvedValue(mockListSchoolsOutput);
+
+      // Act
+      const result = await controller.listSchools();
+
+      // Assert
+      expect(result).toEqual([
+        {
+          id: 'school-1',
+          name: 'School A',
+          lat: -23.5505,
+          lng: -46.6333,
+        },
+        {
+          id: 'school-2',
+          name: 'School B',
+          lat: -23.551,
+          lng: -46.634,
+        },
+      ]);
+      expect(listSchoolsUseCaseMock.execute).toHaveBeenCalled();
+    });
+
+    it('should return empty list when no schools exist', async () => {
+      // Arrange
+      listSchoolsUseCaseMock.execute.mockResolvedValue({ schools: [] });
+
+      // Act
+      const result = await controller.listSchools();
+
+      // Assert
+      expect(result).toEqual([]);
+    });
+
+    it('should throw error if listing schools fails', async () => {
+      // Arrange
+      const error = new Error('Database connection failed');
+      listSchoolsUseCaseMock.execute.mockRejectedValue(error);
+
+      // Act & Assert
+      await expect(controller.listSchools()).rejects.toThrow(
+        'Database connection failed',
+      );
     });
   });
 
