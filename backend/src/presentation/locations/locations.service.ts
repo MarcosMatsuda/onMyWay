@@ -1,35 +1,27 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import {
-  SaveLocationUseCase,
-  SaveLocationInput,
-} from '../../domain/use-cases/save-location.use-case';
-import {
-  CalculateETAUseCase,
-  CalculateETAInput,
-  CalculateETAOutput,
-} from '../../domain/use-cases/calculate-eta.use-case';
-import { GetSchoolArrivalsUseCase } from '../../domain/use-cases/get-school-arrivals.use-case';
+import { SaveLocationWithETAUseCase } from '../../domain/use-cases/save-location-with-eta.use-case';
 import { NotifySchoolUseCase } from '../../domain/use-cases/notify-school.use-case';
-import { ILocationRepository } from '../../domain/repositories/location.repository.interface';
-import { IETARepository } from '../../domain/repositories/eta.repository.interface';
-import { IParentRepository } from '../../domain/repositories/parent.repository.interface';
-import { ISchoolRepository } from '../../domain/repositories/school.repository.interface';
+import {
+  ILocationRepository,
+  LOCATION_REPOSITORY,
+} from '../../domain/repositories/location.repository.interface';
+import {
+  IETARepository,
+  ETA_REPOSITORY,
+} from '../../domain/repositories/eta.repository.interface';
+import {
+  IParentRepository,
+  PARENT_REPOSITORY,
+} from '../../domain/repositories/parent.repository.interface';
 import { CreateLocationDto } from './dtos/create-location.dto';
 import { LocationResponseDto } from './dtos/location-response.dto';
-import { LOCATION_REPOSITORY } from '../../domain/repositories/location.repository.interface';
-import { ETA_REPOSITORY } from '../../domain/repositories/eta.repository.interface';
-import { PARENT_REPOSITORY } from '../../domain/repositories/parent.repository.interface';
-import { SCHOOL_REPOSITORY } from '../../domain/repositories/school.repository.interface';
-import { ArrivalsGateway } from '../../infrastructure/websocket/arrivals.gateway';
 
 @Injectable()
 export class LocationsService {
   private readonly logger = new Logger(LocationsService.name);
 
   constructor(
-    private readonly saveLocationUseCase: SaveLocationUseCase,
-    private readonly calculateETAUseCase: CalculateETAUseCase,
-    private readonly getSchoolArrivalsUseCase: GetSchoolArrivalsUseCase,
+    private readonly saveLocationWithETAUseCase: SaveLocationWithETAUseCase,
     private readonly notifySchoolUseCase: NotifySchoolUseCase,
     @Inject(LOCATION_REPOSITORY)
     private readonly locationRepository: ILocationRepository,
@@ -37,74 +29,72 @@ export class LocationsService {
     private readonly etaRepository: IETARepository,
     @Inject(PARENT_REPOSITORY)
     private readonly parentRepository: IParentRepository,
-    @Inject(SCHOOL_REPOSITORY)
-    private readonly schoolRepository: ISchoolRepository,
-    private readonly arrivalsGateway: ArrivalsGateway,
   ) {}
 
   async saveLocation(
     parentId: string,
     createLocationDto: CreateLocationDto,
   ): Promise<LocationResponseDto> {
-    // Save location
-    const saveLocationInput: SaveLocationInput = {
+    // First, get the parent to determine their school
+    // Note: SaveLocationWithETAUseCase requires schoolId upfront
+    // In production, the parent's school should be retrieved from the request context or parent repo
+    // For now, we'll handle this in the use case validation
+
+    // Use SaveLocationWithETAUseCase which handles both location save + ETA in one flow
+    // We need to get the parent's schoolId first
+    const parent = await this.getParentWithSchool(parentId);
+
+    const output = await this.saveLocationWithETAUseCase.execute({
       parentId,
       lat: createLocationDto.lat,
       lng: createLocationDto.lng,
       accuracy: createLocationDto.accuracy,
-    };
-
-    const saveLocationOutput =
-      await this.saveLocationUseCase.execute(saveLocationInput);
-
-    // Calculate ETA
-    const calculateETAInput: CalculateETAInput = { parentId };
-    let calculateETAOutput: CalculateETAOutput | null = null;
-    let schoolId: string | null = null;
-
-    try {
-      calculateETAOutput =
-        await this.calculateETAUseCase.execute(calculateETAInput);
-      if (calculateETAOutput) {
-        schoolId = calculateETAOutput.eta.schoolId;
-      }
-    } catch (error) {
-      // ETA calculation might fail if school not found or OSRM service unavailable
-      this.logger.warn('ETA calculation failed:', error.message);
-      // Still try to get schoolId from parent to emit update
-      const parent = await this.parentRepository.findById(parentId);
-      if (parent) {
-        schoolId = parent.schoolId;
-      }
-    }
+      schoolId: parent.schoolId,
+    });
 
     // Build response
     const response: LocationResponseDto = {
-      id: saveLocationOutput.location.id,
-      parentId: saveLocationOutput.location.parentId,
-      lat: saveLocationOutput.location.lat,
-      lng: saveLocationOutput.location.lng,
-      accuracy: saveLocationOutput.location.accuracy,
-      timestamp: saveLocationOutput.location.timestamp,
-      isWithinGeofence: saveLocationOutput.isWithinGeofence,
+      id: output.location.id,
+      parentId: output.location.parentId,
+      lat: output.location.lat,
+      lng: output.location.lng,
+      accuracy: output.location.accuracy,
+      timestamp: output.location.timestamp,
+      isWithinGeofence: output.isWithinGeofence,
+      eta: {
+        id: output.eta.id,
+        durationSeconds: output.eta.durationSeconds,
+        distanceMeters: output.eta.distanceMeters,
+        routePolyline: output.eta.routePolyline,
+        calculatedAt: output.eta.calculatedAt,
+      },
     };
 
-    if (calculateETAOutput) {
-      response.eta = {
-        id: calculateETAOutput.eta.id,
-        durationSeconds: calculateETAOutput.eta.durationSeconds,
-        distanceMeters: calculateETAOutput.eta.distanceMeters,
-        routePolyline: calculateETAOutput.eta.routePolyline,
-        calculatedAt: calculateETAOutput.eta.calculatedAt,
-      };
-    }
-
-    // Emit WebSocket event after saving location (with or without successful ETA)
-    if (schoolId) {
-      await this.emitArrivalsUpdate(parentId, schoolId);
-    }
+    // Emit WebSocket event after saving location with ETA
+    await this.emitArrivalsUpdate(parentId, output.eta.schoolId);
 
     return response;
+  }
+
+  private async getParentWithSchool(
+    parentId: string,
+  ): Promise<{ schoolId: string }> {
+    // First try to get parent to get their school directly
+    const parent = await this.parentRepository.findById(parentId);
+    if (parent && parent.schoolId) {
+      return { schoolId: parent.schoolId };
+    }
+
+    // Fallback: Try to get school from latest ETA
+    const latestETA = await this.etaRepository.findLatestByParentId(parentId);
+    if (latestETA) {
+      return { schoolId: latestETA.schoolId };
+    }
+
+    // Cannot determine school
+    throw new Error(
+      `Cannot determine school for parent ${parentId}. Please ensure parent has an associated school.`,
+    );
   }
 
   private async emitArrivalsUpdate(
@@ -112,10 +102,12 @@ export class LocationsService {
     schoolId: string,
   ): Promise<void> {
     try {
-      // Get latest ETA for the parent
+      // Get latest ETA for the parent (just saved by SaveLocationWithETAUseCase)
       const eta = await this.etaRepository.findLatestByParentId(parentId);
       if (!eta) {
-        this.logger.warn(`No ETA found for parent ${parentId}`);
+        this.logger.warn(
+          `No ETA found for parent ${parentId} after location save`,
+        );
         return;
       }
 
