@@ -110,12 +110,15 @@ IDLE (reset)
 
 ```bash
 cd backend
-npm run start:dev     # Dev server (watch mode, porta 3000)
-npm run build         # Build
-npm run lint          # ESLint (0 warnings max)
-npm test              # Jest (--passWithNoTests)
-npm run test:cov      # Coverage
-npx tsc --noEmit      # Type check
+npm run start:dev       # Dev server (watch mode, porta 3000)
+npm run build           # Build + TypeScript check (nest build)
+npm run lint            # ESLint (0 warnings max)
+npm test                # Jest unit tests only (default for WIP)
+npm run test:unit       # Explicit unit tests
+npm run test:coverage   # Unit tests + coverage report
+npm run test:integration # Integration tests (requires PostgreSQL)
+npm run test:all        # Both unit + integration
+npm run test:watch      # Unit tests in watch mode
 ```
 
 ### Docker (PostgreSQL + PostGIS)
@@ -127,9 +130,21 @@ docker-compose up -d  # Sobe PostgreSQL + PostGIS
 
 ### Testes
 
-- Jest + ts-jest, environment node
-- Pattern: `*.spec.ts`
-- `@nestjs/testing` para testes de módulos
+**Multi-project Jest setup:**
+- **Unit tests** (`*.spec.ts` — excludes `*.integration.spec.ts`)
+  - Rodam sem dependências externas (mocks de HTTP, DB)
+  - Padrão: unit tests para use cases, services, controllers
+  - Rápido (~6s)
+- **Integration tests** (`*.integration.spec.ts`)
+  - Requerem PostgreSQL + PostGIS
+  - Atualmente: apenas testes de database module
+  - Não rodam em WIP
+
+**Configuração:**
+- Jest config: `jest.config.js` (multi-project)
+- Setup global: `jest.setup.ts` (clearAllMocks beforeEach)
+- Path aliases mapeados: `@domain/*`, `@data/*`, `@infrastructure/*`, `@presentation/*`
+- Mocks: `src/__mocks__/axios.ts` (HTTP calls)
 
 ---
 
@@ -175,31 +190,38 @@ docker-compose up -d  # Sobe PostgreSQL + PostGIS
 
 ## Pipeline de Qualidade
 
-### Testes obrigatórios
+### Testes obrigatórios (antes de abrir PR)
 
 - **Use cases** → unit tests (`.spec.ts`)
-- **Repositories** → integration tests com `@nestjs/testing` (`.spec.ts`)
-- **Controllers** → e2e tests com Supertest
+- **Repositories** → unit tests com mocks (`.spec.ts`)
+- **Controllers** → unit tests com `@nestjs/testing` (`.spec.ts`)
 - **Services** (OSRM, geofence) → unit tests com mocks
 - Novos módulos **devem ter testes** antes de abrir PR
+- E2E tests: não implementados por enquanto
 
-### Checklist de PR
+### Checklist de PR (antes de abrir)
 
-1. `npm run lint` passa (0 warnings)
-2. `npx tsc --noEmit` passa
-3. `npm test` passa
+**Local verification (Developer WIP):**
+1. ✅ `npm run lint` passa (0 warnings)
+2. ✅ `npm run build` passa (TypeScript compile)
+3. ✅ `npm test` passa (unit tests)
+
+**Code review (após PR aberta):**
 4. Segue Clean Architecture (ver seção Regras de dependência)
 5. Domain não importa de outras camadas
 6. DTOs com `class-validator` decorators para input validation
-7. PR referencia issue: `Closes #N`
+7. Testes cobrem happy path + edge cases
+8. PR referencia issue: `Closes #N`
 
-### CI automático (`backend-ci.yml` — PRs para develop/main)
+### CI automático (PRs para develop/main)
 
-Pipeline: Security Audit → Lint + TypeScript (paralelo) → Tests (com PostgreSQL + PostGIS real)
+**Pipeline esperado:**
+1. Security Audit (dependências vulneráveis)
+2. Lint + TypeScript (paralelo)
+3. Unit tests (não requer DB)
 
-- CI sobe container `postgis/postgis:15-3.3` para testes
-- Se qualquer step falhar, comenta automaticamente no PR com link para os logs
-- Corrigir antes de pedir review
+- Se qualquer step falhar → comenta no PR com link para logs
+- Developer corrige e faz push novamente
 
 ### Labels de status
 
