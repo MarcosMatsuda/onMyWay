@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LocationsService } from './locations.service';
-import { SaveLocationUseCase } from '../../domain/use-cases/save-location.use-case';
-import { CalculateETAUseCase } from '../../domain/use-cases/calculate-eta.use-case';
-import { GetSchoolArrivalsUseCase } from '../../domain/use-cases/get-school-arrivals.use-case';
+import { SaveLocationWithETAUseCase } from '../../domain/use-cases/save-location-with-eta.use-case';
 import { NotifySchoolUseCase } from '../../domain/use-cases/notify-school.use-case';
 import {
   ILocationRepository,
@@ -16,26 +14,18 @@ import {
   IParentRepository,
   PARENT_REPOSITORY,
 } from '../../domain/repositories/parent.repository.interface';
-import {
-  ISchoolRepository,
-  SCHOOL_REPOSITORY,
-} from '../../domain/repositories/school.repository.interface';
 import { CreateLocationDto } from './dtos/create-location.dto';
 import { Location } from '../../domain/entities/location.entity';
 import { ETA } from '../../domain/entities/eta.entity';
-import { ArrivalsGateway } from '../../infrastructure/websocket/arrivals.gateway';
+import { Parent } from '../../domain/entities/parent.entity';
 
 describe('LocationsService', () => {
   let service: LocationsService;
-  let saveLocationUseCaseMock: jest.Mocked<SaveLocationUseCase>;
-  let calculateETAUseCaseMock: jest.Mocked<CalculateETAUseCase>;
-  let getSchoolArrivalsUseCaseMock: jest.Mocked<GetSchoolArrivalsUseCase>;
+  let saveLocationWithETAUseCaseMock: jest.Mocked<SaveLocationWithETAUseCase>;
   let notifySchoolUseCaseMock: jest.Mocked<NotifySchoolUseCase>;
   let locationRepositoryMock: jest.Mocked<ILocationRepository>;
   let etaRepositoryMock: jest.Mocked<IETARepository>;
   let parentRepositoryMock: jest.Mocked<IParentRepository>;
-  let schoolRepositoryMock: jest.Mocked<ISchoolRepository>;
-  let arrivalsGatewayMock: jest.Mocked<ArrivalsGateway>;
 
   const mockLocation: Location = {
     id: 'location-123',
@@ -56,15 +46,21 @@ describe('LocationsService', () => {
     calculatedAt: new Date(),
   };
 
-  const mockSaveLocationOutput = {
-    location: mockLocation,
-    isWithinGeofence: true,
+  const mockParent: Parent = {
+    id: 'parent-456',
+    name: 'John Doe',
+    email: 'john@example.com',
+    phone: '+5511999999999',
+    schoolId: 'school-123',
+    createdAt: new Date(),
   };
 
-  const mockCalculateETAOutput = {
+  const mockSaveLocationWithETAOutput = {
+    location: mockLocation,
     eta: mockETA,
     distanceMeters: 1200,
     durationMinutes: 15,
+    isWithinGeofence: true,
   };
 
   const createLocationDto: CreateLocationDto = {
@@ -74,15 +70,7 @@ describe('LocationsService', () => {
   };
 
   beforeEach(async () => {
-    saveLocationUseCaseMock = {
-      execute: jest.fn(),
-    } as any;
-
-    calculateETAUseCaseMock = {
-      execute: jest.fn(),
-    } as any;
-
-    getSchoolArrivalsUseCaseMock = {
+    saveLocationWithETAUseCaseMock = {
       execute: jest.fn(),
     } as any;
 
@@ -112,33 +100,12 @@ describe('LocationsService', () => {
       delete: jest.fn(),
     } as any;
 
-    schoolRepositoryMock = {
-      findById: jest.fn(),
-      create: jest.fn(),
-      findAll: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      findParentsWithinGeofence: jest.fn(),
-    } as any;
-
-    arrivalsGatewayMock = {
-      emitArrivalsUpdated: jest.fn(),
-    } as any;
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LocationsService,
         {
-          provide: SaveLocationUseCase,
-          useValue: saveLocationUseCaseMock,
-        },
-        {
-          provide: CalculateETAUseCase,
-          useValue: calculateETAUseCaseMock,
-        },
-        {
-          provide: GetSchoolArrivalsUseCase,
-          useValue: getSchoolArrivalsUseCaseMock,
+          provide: SaveLocationWithETAUseCase,
+          useValue: saveLocationWithETAUseCaseMock,
         },
         {
           provide: NotifySchoolUseCase,
@@ -156,14 +123,6 @@ describe('LocationsService', () => {
           provide: PARENT_REPOSITORY,
           useValue: parentRepositoryMock,
         },
-        {
-          provide: SCHOOL_REPOSITORY,
-          useValue: schoolRepositoryMock,
-        },
-        {
-          provide: ArrivalsGateway,
-          useValue: arrivalsGatewayMock,
-        },
       ],
     }).compile();
 
@@ -171,11 +130,13 @@ describe('LocationsService', () => {
   });
 
   describe('saveLocation', () => {
-    it('should save location and calculate ETA successfully', async () => {
+    it('should save location and calculate ETA using SaveLocationWithETAUseCase', async () => {
       // Arrange
       const parentId = 'parent-456';
-      saveLocationUseCaseMock.execute.mockResolvedValue(mockSaveLocationOutput);
-      calculateETAUseCaseMock.execute.mockResolvedValue(mockCalculateETAOutput);
+      parentRepositoryMock.findById.mockResolvedValue(mockParent);
+      saveLocationWithETAUseCaseMock.execute.mockResolvedValue(
+        mockSaveLocationWithETAOutput,
+      );
       etaRepositoryMock.findLatestByParentId.mockResolvedValue(mockETA);
       notifySchoolUseCaseMock.execute.mockResolvedValue(undefined);
 
@@ -183,15 +144,13 @@ describe('LocationsService', () => {
       const result = await service.saveLocation(parentId, createLocationDto);
 
       // Assert
-      expect(saveLocationUseCaseMock.execute).toHaveBeenCalledWith({
+      expect(parentRepositoryMock.findById).toHaveBeenCalledWith(parentId);
+      expect(saveLocationWithETAUseCaseMock.execute).toHaveBeenCalledWith({
         parentId,
         lat: createLocationDto.lat,
         lng: createLocationDto.lng,
         accuracy: createLocationDto.accuracy,
-      });
-
-      expect(calculateETAUseCaseMock.execute).toHaveBeenCalledWith({
-        parentId,
+        schoolId: 'school-123',
       });
 
       expect(notifySchoolUseCaseMock.execute).toHaveBeenCalledWith({
@@ -218,44 +177,19 @@ describe('LocationsService', () => {
       });
     });
 
-    it('should handle ETA calculation failure gracefully', async () => {
+    it('should throw error when parent school cannot be determined', async () => {
       // Arrange
       const parentId = 'parent-456';
-      saveLocationUseCaseMock.execute.mockResolvedValue(mockSaveLocationOutput);
-      calculateETAUseCaseMock.execute.mockRejectedValue(
-        new Error('ETA calculation failed'),
-      );
-      parentRepositoryMock.findById.mockResolvedValue({
-        id: parentId,
-        name: 'John Doe',
-        email: 'john@example.com',
-        phone: '+5511999999999',
-        schoolId: 'school-123',
-        createdAt: new Date(),
-      });
+      parentRepositoryMock.findById.mockResolvedValue(null);
       etaRepositoryMock.findLatestByParentId.mockResolvedValue(null);
 
-      // Act
-      const result = await service.saveLocation(parentId, createLocationDto);
+      // Act & Assert
+      await expect(
+        service.saveLocation(parentId, createLocationDto),
+      ).rejects.toThrow(`Cannot determine school for parent ${parentId}`);
 
-      // Assert
-      expect(saveLocationUseCaseMock.execute).toHaveBeenCalled();
-      expect(calculateETAUseCaseMock.execute).toHaveBeenCalled();
-      // NotifySchool should not be called if ETA not found
+      expect(saveLocationWithETAUseCaseMock.execute).not.toHaveBeenCalled();
       expect(notifySchoolUseCaseMock.execute).not.toHaveBeenCalled();
-
-      // Should still return location data even if ETA calculation failed
-      expect(result).toEqual({
-        id: 'location-123',
-        parentId: 'parent-456',
-        lat: -23.55052,
-        lng: -46.633308,
-        accuracy: 10.5,
-        timestamp: mockLocation.timestamp,
-        isWithinGeofence: true,
-        // No eta property since calculation failed
-      });
-      expect(result.eta).toBeUndefined();
     });
 
     it('should handle missing accuracy in DTO', async () => {
@@ -271,15 +205,15 @@ describe('LocationsService', () => {
         accuracy: undefined,
       };
 
-      const mockSaveLocationOutputWithoutAccuracy = {
+      const mockOutputWithoutAccuracy = {
+        ...mockSaveLocationWithETAOutput,
         location: mockLocationWithoutAccuracy,
-        isWithinGeofence: true,
       };
 
-      saveLocationUseCaseMock.execute.mockResolvedValue(
-        mockSaveLocationOutputWithoutAccuracy,
+      parentRepositoryMock.findById.mockResolvedValue(mockParent);
+      saveLocationWithETAUseCaseMock.execute.mockResolvedValue(
+        mockOutputWithoutAccuracy,
       );
-      calculateETAUseCaseMock.execute.mockResolvedValue(mockCalculateETAOutput);
       etaRepositoryMock.findLatestByParentId.mockResolvedValue(mockETA);
       notifySchoolUseCaseMock.execute.mockResolvedValue(undefined);
 
@@ -290,11 +224,12 @@ describe('LocationsService', () => {
       );
 
       // Assert
-      expect(saveLocationUseCaseMock.execute).toHaveBeenCalledWith({
+      expect(saveLocationWithETAUseCaseMock.execute).toHaveBeenCalledWith({
         parentId,
         lat: createLocationDtoWithoutAccuracy.lat,
         lng: createLocationDtoWithoutAccuracy.lng,
         accuracy: undefined,
+        schoolId: 'school-123',
       });
 
       expect(result.accuracy).toBeUndefined();

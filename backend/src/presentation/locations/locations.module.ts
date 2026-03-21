@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common';
 import { LocationsController } from './locations.controller';
 import { LocationsService } from './locations.service';
-import { SaveLocationUseCase } from '../../domain/use-cases/save-location.use-case';
-import { CalculateETAUseCase } from '../../domain/use-cases/calculate-eta.use-case';
+import { SaveLocationWithETAUseCase } from '../../domain/use-cases/save-location-with-eta.use-case';
 import { GetArrivalsQueueUseCase } from '../../domain/use-cases/get-arrivals-queue.use-case';
 import { GetSchoolArrivalsUseCase } from '../../domain/use-cases/get-school-arrivals.use-case';
 import { NotifySchoolUseCase } from '../../domain/use-cases/notify-school.use-case';
@@ -16,8 +15,7 @@ import { OSRMServiceAdapter } from '../../infrastructure/osrm/osrm-service.adapt
   controllers: [LocationsController],
   providers: [
     LocationsService,
-    SaveLocationUseCase,
-    CalculateETAUseCase,
+    SaveLocationWithETAUseCase,
     GetArrivalsQueueUseCase,
     GetSchoolArrivalsUseCase,
     NotifySchoolUseCase,
