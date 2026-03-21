@@ -68,7 +68,9 @@ describe('LocationsService', () => {
 
     locationRepositoryMock = {
       save: jest.fn(),
+      findById: jest.fn(),
       findLatestByParentId: jest.fn(),
+      findByParentId: jest.fn(),
       findParentsNearSchool: jest.fn(),
     } as any;
 

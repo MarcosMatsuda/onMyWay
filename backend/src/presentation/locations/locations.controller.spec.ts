@@ -114,9 +114,7 @@ describe('LocationsController', () => {
         accuracy: 10,
       };
 
-      locationsServiceMock.saveLocation.mockResolvedValue(
-        mockLocationResponse,
-      );
+      locationsServiceMock.saveLocation.mockResolvedValue(mockLocationResponse);
 
       // Act
       const result = await controller.saveLocation(
@@ -172,9 +170,7 @@ describe('LocationsController', () => {
   describe('calculateETA', () => {
     it('should calculate ETA for parent', async () => {
       // Arrange
-      calculateETAUseCaseMock.execute.mockResolvedValue(
-        mockCalculateETAOutput,
-      );
+      calculateETAUseCaseMock.execute.mockResolvedValue(mockCalculateETAOutput);
 
       // Act
       const result = await controller.calculateETA(mockParentId);
