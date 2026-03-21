@@ -4,6 +4,9 @@ export const validationSchema = Joi.object({
   NODE_ENV: Joi.string()
     .valid('development', 'test', 'production')
     .default('development'),
+  LOG_LEVEL: Joi.string()
+    .valid('debug', 'info', 'warn', 'error')
+    .default('info'),
   PORT: Joi.number().port().default(3000),
   DATABASE_URL: Joi.string().required().messages({
     'any.required': 'DATABASE_URL is required (postgres connection string)',
