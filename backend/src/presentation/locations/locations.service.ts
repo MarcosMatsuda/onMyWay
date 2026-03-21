@@ -10,20 +10,26 @@ import {
 } from '../../domain/use-cases/calculate-eta.use-case';
 import { ILocationRepository } from '../../domain/repositories/location.repository.interface';
 import { IETARepository } from '../../domain/repositories/eta.repository.interface';
+import { IParentRepository } from '../../domain/repositories/parent.repository.interface';
 import { CreateLocationDto } from './dtos/create-location.dto';
 import { LocationResponseDto } from './dtos/location-response.dto';
 import { LOCATION_REPOSITORY } from '../../domain/repositories/location.repository.interface';
 import { ETA_REPOSITORY } from '../../domain/repositories/eta.repository.interface';
+import { PARENT_REPOSITORY } from '../../domain/repositories/parent.repository.interface';
+import { ArrivalsGateway } from '../../infrastructure/websocket/arrivals.gateway';
 
 @Injectable()
 export class LocationsService {
   constructor(
     private readonly saveLocationUseCase: SaveLocationUseCase,
     private readonly calculateETAUseCase: CalculateETAUseCase,
+    private readonly arrivalsGateway: ArrivalsGateway,
     @Inject(LOCATION_REPOSITORY)
     private readonly locationRepository: ILocationRepository,
     @Inject(ETA_REPOSITORY)
     private readonly etaRepository: IETARepository,
+    @Inject(PARENT_REPOSITORY)
+    private readonly parentRepository: IParentRepository,
   ) {}
 
   async saveLocation(

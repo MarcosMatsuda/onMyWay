@@ -18,8 +18,10 @@ describe('LocationsService', () => {
   let service: LocationsService;
   let saveLocationUseCaseMock: jest.Mocked<SaveLocationUseCase>;
   let calculateETAUseCaseMock: jest.Mocked<CalculateETAUseCase>;
+  let arrivalsGatewayMock: jest.Mocked<ArrivalsGateway>;
   let locationRepositoryMock: jest.Mocked<ILocationRepository>;
   let etaRepositoryMock: jest.Mocked<IETARepository>;
+  let parentRepositoryMock: jest.Mocked<IParentRepository>;
 
   const mockLocation: Location = {
     id: 'location-123',
@@ -51,6 +53,15 @@ describe('LocationsService', () => {
     durationMinutes: 15,
   };
 
+  const mockParent: Parent = {
+    id: 'parent-456',
+    name: 'John Doe',
+    email: 'john@example.com',
+    phone: '+5511999999999',
+    schoolId: 'school-123',
+    createdAt: new Date(),
+  };
+
   const createLocationDto: CreateLocationDto = {
     lat: -23.55052,
     lng: -46.633308,
@@ -64,6 +75,10 @@ describe('LocationsService', () => {
 
     calculateETAUseCaseMock = {
       execute: jest.fn(),
+    } as any;
+
+    arrivalsGatewayMock = {
+      emitArrivalsUpdate: jest.fn(),
     } as any;
 
     locationRepositoryMock = {
@@ -80,6 +95,14 @@ describe('LocationsService', () => {
       findBySchoolId: jest.fn(),
     } as any;
 
+    parentRepositoryMock = {
+      findById: jest.fn(),
+      create: jest.fn(),
+      findAll: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    } as any;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LocationsService,
@@ -92,12 +115,20 @@ describe('LocationsService', () => {
           useValue: calculateETAUseCaseMock,
         },
         {
+          provide: ArrivalsGateway,
+          useValue: arrivalsGatewayMock,
+        },
+        {
           provide: LOCATION_REPOSITORY,
           useValue: locationRepositoryMock,
         },
         {
           provide: ETA_REPOSITORY,
           useValue: etaRepositoryMock,
+        },
+        {
+          provide: PARENT_REPOSITORY,
+          useValue: parentRepositoryMock,
         },
       ],
     }).compile();
@@ -111,6 +142,7 @@ describe('LocationsService', () => {
       const parentId = 'parent-456';
       saveLocationUseCaseMock.execute.mockResolvedValue(mockSaveLocationOutput);
       calculateETAUseCaseMock.execute.mockResolvedValue(mockCalculateETAOutput);
+      parentRepositoryMock.findById.mockResolvedValue(mockParent);
 
       // Act
       const result = await service.saveLocation(parentId, createLocationDto);
@@ -126,6 +158,10 @@ describe('LocationsService', () => {
       expect(calculateETAUseCaseMock.execute).toHaveBeenCalledWith({
         parentId,
       });
+
+      expect(parentRepositoryMock.findById).toHaveBeenCalledWith(parentId);
+
+      expect(arrivalsGatewayMock.emitArrivalsUpdate).toHaveBeenCalledWith('school-123');
 
       expect(result).toEqual({
         id: 'location-123',
@@ -159,6 +195,7 @@ describe('LocationsService', () => {
       // Assert
       expect(saveLocationUseCaseMock.execute).toHaveBeenCalled();
       expect(calculateETAUseCaseMock.execute).toHaveBeenCalled();
+      expect(arrivalsGatewayMock.emitArrivalsUpdate).not.toHaveBeenCalled();
 
       // Should still return location data even if ETA calculation failed
       expect(result).toEqual({
@@ -196,6 +233,7 @@ describe('LocationsService', () => {
         mockSaveLocationOutputWithoutAccuracy,
       );
       calculateETAUseCaseMock.execute.mockResolvedValue(mockCalculateETAOutput);
+      parentRepositoryMock.findById.mockResolvedValue(mockParent);
 
       // Act
       const result = await service.saveLocation(
@@ -211,7 +249,53 @@ describe('LocationsService', () => {
         accuracy: undefined,
       });
 
+      expect(arrivalsGatewayMock.emitArrivalsUpdate).toHaveBeenCalledWith('school-123');
       expect(result.accuracy).toBeUndefined();
+    });
+
+    it('should not emit WebSocket update when parent not found', async () => {
+      // Arrange
+      const parentId = 'parent-456';
+      saveLocationUseCaseMock.execute.mockResolvedValue(mockSaveLocationOutput);
+      calculateETAUseCaseMock.execute.mockResolvedValue(mockCalculateETAOutput);
+      parentRepositoryMock.findById.mockResolvedValue(null); // Parent not found
+
+      // Act
+      const result = await service.saveLocation(parentId, createLocationDto);
+
+      // Assert
+      expect(saveLocationUseCaseMock.execute).toHaveBeenCalled();
+      expect(calculateETAUseCaseMock.execute).toHaveBeenCalled();
+      expect(parentRepositoryMock.findById).toHaveBeenCalledWith(parentId);
+      expect(arrivalsGatewayMock.emitArrivalsUpdate).not.toHaveBeenCalled();
+      
+      // Should still return the location data
+      expect(result.eta).toBeDefined();
+    });
+
+    it('should not emit WebSocket update when parent has no schoolId', async () => {
+      // Arrange
+      const parentId = 'parent-456';
+      const parentWithoutSchool: Parent = {
+        ...mockParent,
+        schoolId: undefined,
+      };
+      
+      saveLocationUseCaseMock.execute.mockResolvedValue(mockSaveLocationOutput);
+      calculateETAUseCaseMock.execute.mockResolvedValue(mockCalculateETAOutput);
+      parentRepositoryMock.findById.mockResolvedValue(parentWithoutSchool);
+
+      // Act
+      const result = await service.saveLocation(parentId, createLocationDto);
+
+      // Assert
+      expect(saveLocationUseCaseMock.execute).toHaveBeenCalled();
+      expect(calculateETAUseCaseMock.execute).toHaveBeenCalled();
+      expect(parentRepositoryMock.findById).toHaveBeenCalledWith(parentId);
+      expect(arrivalsGatewayMock.emitArrivalsUpdate).not.toHaveBeenCalled();
+      
+      // Should still return the location data
+      expect(result.eta).toBeDefined();
     });
   });
 
