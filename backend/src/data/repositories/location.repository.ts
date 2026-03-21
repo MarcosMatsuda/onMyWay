@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { LocationModel } from '../models/location.model';
 import { LocationMapper } from '../mappers/location.mapper';
 import { Location } from '../../domain/entities/location.entity';
@@ -11,6 +11,7 @@ export class LocationRepository implements ILocationRepository {
   constructor(
     @InjectRepository(LocationModel)
     private readonly repository: Repository<LocationModel>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async save(location: Location | Omit<Location, 'id'>): Promise<Location> {
@@ -43,18 +44,26 @@ export class LocationRepository implements ILocationRepository {
   }
 
   async findParentsNearSchool(schoolId: string): Promise<string[]> {
-    // This is a simplified implementation for MVP
-    // In production, use PostGIS or similar for spatial queries
+    // Use PostGIS to find parents whose latest location is within school's geofence radius
     const query = `
       SELECT DISTINCT l.parent_id
       FROM locations l
       JOIN parents p ON l.parent_id = p.id
-      WHERE p.school_id = $1
-      ORDER BY l.timestamp DESC
-      LIMIT 100
+      JOIN schools s ON p.school_id = s.id
+      WHERE s.id = $1
+        AND ST_Distance(
+          ST_MakePoint(l.lng, l.lat)::geography,
+          ST_MakePoint(s.lng, s.lat)::geography
+        ) <= s.geofence_radius_meters
+        AND l.timestamp = (
+          SELECT MAX(l2.timestamp)
+          FROM locations l2
+          WHERE l2.parent_id = l.parent_id
+        )
+      ORDER BY l.parent_id
     `;
 
-    const result = await this.repository.query(query, [schoolId]);
+    const result = await this.dataSource.query(query, [schoolId]);
     return result.map((row: any) => row.parent_id);
   }
 }
