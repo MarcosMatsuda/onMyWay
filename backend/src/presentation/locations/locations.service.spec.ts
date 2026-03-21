@@ -3,6 +3,7 @@ import { LocationsService } from './locations.service';
 import { SaveLocationUseCase } from '../../domain/use-cases/save-location.use-case';
 import { CalculateETAUseCase } from '../../domain/use-cases/calculate-eta.use-case';
 import { GetSchoolArrivalsUseCase } from '../../domain/use-cases/get-school-arrivals.use-case';
+import { NotifySchoolUseCase } from '../../domain/use-cases/notify-school.use-case';
 import {
   ILocationRepository,
   LOCATION_REPOSITORY,
@@ -29,6 +30,7 @@ describe('LocationsService', () => {
   let saveLocationUseCaseMock: jest.Mocked<SaveLocationUseCase>;
   let calculateETAUseCaseMock: jest.Mocked<CalculateETAUseCase>;
   let getSchoolArrivalsUseCaseMock: jest.Mocked<GetSchoolArrivalsUseCase>;
+  let notifySchoolUseCaseMock: jest.Mocked<NotifySchoolUseCase>;
   let locationRepositoryMock: jest.Mocked<ILocationRepository>;
   let etaRepositoryMock: jest.Mocked<IETARepository>;
   let parentRepositoryMock: jest.Mocked<IParentRepository>;
@@ -84,6 +86,10 @@ describe('LocationsService', () => {
       execute: jest.fn(),
     } as any;
 
+    notifySchoolUseCaseMock = {
+      execute: jest.fn(),
+    } as any;
+
     locationRepositoryMock = {
       save: jest.fn(),
       findById: jest.fn(),
@@ -135,6 +141,10 @@ describe('LocationsService', () => {
           useValue: getSchoolArrivalsUseCaseMock,
         },
         {
+          provide: NotifySchoolUseCase,
+          useValue: notifySchoolUseCaseMock,
+        },
+        {
           provide: LOCATION_REPOSITORY,
           useValue: locationRepositoryMock,
         },
@@ -166,6 +176,8 @@ describe('LocationsService', () => {
       const parentId = 'parent-456';
       saveLocationUseCaseMock.execute.mockResolvedValue(mockSaveLocationOutput);
       calculateETAUseCaseMock.execute.mockResolvedValue(mockCalculateETAOutput);
+      etaRepositoryMock.findLatestByParentId.mockResolvedValue(mockETA);
+      notifySchoolUseCaseMock.execute.mockResolvedValue(undefined);
 
       // Act
       const result = await service.saveLocation(parentId, createLocationDto);
@@ -180,6 +192,12 @@ describe('LocationsService', () => {
 
       expect(calculateETAUseCaseMock.execute).toHaveBeenCalledWith({
         parentId,
+      });
+
+      expect(notifySchoolUseCaseMock.execute).toHaveBeenCalledWith({
+        schoolId: 'school-123',
+        parentId,
+        eta: mockETA,
       });
 
       expect(result).toEqual({
@@ -207,6 +225,15 @@ describe('LocationsService', () => {
       calculateETAUseCaseMock.execute.mockRejectedValue(
         new Error('ETA calculation failed'),
       );
+      parentRepositoryMock.findById.mockResolvedValue({
+        id: parentId,
+        name: 'John Doe',
+        email: 'john@example.com',
+        phone: '+5511999999999',
+        schoolId: 'school-123',
+        createdAt: new Date(),
+      });
+      etaRepositoryMock.findLatestByParentId.mockResolvedValue(null);
 
       // Act
       const result = await service.saveLocation(parentId, createLocationDto);
@@ -214,6 +241,8 @@ describe('LocationsService', () => {
       // Assert
       expect(saveLocationUseCaseMock.execute).toHaveBeenCalled();
       expect(calculateETAUseCaseMock.execute).toHaveBeenCalled();
+      // NotifySchool should not be called if ETA not found
+      expect(notifySchoolUseCaseMock.execute).not.toHaveBeenCalled();
 
       // Should still return location data even if ETA calculation failed
       expect(result).toEqual({
@@ -251,6 +280,8 @@ describe('LocationsService', () => {
         mockSaveLocationOutputWithoutAccuracy,
       );
       calculateETAUseCaseMock.execute.mockResolvedValue(mockCalculateETAOutput);
+      etaRepositoryMock.findLatestByParentId.mockResolvedValue(mockETA);
+      notifySchoolUseCaseMock.execute.mockResolvedValue(undefined);
 
       // Act
       const result = await service.saveLocation(
