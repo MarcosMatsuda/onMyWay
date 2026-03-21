@@ -50,9 +50,8 @@ export class SchoolRepository implements ISchoolRepository {
       throw new Error(`School with id ${schoolId} not found`);
     }
 
-    // This is a simplified implementation for MVP
-    // In production, use PostGIS or similar for spatial queries
-    // Query to find parents within the school's geofence radius
+    // Query to find parents within the school's geofence radius using PostGIS
+    // Uses correct coordinate order: (longitude, latitude)
     const query = `
       SELECT DISTINCT p.id
       FROM parents p
@@ -66,7 +65,7 @@ export class SchoolRepository implements ISchoolRepository {
         )
         AND ST_Distance(
           ST_MakePoint($2, $3)::geography,
-          ST_MakePoint(l.lat, l.lng)::geography
+          ST_MakePoint(l.lng, l.lat)::geography
         ) <= $4
     `;
 
