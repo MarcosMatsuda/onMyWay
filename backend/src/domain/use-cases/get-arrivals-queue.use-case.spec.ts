@@ -85,6 +85,7 @@ describe('GetArrivalsQueueUseCase', () => {
       findById: jest.fn(),
       findLatestByParentId: jest.fn(),
       findBySchoolId: jest.fn(),
+      findLatestBulkByParentIds: jest.fn(),
     } as jest.Mocked<IETARepository>;
 
     schoolRepositoryMock = {
@@ -100,6 +101,7 @@ describe('GetArrivalsQueueUseCase', () => {
       findById: jest.fn(),
       findByEmail: jest.fn(),
       findBySchoolId: jest.fn(),
+      findByIds: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),

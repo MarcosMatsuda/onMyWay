@@ -8,4 +8,7 @@ export interface ILocationRepository {
   findLatestByParentId(parentId: string): Promise<Location | null>;
   findByParentId(parentId: string): Promise<Location[]>;
   findParentsNearSchool(schoolId: string): Promise<string[]>;
+  findLatestBulkByParentIds(
+    parentIds: string[],
+  ): Promise<Map<string, Location>>;
 }

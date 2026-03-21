@@ -86,6 +86,7 @@ describe('GetSchoolArrivalsUseCase', () => {
       save: jest.fn(),
       findLatestByParentId: jest.fn(),
       findBySchoolId: jest.fn(),
+      findLatestBulkByParentIds: jest.fn(),
     } as any;
 
     schoolRepositoryMock = {
@@ -103,12 +104,14 @@ describe('GetSchoolArrivalsUseCase', () => {
       findAll: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      findByIds: jest.fn(),
     } as any;
 
     locationRepositoryMock = {
       save: jest.fn(),
       findLatestByParentId: jest.fn(),
       findParentsNearSchool: jest.fn(),
+      findLatestBulkByParentIds: jest.fn(),
     } as any;
 
     useCase = new GetSchoolArrivalsUseCase(
@@ -119,7 +122,7 @@ describe('GetSchoolArrivalsUseCase', () => {
     );
   });
 
-  it('should return arrivals queue for a school', async () => {
+  it('should return arrivals queue for a school using bulk queries', async () => {
     // Arrange
     const input = { schoolId: 'school-456' };
 
@@ -129,17 +132,26 @@ describe('GetSchoolArrivalsUseCase', () => {
       'parent-2',
     ]);
 
-    etaRepositoryMock.findLatestByParentId
-      .mockResolvedValueOnce(mockETAs[0])
-      .mockResolvedValueOnce(mockETAs[1]);
+    // Mock bulk queries instead of individual queries
+    const etasMap = new Map([
+      ['parent-1', mockETAs[0]],
+      ['parent-2', mockETAs[1]],
+    ]);
+    etaRepositoryMock.findLatestBulkByParentIds.mockResolvedValue(etasMap);
 
-    parentRepositoryMock.findById
-      .mockResolvedValueOnce(mockParents[0])
-      .mockResolvedValueOnce(mockParents[1]);
+    const parentsMap = new Map([
+      ['parent-1', mockParents[0]],
+      ['parent-2', mockParents[1]],
+    ]);
+    parentRepositoryMock.findByIds.mockResolvedValue(parentsMap);
 
-    locationRepositoryMock.findLatestByParentId
-      .mockResolvedValueOnce(mockLocations[0])
-      .mockResolvedValueOnce(mockLocations[1]);
+    const locationsMap = new Map([
+      ['parent-1', mockLocations[0]],
+      ['parent-2', mockLocations[1]],
+    ]);
+    locationRepositoryMock.findLatestBulkByParentIds.mockResolvedValue(
+      locationsMap,
+    );
 
     // Act
     const result = await useCase.execute(input);
@@ -149,6 +161,19 @@ describe('GetSchoolArrivalsUseCase', () => {
     expect(schoolRepositoryMock.findParentsWithinGeofence).toHaveBeenCalledWith(
       'school-456',
     );
+
+    // Verify bulk methods were called instead of individual ones
+    expect(etaRepositoryMock.findLatestBulkByParentIds).toHaveBeenCalledWith([
+      'parent-1',
+      'parent-2',
+    ]);
+    expect(parentRepositoryMock.findByIds).toHaveBeenCalledWith([
+      'parent-1',
+      'parent-2',
+    ]);
+    expect(
+      locationRepositoryMock.findLatestBulkByParentIds,
+    ).toHaveBeenCalledWith(['parent-1', 'parent-2']);
 
     expect(result.schoolName).toBe('Springfield Elementary');
     expect(result.totalCount).toBe(2);
@@ -182,17 +207,25 @@ describe('GetSchoolArrivalsUseCase', () => {
       'parent-2',
     ]);
 
-    etaRepositoryMock.findLatestByParentId
-      .mockResolvedValueOnce(mockETAs[0])
-      .mockResolvedValueOnce(mockETAs[1]);
+    const etasMap = new Map([
+      ['parent-1', mockETAs[0]],
+      ['parent-2', mockETAs[1]],
+    ]);
+    etaRepositoryMock.findLatestBulkByParentIds.mockResolvedValue(etasMap);
 
-    parentRepositoryMock.findById
-      .mockResolvedValueOnce(mockParents[0])
-      .mockResolvedValueOnce(mockParents[1]);
+    const parentsMap = new Map([
+      ['parent-1', mockParents[0]],
+      ['parent-2', mockParents[1]],
+    ]);
+    parentRepositoryMock.findByIds.mockResolvedValue(parentsMap);
 
-    locationRepositoryMock.findLatestByParentId
-      .mockResolvedValueOnce(mockLocations[0])
-      .mockResolvedValueOnce(mockLocations[1]);
+    const locationsMap = new Map([
+      ['parent-1', mockLocations[0]],
+      ['parent-2', mockLocations[1]],
+    ]);
+    locationRepositoryMock.findLatestBulkByParentIds.mockResolvedValue(
+      locationsMap,
+    );
 
     // Act
     const result = await useCase.execute(input);
@@ -213,13 +246,15 @@ describe('GetSchoolArrivalsUseCase', () => {
     ]);
 
     // Only parent-1 has ETA
-    etaRepositoryMock.findLatestByParentId
-      .mockResolvedValueOnce(mockETAs[0])
-      .mockResolvedValueOnce(null); // parent-2 has no ETA
+    const etasMap = new Map([['parent-1', mockETAs[0]]]);
+    etaRepositoryMock.findLatestBulkByParentIds.mockResolvedValue(etasMap);
 
-    parentRepositoryMock.findById.mockResolvedValueOnce(mockParents[0]);
-    locationRepositoryMock.findLatestByParentId.mockResolvedValueOnce(
-      mockLocations[0],
+    const parentsMap = new Map([['parent-1', mockParents[0]]]);
+    parentRepositoryMock.findByIds.mockResolvedValue(parentsMap);
+
+    const locationsMap = new Map([['parent-1', mockLocations[0]]]);
+    locationRepositoryMock.findLatestBulkByParentIds.mockResolvedValue(
+      locationsMap,
     );
 
     // Act
@@ -245,13 +280,16 @@ describe('GetSchoolArrivalsUseCase', () => {
       schoolId: 'different-school',
       routePolyline: 'encoded_polyline_1',
     };
-    etaRepositoryMock.findLatestByParentId.mockResolvedValueOnce(
-      wrongSchoolETA,
-    );
 
-    parentRepositoryMock.findById.mockResolvedValueOnce(mockParents[0]);
-    locationRepositoryMock.findLatestByParentId.mockResolvedValueOnce(
-      mockLocations[0],
+    const etasMap = new Map([['parent-1', wrongSchoolETA]]);
+    etaRepositoryMock.findLatestBulkByParentIds.mockResolvedValue(etasMap);
+
+    const parentsMap = new Map([['parent-1', mockParents[0]]]);
+    parentRepositoryMock.findByIds.mockResolvedValue(parentsMap);
+
+    const locationsMap = new Map([['parent-1', mockLocations[0]]]);
+    locationRepositoryMock.findLatestBulkByParentIds.mockResolvedValue(
+      locationsMap,
     );
 
     // Act
