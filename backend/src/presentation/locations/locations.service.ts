@@ -61,13 +61,22 @@ export class LocationsService {
     // Calculate ETA
     const calculateETAInput: CalculateETAInput = { parentId };
     let calculateETAOutput: CalculateETAOutput | null = null;
+    let schoolId: string | null = null;
 
     try {
       calculateETAOutput =
         await this.calculateETAUseCase.execute(calculateETAInput);
+      if (calculateETAOutput) {
+        schoolId = calculateETAOutput.eta.schoolId;
+      }
     } catch (error) {
       // ETA calculation might fail if school not found or OSRM service unavailable
       this.logger.warn('ETA calculation failed:', error.message);
+      // Still try to get schoolId from parent to emit update
+      const parent = await this.parentRepository.findById(parentId);
+      if (parent) {
+        schoolId = parent.schoolId;
+      }
     }
 
     // Build response
@@ -89,9 +98,11 @@ export class LocationsService {
         routePolyline: calculateETAOutput.eta.routePolyline,
         calculatedAt: calculateETAOutput.eta.calculatedAt,
       };
+    }
 
-      // Emit WebSocket event if ETA calculation succeeded
-      await this.emitArrivalsUpdate(parentId, calculateETAOutput.eta.schoolId);
+    // Emit WebSocket event after saving location (with or without successful ETA)
+    if (schoolId) {
+      await this.emitArrivalsUpdate(parentId, schoolId);
     }
 
     return response;
