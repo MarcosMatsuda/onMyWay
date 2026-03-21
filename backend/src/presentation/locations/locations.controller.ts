@@ -7,19 +7,9 @@ import {
   Query,
   UseGuards,
   Request,
-  UsePipes,
-  ValidationPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
-import {
-  SaveLocationWithETAUseCase,
-  SaveLocationWithETAInput,
-  SaveLocationWithETAOutput,
-} from '../../domain/use-cases/save-location-with-eta.use-case';
-import {
-  GetParentLocationsUseCase,
-  GetParentLocationsInput,
-  GetParentLocationsOutput,
-} from '../../domain/use-cases/get-parent-locations.use-case';
 import {
   CalculateETAUseCase,
   CalculateETAInput,
@@ -31,47 +21,37 @@ import {
   GetArrivalsQueueOutput,
 } from '../../domain/use-cases/get-arrivals-queue.use-case';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
-import { SaveLocationDto } from './dtos/save-location.dto';
+import { JwtPayload } from '../../infrastructure/auth/jwt-payload.interface';
+import { CreateLocationDto } from './dtos/create-location.dto';
+import { LocationResponseDto } from './dtos/location-response.dto';
+import { LocationsService } from './locations.service';
 
 @Controller('locations')
 export class LocationsController {
   constructor(
-    private readonly saveLocationWithETAUseCase: SaveLocationWithETAUseCase,
-    private readonly getParentLocationsUseCase: GetParentLocationsUseCase,
+    private readonly locationsService: LocationsService,
     private readonly calculateETAUseCase: CalculateETAUseCase,
     private readonly getArrivalsQueueUseCase: GetArrivalsQueueUseCase,
   ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe({ transform: true }))
+  @HttpCode(HttpStatus.CREATED)
   async saveLocation(
-    @Request() req,
-    @Body() saveLocationDto: SaveLocationDto,
-  ): Promise<SaveLocationWithETAOutput> {
-    const parentId = req.user.sub; // Get parentId from JWT token
-
-    const input: SaveLocationWithETAInput = {
-      parentId,
-      lat: saveLocationDto.lat,
-      lng: saveLocationDto.lng,
-      schoolId: saveLocationDto.schoolId,
-      accuracy: saveLocationDto.accuracy,
-    };
-
-    return this.saveLocationWithETAUseCase.execute(input);
+    @Request() req: { user: JwtPayload },
+    @Body() createLocationDto: CreateLocationDto,
+  ): Promise<LocationResponseDto> {
+    const parentId = req.user.sub;
+    return this.locationsService.saveLocation(parentId, createLocationDto);
   }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  async getMyLocations(@Request() req): Promise<GetParentLocationsOutput> {
-    const parentId = req.user.sub; // Get parentId from JWT token
-
-    const input: GetParentLocationsInput = {
-      parentId,
-    };
-
-    return this.getParentLocationsUseCase.execute(input);
+  async getMyLatestLocation(
+    @Request() req: { user: JwtPayload },
+  ): Promise<LocationResponseDto | null> {
+    const parentId = req.user.sub;
+    return this.locationsService.getMyLatestLocation(parentId);
   }
 
   @Post(':parentId/calculate-eta')
