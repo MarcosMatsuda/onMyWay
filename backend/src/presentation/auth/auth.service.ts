@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  NotFoundException,
   Inject,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -14,6 +15,10 @@ import {
   IParentRepository,
   PARENT_REPOSITORY,
 } from '../../domain/repositories/parent.repository.interface';
+import {
+  ISchoolRepository,
+  SCHOOL_REPOSITORY,
+} from '../../domain/repositories/school.repository.interface';
 import { JwtPayload } from '../../infrastructure/auth/jwt-payload.interface';
 
 @Injectable()
@@ -21,6 +26,8 @@ export class AuthService {
   constructor(
     @Inject(PARENT_REPOSITORY)
     private readonly parentRepository: IParentRepository,
+    @Inject(SCHOOL_REPOSITORY)
+    private readonly schoolRepository: ISchoolRepository,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -31,6 +38,14 @@ export class AuthService {
     );
     if (existingParent) {
       throw new ConflictException('Email already registered');
+    }
+
+    // Validate school exists
+    const school = await this.schoolRepository.findById(registerDto.schoolId);
+    if (!school) {
+      throw new NotFoundException(
+        `School with id ${registerDto.schoolId} not found`,
+      );
     }
 
     // Hash password
