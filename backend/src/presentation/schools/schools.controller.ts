@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
 import {
   GetSchoolArrivalsUseCase,
@@ -25,6 +26,8 @@ import {
 import { ArrivalsResponseDto } from './dtos/arrival.dto';
 import { SchoolStatsDto, SchoolConfigDto } from './dtos/school-config.dto';
 
+@ApiTags('schools')
+@ApiBearerAuth()
 @Controller('schools')
 @UseGuards(JwtAuthGuard)
 export class SchoolsController {
