@@ -177,6 +177,18 @@ docker-compose up -d  # Sobe PostgreSQL + PostGIS
 - **Nunca mencionar IA, Claude ou ferramentas automatizadas** em commits ou PRs
 - PRs devem referenciar issues: `Closes #N`
 
+### Ciclo de vida das Issues
+
+**Ao abrir um PR:**
+- Sempre incluir `Closes #N` no corpo do PR para que o GitHub feche a issue automaticamente no merge
+
+**Ao encontrar um problema numa issue já implementada:**
+1. **Fechar a issue original** — com comentário explicando que a implementação foi entregue
+2. **Abrir nova issue** — descrevendo especificamente o problema encontrado, com contexto, escopo e critérios de aceite próprios
+3. Nunca reaproveitar uma issue fechada para rastrear problemas novos
+
+**Nunca deixar issue aberta se a implementação já foi entregue** — mesmo que com imperfeições. O histórico deve refletir o que foi feito, e os problemas devem ter rastreabilidade própria.
+
 ### Branches
 - `main` — produção
 - `develop` — desenvolvimento
