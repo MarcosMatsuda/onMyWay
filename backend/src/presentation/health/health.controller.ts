@@ -1,26 +1,57 @@
-import { Controller, Get, Injectable } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpStatus,
+  HttpException,
+  Injectable,
+} from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 export interface HealthCheckResponse {
-  status: 'ok';
+  status: 'ok' | 'error';
   timestamp: string;
   uptime: number;
   service: string;
   version: string;
-  checks: Record<string, string>;
+  checks: {
+    database: 'ok' | 'error';
+  };
 }
 
 @Injectable()
 export class HealthService {
-  getHealth(): HealthCheckResponse {
+  constructor(private readonly dataSource: DataSource) {}
+
+  async checkHealth(): Promise<HealthCheckResponse> {
+    const checks = {
+      database: await this.checkDatabase(),
+    };
+
+    const hasErrors = Object.values(checks).some((check) => check === 'error');
+    const status = hasErrors ? 'error' : 'ok';
+
     return {
-      status: 'ok',
+      status,
       timestamp: new Date().toISOString(),
       uptime: Math.floor(process.uptime()),
       service: 'onMyWay-api',
       version: '1.0.0',
-      checks: {},
+      checks,
     };
+  }
+
+  private async checkDatabase(): Promise<'ok' | 'error'> {
+    try {
+      if (!this.dataSource.isInitialized) {
+        return 'error';
+      }
+
+      await this.dataSource.query('SELECT 1');
+      return 'ok';
+    } catch {
+      return 'error';
+    }
   }
 }
 
@@ -32,7 +63,7 @@ export class HealthController {
   @Get()
   @ApiOperation({
     summary: 'Health check',
-    description: 'Check service health status',
+    description: 'Check service health and database connectivity',
   })
   @ApiResponse({
     status: 200,
@@ -44,11 +75,35 @@ export class HealthController {
         uptime: 3600,
         service: 'onMyWay-api',
         version: '1.0.0',
-        checks: {},
+        checks: {
+          database: 'ok',
+        },
       },
     },
   })
-  health(): HealthCheckResponse {
-    return this.healthService.getHealth();
+  @ApiResponse({
+    status: 503,
+    description: 'Service is degraded',
+    schema: {
+      example: {
+        status: 'error',
+        timestamp: '2026-03-23T16:37:00.000Z',
+        uptime: 3600,
+        service: 'onMyWay-api',
+        version: '1.0.0',
+        checks: {
+          database: 'error',
+        },
+      },
+    },
+  })
+  async health(): Promise<HealthCheckResponse> {
+    const healthStatus = await this.healthService.checkHealth();
+
+    if (healthStatus.status === 'error') {
+      throw new HttpException(healthStatus, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    return healthStatus;
   }
 }
