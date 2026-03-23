@@ -8,6 +8,7 @@ import { OSRMModule } from './infrastructure/osrm/osrm.module';
 import { LocationsModule } from './presentation/locations/locations.module';
 import { SchoolsModule } from './presentation/schools/schools.module';
 import { WebSocketModule } from './infrastructure/websocket/websocket.module';
+import { HealthModule } from './presentation/health/health.module';
 import { validationSchema } from './infrastructure/config/validation.schema';
 
 @Module({
@@ -30,6 +31,7 @@ import { validationSchema } from './infrastructure/config/validation.schema';
     LocationsModule,
     SchoolsModule,
     WebSocketModule,
+    HealthModule,
   ],
   controllers: [AppController],
 })
