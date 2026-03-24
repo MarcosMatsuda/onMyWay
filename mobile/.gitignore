@@ -14,3 +14,6 @@ out/
 *.swp
 *.swo
 ~*
+# Firebase config files (provided via CI/environment secrets)
+google-services.json
+GoogleService-Info.plist

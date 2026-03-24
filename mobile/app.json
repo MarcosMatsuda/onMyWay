@@ -33,9 +33,20 @@
           "locationAlwaysAndWhenInUsePermission": "This app uses your location to notify the school when you are nearby."
         }
       ],
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#2563eb"
+        }
+      ],
       "@react-native-firebase/app",
-      "@react-native-firebase/messaging"
+      [
+        "@react-native-firebase/messaging",
+        {
+          "enabled": true
+        }
+      ]
     ]
   }
 }

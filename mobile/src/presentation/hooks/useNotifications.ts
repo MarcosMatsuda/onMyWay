@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import * as Notifications from 'expo-notifications';
-import { fcmService } from '@infrastructure/notifications';
+import { fcmService, type RemoteMessage } from '@infrastructure/notifications';
 
 export interface UseNotifications {
   fcmToken: string | null;
@@ -8,55 +8,81 @@ export interface UseNotifications {
   requestPermission(): Promise<void>;
 }
 
-export function useNotifications(): UseNotifications {
+// Configure how to handle notifications when app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+export const useNotifications = (): UseNotifications => {
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
 
+  // Request permission and get token on mount
   useEffect(() => {
-    const initializeFCM = async (): Promise<void> => {
+    const initializeNotifications = async (): Promise<() => void> => {
       try {
-        // Request permission from user
+        // Request FCM permission
         const granted = await fcmService.requestPermission();
         setPermissionGranted(granted);
 
-        // Get FCM token if permission granted
         if (granted) {
+          // Get FCM token
           const token = await fcmService.getToken();
           setFcmToken(token);
         }
 
-        // Subscribe to foreground messages
-        const unsubscribe = fcmService.onMessage(async (notification) => {
-          // Display local notification
-          await Notifications.scheduleNotificationAsync({
+        // Handle foreground messages
+        const unsubscribeForeground = fcmService.onMessage((message: RemoteMessage) => {
+          // Show local notification
+          void Notifications.scheduleNotificationAsync({
             content: {
-              title: notification.title || 'Notification',
-              body: notification.body || '',
-              data: notification.data,
+              title: message.title || 'Notification',
+              body: message.body || '',
+              data: message.data,
             },
-            trigger: null, // Show immediately
+            trigger: null,
+          }).catch((error) => {
+            console.warn('Failed to schedule notification:', error);
           });
         });
 
         // Handle background messages
-        fcmService.onBackgroundMessage(async (notification) => {
-          // Background message is handled by Firebase
-          // We just log it here for debugging
-          console.log('Background notification received:', notification);
+        fcmService.onBackgroundMessage((message: RemoteMessage) => {
+          // Background message handler — notification already shown by FCM
+          console.log('Background message received:', message);
         });
 
-        return () => {
-          unsubscribe();
-        };
+        return unsubscribeForeground;
       } catch (error) {
-        console.warn('Failed to initialize FCM:', error);
+        console.warn('Notification initialization failed:', error);
+        return () => {};
       }
     };
 
-    void initializeFCM();
+    let unsubscribe: (() => void) | null = null;
+
+    initializeNotifications()
+      .then((unsub) => {
+        unsubscribe = unsub;
+      })
+      .catch((error) => {
+        console.warn('Error initializing notifications:', error);
+      });
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
-  const requestPermission = async (): Promise<void> => {
+  const requestPermission = useCallback(async (): Promise<void> => {
     try {
       const granted = await fcmService.requestPermission();
       setPermissionGranted(granted);
@@ -66,13 +92,13 @@ export function useNotifications(): UseNotifications {
         setFcmToken(token);
       }
     } catch (error) {
-      console.warn('Failed to request notification permission:', error);
+      console.warn('Permission request failed:', error);
     }
-  };
+  }, []);
 
   return {
     fcmToken,
     permissionGranted,
     requestPermission,
   };
-}
+};
