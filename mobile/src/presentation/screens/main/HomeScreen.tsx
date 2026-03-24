@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, Switch, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Button, Switch, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { School } from '@domain/entities';
@@ -133,6 +133,9 @@ const styles = StyleSheet.create({
     color: '#991b1b',
     fontSize: 14,
   },
+  mapButtonContainer: {
+    marginBottom: 16,
+  },
   navigationButtons: {
     flexDirection: 'row',
     gap: 8,
@@ -140,6 +143,19 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flex: 1,
+  },
+  mapButton: {
+    backgroundColor: '#2563eb',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  mapButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
@@ -267,6 +283,16 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
               </View>
             </View>
 
+            {/* View Map Button */}
+            {selectedSchool && (
+              <TouchableOpacity
+                style={styles.mapButton}
+                onPress={() => navigation.navigate('Map', { schoolId: selectedSchool.id })}
+              >
+                <Text style={styles.mapButtonText}>View Map</Text>
+              </TouchableOpacity>
+            )}
+
             {/* Status Badge */}
             <View style={[styles.statusBadge, statusBadge.container]}>
               <Text style={statusBadge.text}>{statusBadge.label}</Text>
@@ -288,6 +314,15 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
                 <Text style={styles.errorText}>Error: {locationError}</Text>
               </View>
             )}
+
+            {/* View Map Button */}
+            <View style={styles.mapButtonContainer}>
+              <Button
+                title="View Map"
+                onPress={() => navigation.navigate('Map', { schoolId: selectedSchool.id })}
+                disabled={isSending}
+              />
+            </View>
 
             {/* Navigation Buttons */}
             <View style={styles.navigationButtons}>
