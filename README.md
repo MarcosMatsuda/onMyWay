@@ -1,50 +1,72 @@
 # onMyWay
 
 [![WIP](https://img.shields.io/badge/status-WIP-yellow?style=flat-square)](https://github.com/MarcosMatsuda/onMyWay)
-[![Phase](https://img.shields.io/badge/phase-0%20Setup-blue?style=flat-square)](https://github.com/MarcosMatsuda/onMyWay/blob/develop/IMPLEMENTATION-ROADMAP.md)
+[![Phase](https://img.shields.io/badge/phase-2%20Mobile-blue?style=flat-square)](https://github.com/MarcosMatsuda/onMyWay/blob/develop/IMPLEMENTATION-ROADMAP.md)
+[![Backend](https://img.shields.io/badge/backend-complete-brightgreen?style=flat-square)](#)
+[![Mobile](https://img.shields.io/badge/mobile-in%20progress-orange?style=flat-square)](#)
 
 Real-time arrival notification system with live queue management.
 
-> **🚧 Work In Progress** — Currently in Phase 0 (Project Setup). See [IMPLEMENTATION-ROADMAP.md](./IMPLEMENTATION-ROADMAP.md) for timeline.
+> **🚧 Work In Progress** — Backend complete. Mobile app in active development. See [IMPLEMENTATION-ROADMAP.md](./IMPLEMENTATION-ROADMAP.md) for timeline.
 
-  ## 📚 Documentation
+## 📊 Status
 
-  - [BRAINSTORM.md](./BRAINSTORM.md) — Product vision, stack, and OSRM strategy
-  - [TECHNICAL-ARCHITECTURE.md](./TECHNICAL-ARCHITECTURE.md) — Complete technical analysis
-  - [IMPLEMENTATION-ROADMAP.md](./IMPLEMENTATION-ROADMAP.md) — Development phases and timeline
+| Layer | Status | Notes |
+|-------|--------|-------|
+| ✅ Backend (NestJS) | Complete | Auth, locations, schools, WebSocket, OSRM, PostGIS |
+| 🔄 Mobile (Expo) | In Progress | All screens built, API integration in progress |
+| ⏳ Web Dashboard | Planned | Phase 3 |
 
-  ## 📂 Project Structure
+## 📚 Documentation
 
-  onMyWay/
-  ├── backend/        (Node.js + Nest.js API)
-  ├── mobile/         (React Native + Expo)
-  ├── web/            (Next.js + React Dashboard)
-  └── docs/           (Documentation)
+- [BRAINSTORM.md](./BRAINSTORM.md) — Product vision, stack, and OSRM strategy
+- [TECHNICAL-ARCHITECTURE.md](./TECHNICAL-ARCHITECTURE.md) — Complete technical analysis
+- [IMPLEMENTATION-ROADMAP.md](./IMPLEMENTATION-ROADMAP.md) — Development phases and timeline
 
-  ## 🎯 MVP Overview
+## 📂 Project Structure
 
-  - **Mobile App:** Parents share location with privacy controls (only tracked within 1km of destination)
-  - **Backend:** Real-time location processing, OSRM route calculation, WebSocket updates
-  - **Web Dashboard:** Live arrival queue with interactive map and ETA tracking
+```
+onMyWay/
+├── backend/        # Node.js + NestJS API (active)
+├── mobile/         # React Native + Expo (active)
+├── web/            # Next.js + React Dashboard (planned)
+└── docs/           # Documentation
+```
 
-  ## 🔧 Tech Stack
+## 🎯 MVP Overview
 
-  | Layer | Technology |
-  |-------|-----------|
-  | Mobile | React Native + Expo |
-  | Backend | Node.js + Nest.js + TypeScript |
-  | Database | PostgreSQL + PostGIS |
-  | Routing | OSRM (Open Source Routing Machine) |
-  | Real-time | WebSocket (Socket.io) |
-  | Web | Next.js + React + Tailwind |
-  | Hosting | Railway (backend) + Vercel (web) |
+- **Mobile App:** Parents share location with privacy controls (only tracked within 1km of destination)
+- **Backend:** Real-time location processing, OSRM route calculation, WebSocket updates
+- **Web Dashboard:** Live arrival queue with interactive map and ETA tracking
 
-  ## 📅 Development
+## 🔧 Tech Stack
 
-  See [IMPLEMENTATION-ROADMAP.md](./IMPLEMENTATION-ROADMAP.md) for detailed phases and timeline.
+| Layer | Technology |
+|-------|-----------|
+| Mobile | React Native + Expo |
+| Backend | Node.js + NestJS + TypeScript |
+| Database | PostgreSQL + PostGIS |
+| Routing | OSRM (Open Source Routing Machine) |
+| Real-time | WebSocket (Socket.io) |
+| Notifications | Firebase Cloud Messaging (FCM) |
+| Web | Next.js + React + Tailwind |
+| Hosting | Railway (backend) + Vercel (web) |
 
-  **Status:** 🚧 Phase 0 - Project setup
+## 🚀 Running Locally
 
-  ---
+```bash
+# Backend
+cd backend
+docker-compose up -d   # PostgreSQL + PostGIS
+npm install
+npm run start:dev      # http://localhost:3000
 
-  **Built with Clean Architecture principles. Inspired by modern SaaS patterns.**
+# Mobile
+cd mobile
+npm install
+npx expo start
+```
+
+---
+
+**Built with Clean Architecture principles. Inspired by modern SaaS patterns.**
