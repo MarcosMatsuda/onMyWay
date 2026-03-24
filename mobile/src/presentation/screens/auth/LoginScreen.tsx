@@ -1,33 +1,32 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, ActivityIndicator } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useAuth } from '../../hooks';
-import { AuthStackParamList } from '../../navigation/types';
+import { View, TextInput, Button, Text, ActivityIndicator, ScrollView } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAuth } from '@presentation/hooks';
+import { AuthStackParamList } from '@presentation/navigation/types';
 
-type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
+interface Props {
+  navigation: LoginScreenNavigationProp;
+}
 
-export function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
+export const LoginScreen: React.FC<Props> = ({ navigation }) => {
+  const { login, isLoading, error } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-
-  const { login, isLoading, error } = useAuth();
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
     if (!email.trim()) {
       errors.email = 'Email is required';
-    } else if (!isValidEmail(email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.email = 'Invalid email format';
     }
 
-    if (!password.trim()) {
+    if (!password) {
       errors.password = 'Password is required';
     } else if (password.length < 6) {
       errors.password = 'Password must be at least 6 characters';
@@ -37,62 +36,101 @@ export function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
     return Object.keys(errors).length === 0;
   };
 
-  const handleLogin = async (): Promise<void> => {
+  const handleLogin = async () => {
     if (!validateForm()) {
       return;
     }
 
     try {
       await login(email, password);
+      // Navigation will be handled automatically by AppNavigator
     } catch {
-      // Error is handled by useAuth hook
+      // Error is already stored in useAuth().error
     }
   };
 
   return (
-    <View style={{ flex: 1, padding: 20, justifyContent: 'center' }}>
-      <Text style={{ fontSize: 24, marginBottom: 20 }}>Login</Text>
+    <ScrollView style={{ flex: 1, padding: 16 }}>
+      <View style={{ marginTop: 20 }}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Login</Text>
 
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        editable={!isLoading}
-        style={{ borderWidth: 1, padding: 10, marginBottom: 10 }}
-      />
-      {validationErrors.email && (
-        <Text style={{ color: 'red', marginBottom: 10 }}>{validationErrors.email}</Text>
-      )}
+        {/* Email Input */}
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontWeight: '600', marginBottom: 8 }}>Email</Text>
+          <TextInput
+            style={{
+              borderWidth: 1,
+              borderColor: validationErrors.email ? '#ff6b6b' : '#ccc',
+              padding: 12,
+              borderRadius: 4,
+            }}
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={setEmail}
+            editable={!isLoading}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          {validationErrors.email && (
+            <Text style={{ color: '#ff6b6b', marginTop: 4 }}>{validationErrors.email}</Text>
+          )}
+        </View>
 
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        editable={!isLoading}
-        style={{ borderWidth: 1, padding: 10, marginBottom: 10 }}
-      />
-      {validationErrors.password && (
-        <Text style={{ color: 'red', marginBottom: 10 }}>{validationErrors.password}</Text>
-      )}
+        {/* Password Input */}
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontWeight: '600', marginBottom: 8 }}>Password</Text>
+          <TextInput
+            style={{
+              borderWidth: 1,
+              borderColor: validationErrors.password ? '#ff6b6b' : '#ccc',
+              padding: 12,
+              borderRadius: 4,
+            }}
+            placeholder="Enter your password"
+            value={password}
+            onChangeText={setPassword}
+            editable={!isLoading}
+            secureTextEntry
+          />
+          {validationErrors.password && (
+            <Text style={{ color: '#ff6b6b', marginTop: 4 }}>{validationErrors.password}</Text>
+          )}
+        </View>
 
-      {error && <Text style={{ color: 'red', marginBottom: 10 }}>{error}</Text>}
+        {/* API Error */}
+        {error && (
+          <View
+            style={{
+              marginBottom: 16,
+              padding: 12,
+              backgroundColor: '#ffe0e0',
+              borderRadius: 4,
+            }}
+          >
+            <Text style={{ color: '#ff6b6b' }}>{error}</Text>
+          </View>
+        )}
 
-      <View style={{ marginBottom: 10 }}>
-        <Button
-          title={isLoading ? 'Logging in...' : 'Login'}
-          onPress={handleLogin}
-          disabled={isLoading}
-        />
+        {/* Login Button */}
+        <View style={{ marginBottom: 16 }}>
+          <Button
+            title={isLoading ? 'Logging in...' : 'Login'}
+            onPress={handleLogin}
+            disabled={isLoading}
+          />
+          {isLoading && <ActivityIndicator size="large" style={{ marginTop: 12 }} />}
+        </View>
+
+        {/* Register Link */}
+        <View style={{ alignItems: 'center', marginTop: 20 }}>
+          <Text style={{ marginBottom: 8 }}>Don't have an account?</Text>
+          <Button
+            title="Go to Register"
+            onPress={() => navigation.navigate('Register')}
+            disabled={isLoading}
+          />
+        </View>
       </View>
-
-      {isLoading && <ActivityIndicator size="large" />}
-
-      <Button
-        title="Don't have an account? Register"
-        onPress={() => navigation.navigate('Register')}
-        disabled={isLoading}
-      />
-    </View>
+    </ScrollView>
   );
-}
+};
