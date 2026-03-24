@@ -1,12 +1,7 @@
 import { DataSource } from 'typeorm'
-import { getDatabase } from '../../database/database.factory'
 
 export class DbHelper {
-  private dataSource: DataSource
-
-  async init(): Promise<void> {
-    this.dataSource = await getDatabase()
-  }
+  constructor(private dataSource: DataSource) {}
 
   async truncateTables(): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner()
@@ -17,11 +12,5 @@ export class DbHelper {
     }
     
     await queryRunner.release()
-  }
-
-  async close(): Promise<void> {
-    if (this.dataSource?.isInitialized) {
-      await this.dataSource.destroy()
-    }
   }
 }
