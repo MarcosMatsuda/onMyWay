@@ -1,5 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { ISchoolRepository } from '../repositories/school.repository.interface';
+import { Injectable, Inject } from '@nestjs/common';
+import {
+  ISchoolRepository,
+  SCHOOL_REPOSITORY,
+} from '../repositories/school.repository.interface';
 import { School } from '../entities/school.entity';
 
 export interface CreateSchoolInput {
@@ -14,7 +17,10 @@ export interface CreateSchoolOutput extends School {}
 
 @Injectable()
 export class CreateSchoolUseCase {
-  constructor(private readonly schoolRepository: ISchoolRepository) {}
+  constructor(
+    @Inject(SCHOOL_REPOSITORY)
+    private readonly schoolRepository: ISchoolRepository,
+  ) {}
 
   async execute(input: CreateSchoolInput): Promise<CreateSchoolOutput> {
     const school = await this.schoolRepository.create({
