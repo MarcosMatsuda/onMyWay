@@ -9,6 +9,7 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { School } from '@domain/entities';
 import { useLocation, useSendLocation } from '@presentation/hooks';
@@ -157,12 +158,6 @@ const styles = StyleSheet.create<any>({
   },
 });
 
-// Mock AsyncStorage
-const AsyncStorage = {
-  getItem: async (_key: string) => Promise.resolve(null as string | null),
-  setItem: async (_key: string, _value: string) => Promise.resolve(),
-};
-
 export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [isShareEnabled, setIsShareEnabled] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
@@ -183,7 +178,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     const loadSelectedSchool = async () => {
       try {
         setIsLoadingSchool(true);
-        const schoolJson = await AsyncStorage.getItem('selected_school');
+        const schoolJson = await AsyncStorage.getItem('@onmyway:selected_school');
         if (schoolJson) {
           const school = JSON.parse(schoolJson) as School;
           setSelectedSchool(school);
