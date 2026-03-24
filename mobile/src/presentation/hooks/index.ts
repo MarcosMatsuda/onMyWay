@@ -6,3 +6,5 @@ export { useSendLocation } from './useSendLocation';
 export type { UseSendLocation } from './useSendLocation';
 export { useArrivals } from './useArrivals';
 export type { UseArrivals } from './useArrivals';
+export { useNotifications } from './useNotifications';
+export type { UseNotifications } from './useNotifications';
