@@ -1,16 +1,16 @@
 import { IParentRepository } from '@domain/repositories';
 import { Parent } from '@domain/entities';
-import { HttpClient } from '@infrastructure/http';
+import { httpClient } from '@infrastructure/http';
 
 /**
  * ParentRepository
  * Implements IParentRepository using HTTP client
  */
 export class ParentRepository implements IParentRepository {
-  constructor(private readonly httpClient: HttpClient) {}
+  constructor(private readonly http = httpClient) {}
 
   async getProfile(): Promise<Parent> {
-    const response = await this.httpClient.get<{
+    const response = await this.http.get<{
       id: string;
       name: string;
       phone: string;
@@ -28,7 +28,7 @@ export class ParentRepository implements IParentRepository {
   }
 
   async saveProfile(parent: Partial<Parent>): Promise<void> {
-    await this.httpClient.put('/auth/profile', {
+    await this.http.put('/auth/profile', {
       name: parent.name,
       phone: parent.phone,
       email: parent.email,
@@ -36,3 +36,5 @@ export class ParentRepository implements IParentRepository {
     });
   }
 }
+
+export const parentRepository = new ParentRepository();

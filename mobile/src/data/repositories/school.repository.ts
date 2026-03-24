@@ -1,16 +1,16 @@
 import { ISchoolRepository, ArrivalsListener } from '@domain/repositories';
 import { School, ETA } from '@domain/entities';
-import { HttpClient } from '@infrastructure/http';
+import { httpClient } from '@infrastructure/http';
 
 /**
  * SchoolRepository
  * Implements ISchoolRepository using HTTP client
  */
 export class SchoolRepository implements ISchoolRepository {
-  constructor(private readonly httpClient: HttpClient) {}
+  constructor(private readonly http = httpClient) {}
 
   async getSchool(schoolId: string): Promise<School> {
-    const response = await this.httpClient.get<{
+    const response = await this.http.get<{
       id: string;
       name: string;
       location: {
@@ -30,16 +30,16 @@ export class SchoolRepository implements ISchoolRepository {
   }
 
   async listSchools(): Promise<School[]> {
-    const responses = await this.httpClient.get<
-      {
-        id: string;
-        name: string;
-        location: {
-          lat: number;
-          lng: number;
-        };
-      }[]
-    >('/schools');
+    interface SchoolResponse {
+      id: string;
+      name: string;
+      location: {
+        lat: number;
+        lng: number;
+      };
+    }
+
+    const responses = await this.http.get<SchoolResponse[]>('/schools');
 
     return responses.map((response) => ({
       id: response.id,
@@ -52,14 +52,14 @@ export class SchoolRepository implements ISchoolRepository {
   }
 
   async getArrivalsQueue(schoolId: string): Promise<ETA[]> {
-    const responses = await this.httpClient.get<
-      {
-        parentId: string;
-        distanceMeters: number;
-        durationMinutes: number;
-        routePolyline: string;
-      }[]
-    >(`/schools/${schoolId}/arrivals`);
+    interface ETAResponse {
+      parentId: string;
+      distanceMeters: number;
+      durationMinutes: number;
+      routePolyline: string;
+    }
+
+    const responses = await this.http.get<ETAResponse[]>(`/schools/${schoolId}/arrivals`);
 
     return responses.map((response) => ({
       parentId: response.parentId,
@@ -74,3 +74,5 @@ export class SchoolRepository implements ISchoolRepository {
     return () => {};
   }
 }
+
+export const schoolRepository = new SchoolRepository();
