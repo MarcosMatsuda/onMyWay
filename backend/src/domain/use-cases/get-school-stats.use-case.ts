@@ -1,5 +1,12 @@
-import { IETARepository } from '../repositories/eta.repository.interface';
-import { ISchoolRepository } from '../repositories/school.repository.interface';
+import { Injectable, Inject } from '@nestjs/common';
+import {
+  IETARepository,
+  ETA_REPOSITORY,
+} from '../repositories/eta.repository.interface';
+import {
+  ISchoolRepository,
+  SCHOOL_REPOSITORY,
+} from '../repositories/school.repository.interface';
 
 export interface GetSchoolStatsInput {
   schoolId: string;
@@ -13,9 +20,12 @@ export interface GetSchoolStatsOutput {
   etaGreaterThan15Min: number;
 }
 
+@Injectable()
 export class GetSchoolStatsUseCase {
   constructor(
+    @Inject(ETA_REPOSITORY)
     private readonly etaRepository: IETARepository,
+    @Inject(SCHOOL_REPOSITORY)
     private readonly schoolRepository: ISchoolRepository,
   ) {}
 
