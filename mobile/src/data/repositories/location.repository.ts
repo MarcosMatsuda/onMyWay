@@ -1,38 +1,37 @@
-import { CurrentLocation } from '@domain/entities';
 import { ILocationRepository } from '@domain/repositories';
+import { CurrentLocation } from '@domain/entities';
 import { HttpClient } from '@infrastructure/http';
 
-interface LocationDTO {
-  lat: number;
-  lng: number;
-  accuracy: number;
-  timestamp: number;
-}
-
-interface SendLocationRequest {
-  schoolId: string;
-  lat: number;
-  lng: number;
-  accuracy: number;
-  timestamp: number;
-}
-
+/**
+ * LocationRepository
+ * Implements ILocationRepository using HTTP client
+ */
 export class LocationRepository implements ILocationRepository {
-  constructor(private httpClient: HttpClient) {}
+  constructor(private readonly httpClient: HttpClient) {}
 
   async sendLocation(schoolId: string, location: CurrentLocation): Promise<void> {
-    await this.httpClient.post<void>('/locations', {
+    await this.httpClient.post('/locations', {
       schoolId,
       lat: location.lat,
       lng: location.lng,
       accuracy: location.accuracy,
       timestamp: location.timestamp,
-    } as SendLocationRequest);
+    });
   }
 
   async getMyLocation(): Promise<CurrentLocation | null> {
     try {
-      const response = await this.httpClient.get<LocationDTO>('/locations/me');
+      const response = await this.httpClient.get<{
+        lat: number;
+        lng: number;
+        accuracy: number;
+        timestamp: number;
+      } | null>('/locations/me');
+
+      if (!response) {
+        return null;
+      }
+
       return {
         lat: response.lat,
         lng: response.lng,

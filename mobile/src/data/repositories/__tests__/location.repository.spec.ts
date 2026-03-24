@@ -1,10 +1,14 @@
-import { CurrentLocation } from '@domain/entities';
-import { HttpClient } from '@infrastructure/http';
 import { LocationRepository } from '../location.repository';
+import { CurrentLocation } from '@domain/entities';
 
 describe('LocationRepository', () => {
   let repository: LocationRepository;
-  let mockHttpClient: jest.Mocked<HttpClient>;
+  let mockHttpClient: {
+    get: jest.Mock;
+    post: jest.Mock;
+    put: jest.Mock;
+    delete: jest.Mock;
+  };
 
   beforeEach(() => {
     mockHttpClient = {
@@ -13,18 +17,19 @@ describe('LocationRepository', () => {
       put: jest.fn(),
       delete: jest.fn(),
     };
-    repository = new LocationRepository(mockHttpClient);
+    repository = new LocationRepository(mockHttpClient as any);
   });
 
   describe('sendLocation', () => {
-    it('should POST location to /locations with correct payload', async () => {
+    it('should send location with correct payload', async () => {
       const schoolId = 'school-123';
       const location: CurrentLocation = {
         lat: -23.5505,
         lng: -46.6333,
         accuracy: 10,
-        timestamp: 1234567890,
+        timestamp: Date.now(),
       };
+
       mockHttpClient.post.mockResolvedValue(undefined);
 
       await repository.sendLocation(schoolId, location);
@@ -38,44 +43,48 @@ describe('LocationRepository', () => {
       });
     });
 
-    it('should propagate errors from HTTP client', async () => {
+    it('should handle send location errors', async () => {
       const schoolId = 'school-123';
       const location: CurrentLocation = {
         lat: -23.5505,
         lng: -46.6333,
         accuracy: 10,
-        timestamp: 1234567890,
+        timestamp: Date.now(),
       };
-      const error = new Error('Network error');
-      mockHttpClient.post.mockRejectedValue(error);
 
-      await expect(repository.sendLocation(schoolId, location)).rejects.toThrow(error);
+      mockHttpClient.post.mockRejectedValue(new Error('Network error'));
+
+      await expect(repository.sendLocation(schoolId, location)).rejects.toThrow('Network error');
     });
   });
 
   describe('getMyLocation', () => {
-    it('should GET location from /locations/me and map to entity', async () => {
-      const mockResponse = {
+    it('should return current location from API', async () => {
+      const apiResponse = {
         lat: -23.5505,
         lng: -46.6333,
         accuracy: 10,
         timestamp: 1234567890,
       };
-      mockHttpClient.get.mockResolvedValue(mockResponse);
+
+      mockHttpClient.get.mockResolvedValue(apiResponse);
 
       const result = await repository.getMyLocation();
 
-      expect(result).toEqual({
-        lat: -23.5505,
-        lng: -46.6333,
-        accuracy: 10,
-        timestamp: 1234567890,
-      });
+      expect(result).toEqual(apiResponse);
       expect(mockHttpClient.get).toHaveBeenCalledWith('/locations/me');
     });
 
+    it('should return null when location is not available', async () => {
+      mockHttpClient.get.mockResolvedValue(null);
+
+      const result = await repository.getMyLocation();
+
+      expect(result).toBeNull();
+    });
+
     it('should return null on error', async () => {
-      mockHttpClient.get.mockRejectedValue(new Error('Not found'));
+      mockHttpClient.get.mockRejectedValue(new Error('API error'));
 
       const result = await repository.getMyLocation();
 

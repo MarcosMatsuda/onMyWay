@@ -1,20 +1,23 @@
-import { Parent } from '@domain/entities';
 import { IParentRepository } from '@domain/repositories';
+import { Parent } from '@domain/entities';
 import { HttpClient } from '@infrastructure/http';
 
-interface ParentDTO {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  schoolId: string;
-}
-
+/**
+ * ParentRepository
+ * Implements IParentRepository using HTTP client
+ */
 export class ParentRepository implements IParentRepository {
-  constructor(private httpClient: HttpClient) {}
+  constructor(private readonly httpClient: HttpClient) {}
 
   async getProfile(): Promise<Parent> {
-    const response = await this.httpClient.get<ParentDTO>('/auth/profile');
+    const response = await this.httpClient.get<{
+      id: string;
+      name: string;
+      phone: string;
+      email: string;
+      schoolId: string;
+    }>('/auth/profile');
+
     return {
       id: response.id,
       name: response.name,
@@ -25,7 +28,7 @@ export class ParentRepository implements IParentRepository {
   }
 
   async saveProfile(parent: Partial<Parent>): Promise<void> {
-    await this.httpClient.put<void>('/auth/profile', {
+    await this.httpClient.put('/auth/profile', {
       name: parent.name,
       phone: parent.phone,
       email: parent.email,
