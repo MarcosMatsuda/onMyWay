@@ -130,12 +130,16 @@ describe('WebSocket/Arrivals Gateway (E2E)', () => {
 
       await new Promise<void>((resolve, reject) => {
         client.on('connect', () => {
-          client.emit('school:join', { schoolId: testSchoolId }, (response: any) => {
-            expect(response).toBeDefined();
-            expect(response.success).toBe(true);
-            expect(response.room).toBe(`school:${testSchoolId}`);
-            resolve();
-          });
+          client.emit(
+            'school:join',
+            { schoolId: testSchoolId },
+            (response: any) => {
+              expect(response).toBeDefined();
+              expect(response.success).toBe(true);
+              expect(response.room).toBe(`school:${testSchoolId}`);
+              resolve();
+            },
+          );
         });
 
         setTimeout(() => {
@@ -156,12 +160,16 @@ describe('WebSocket/Arrivals Gateway (E2E)', () => {
       await new Promise<void>((resolve, reject) => {
         client.on('connect', () => {
           client.emit('school:join', { schoolId: testSchoolId }, () => {
-            client.emit('school:leave', { schoolId: testSchoolId }, (response: any) => {
-              expect(response).toBeDefined();
-              expect(response.success).toBe(true);
-              expect(response.room).toBe(`school:${testSchoolId}`);
-              resolve();
-            });
+            client.emit(
+              'school:leave',
+              { schoolId: testSchoolId },
+              (response: any) => {
+                expect(response).toBeDefined();
+                expect(response.success).toBe(true);
+                expect(response.room).toBe(`school:${testSchoolId}`);
+                resolve();
+              },
+            );
           });
         });
 
@@ -190,7 +198,11 @@ describe('WebSocket/Arrivals Gateway (E2E)', () => {
             // Simulate server emitting arrivals update
             const arrivalsGateway = app.get(ArrivalsGateway);
             if (arrivalsGateway) {
-              arrivalsGateway.emitArrivalsUpdated(testSchoolId, [], 'Test School');
+              arrivalsGateway.emitArrivalsUpdated(
+                testSchoolId,
+                [],
+                'Test School',
+              );
             }
           });
         });
