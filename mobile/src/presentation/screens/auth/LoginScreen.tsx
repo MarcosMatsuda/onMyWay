@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, ActivityIndicator, ScrollView } from 'react-native';
+import {
+  View,
+  TextInput,
+  Button,
+  Text,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  SafeAreaView,
+} from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '@presentation/hooks';
 import { AuthStackParamList } from '@presentation/navigation/types';
@@ -43,94 +52,172 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       await login(email, password);
-      // Navigation will be handled automatically by AppNavigator
     } catch {
       // Error is already stored in useAuth().error
     }
   };
 
   return (
-    <ScrollView style={{ flex: 1, padding: 16 }}>
-      <View style={{ marginTop: 20 }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Login</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Sign In</Text>
+          <Text style={styles.subtitle}>Enter your credentials to continue</Text>
+        </View>
 
         {/* Email Input */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontWeight: '600', marginBottom: 8 }}>Email</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Email</Text>
           <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: validationErrors.email ? '#ff6b6b' : '#ccc',
-              padding: 12,
-              borderRadius: 4,
-            }}
-            placeholder="Enter your email"
+            style={[styles.input, validationErrors.email ? styles.inputError : undefined]}
+            placeholder="name@example.com"
+            placeholderTextColor="#9ca3af"
             value={email}
             onChangeText={setEmail}
             editable={!isLoading}
             keyboardType="email-address"
             autoCapitalize="none"
+            textContentType="emailAddress"
           />
-          {validationErrors.email && (
-            <Text style={{ color: '#ff6b6b', marginTop: 4 }}>{validationErrors.email}</Text>
-          )}
+          {validationErrors.email && <Text style={styles.errorText}>{validationErrors.email}</Text>}
         </View>
 
         {/* Password Input */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontWeight: '600', marginBottom: 8 }}>Password</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Password</Text>
           <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: validationErrors.password ? '#ff6b6b' : '#ccc',
-              padding: 12,
-              borderRadius: 4,
-            }}
-            placeholder="Enter your password"
+            style={[styles.input, validationErrors.password ? styles.inputError : undefined]}
+            placeholder="••••••••"
+            placeholderTextColor="#9ca3af"
             value={password}
             onChangeText={setPassword}
             editable={!isLoading}
             secureTextEntry
+            textContentType="password"
           />
           {validationErrors.password && (
-            <Text style={{ color: '#ff6b6b', marginTop: 4 }}>{validationErrors.password}</Text>
+            <Text style={styles.errorText}>{validationErrors.password}</Text>
           )}
         </View>
 
         {/* API Error */}
         {error && (
-          <View
-            style={{
-              marginBottom: 16,
-              padding: 12,
-              backgroundColor: '#ffe0e0',
-              borderRadius: 4,
-            }}
-          >
-            <Text style={{ color: '#ff6b6b' }}>{error}</Text>
+          <View style={styles.errorBox}>
+            <Text style={styles.errorBoxText}>{error}</Text>
           </View>
         )}
 
         {/* Login Button */}
-        <View style={{ marginBottom: 16 }}>
+        <View style={styles.buttonContainer}>
           <Button
-            title={isLoading ? 'Logging in...' : 'Login'}
+            title={isLoading ? 'Signing in...' : 'Sign In'}
             onPress={handleLogin}
             disabled={isLoading}
+            color={styles.buttonColor.color}
           />
-          {isLoading && <ActivityIndicator size="large" style={{ marginTop: 12 }} />}
+          {isLoading && <ActivityIndicator size="large" color="#2563eb" style={styles.loader} />}
         </View>
 
         {/* Register Link */}
-        <View style={{ alignItems: 'center', marginTop: 20 }}>
-          <Text style={{ marginBottom: 8 }}>Don't have an account?</Text>
-          <Button
-            title="Go to Register"
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Don't have an account? </Text>
+          <Text
+            style={[styles.footerText, styles.link]}
             onPress={() => navigation.navigate('Register')}
             disabled={isLoading}
-          />
+          >
+            Sign up
+          </Text>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  container: {
+    flexGrow: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  header: {
+    marginBottom: 32,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#6b7280',
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 6,
+    padding: 12,
+    fontSize: 16,
+    color: '#1a1a1a',
+    backgroundColor: '#f9fafb',
+  },
+  inputError: {
+    borderColor: '#ef4444',
+    backgroundColor: '#fef2f2',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 6,
+  },
+  errorBox: {
+    backgroundColor: '#fee2e2',
+    borderLeftWidth: 4,
+    borderLeftColor: '#ef4444',
+    padding: 12,
+    borderRadius: 4,
+    marginBottom: 20,
+  },
+  errorBoxText: {
+    color: '#dc2626',
+    fontSize: 14,
+  },
+  buttonContainer: {
+    marginBottom: 20,
+  },
+  buttonColor: {
+    color: '#2563eb',
+  },
+  loader: {
+    marginTop: 12,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 32,
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  link: {
+    color: '#2563eb',
+    fontWeight: '600',
+  },
+});

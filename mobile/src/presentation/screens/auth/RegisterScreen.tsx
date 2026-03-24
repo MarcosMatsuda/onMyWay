@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, ActivityIndicator, ScrollView } from 'react-native';
+import {
+  View,
+  TextInput,
+  Button,
+  Text,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  SafeAreaView,
+} from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '@presentation/hooks';
 import { AuthStackParamList } from '@presentation/navigation/types';
@@ -64,158 +73,220 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       await register(name, email, phone, password);
-      // Navigation will be handled automatically by AppNavigator
     } catch {
       // Error is already stored in useAuth().error
     }
   };
 
   return (
-    <ScrollView style={{ flex: 1, padding: 16 }}>
-      <View style={{ marginTop: 20 }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Register</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Join onMyWay to share your location</Text>
+        </View>
 
         {/* Name Input */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontWeight: '600', marginBottom: 8 }}>Name</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Full Name</Text>
           <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: validationErrors.name ? '#ff6b6b' : '#ccc',
-              padding: 12,
-              borderRadius: 4,
-            }}
-            placeholder="Enter your full name"
+            style={[styles.input, validationErrors.name ? styles.inputError : undefined]}
+            placeholder="John Doe"
+            placeholderTextColor="#9ca3af"
             value={name}
             onChangeText={setName}
             editable={!isLoading}
+            textContentType="name"
           />
-          {validationErrors.name && (
-            <Text style={{ color: '#ff6b6b', marginTop: 4 }}>{validationErrors.name}</Text>
-          )}
+          {validationErrors.name && <Text style={styles.errorText}>{validationErrors.name}</Text>}
         </View>
 
         {/* Email Input */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontWeight: '600', marginBottom: 8 }}>Email</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Email</Text>
           <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: validationErrors.email ? '#ff6b6b' : '#ccc',
-              padding: 12,
-              borderRadius: 4,
-            }}
-            placeholder="Enter your email"
+            style={[styles.input, validationErrors.email ? styles.inputError : undefined]}
+            placeholder="name@example.com"
+            placeholderTextColor="#9ca3af"
             value={email}
             onChangeText={setEmail}
             editable={!isLoading}
             keyboardType="email-address"
             autoCapitalize="none"
+            textContentType="emailAddress"
           />
-          {validationErrors.email && (
-            <Text style={{ color: '#ff6b6b', marginTop: 4 }}>{validationErrors.email}</Text>
-          )}
+          {validationErrors.email && <Text style={styles.errorText}>{validationErrors.email}</Text>}
         </View>
 
         {/* Phone Input */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontWeight: '600', marginBottom: 8 }}>Phone</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Phone Number</Text>
           <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: validationErrors.phone ? '#ff6b6b' : '#ccc',
-              padding: 12,
-              borderRadius: 4,
-            }}
-            placeholder="Enter your phone"
+            style={[styles.input, validationErrors.phone ? styles.inputError : undefined]}
+            placeholder="+55 (11) 99999-9999"
+            placeholderTextColor="#9ca3af"
             value={phone}
             onChangeText={setPhone}
             editable={!isLoading}
             keyboardType="phone-pad"
+            textContentType="telephoneNumber"
           />
-          {validationErrors.phone && (
-            <Text style={{ color: '#ff6b6b', marginTop: 4 }}>{validationErrors.phone}</Text>
-          )}
+          {validationErrors.phone && <Text style={styles.errorText}>{validationErrors.phone}</Text>}
         </View>
 
         {/* Password Input */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontWeight: '600', marginBottom: 8 }}>Password</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Password</Text>
           <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: validationErrors.password ? '#ff6b6b' : '#ccc',
-              padding: 12,
-              borderRadius: 4,
-            }}
-            placeholder="Enter your password"
+            style={[styles.input, validationErrors.password ? styles.inputError : undefined]}
+            placeholder="••••••••"
+            placeholderTextColor="#9ca3af"
             value={password}
             onChangeText={setPassword}
             editable={!isLoading}
             secureTextEntry
+            textContentType="newPassword"
           />
           {validationErrors.password && (
-            <Text style={{ color: '#ff6b6b', marginTop: 4 }}>{validationErrors.password}</Text>
+            <Text style={styles.errorText}>{validationErrors.password}</Text>
           )}
         </View>
 
         {/* Confirm Password Input */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontWeight: '600', marginBottom: 8 }}>Confirm Password</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Confirm Password</Text>
           <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: validationErrors.confirmPassword ? '#ff6b6b' : '#ccc',
-              padding: 12,
-              borderRadius: 4,
-            }}
-            placeholder="Confirm your password"
+            style={[styles.input, validationErrors.confirmPassword ? styles.inputError : undefined]}
+            placeholder="••••••••"
+            placeholderTextColor="#9ca3af"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             editable={!isLoading}
             secureTextEntry
+            textContentType="newPassword"
           />
           {validationErrors.confirmPassword && (
-            <Text style={{ color: '#ff6b6b', marginTop: 4 }}>
-              {validationErrors.confirmPassword}
-            </Text>
+            <Text style={styles.errorText}>{validationErrors.confirmPassword}</Text>
           )}
         </View>
 
         {/* API Error */}
         {error && (
-          <View
-            style={{
-              marginBottom: 16,
-              padding: 12,
-              backgroundColor: '#ffe0e0',
-              borderRadius: 4,
-            }}
-          >
-            <Text style={{ color: '#ff6b6b' }}>{error}</Text>
+          <View style={styles.errorBox}>
+            <Text style={styles.errorBoxText}>{error}</Text>
           </View>
         )}
 
         {/* Register Button */}
-        <View style={{ marginBottom: 16 }}>
+        <View style={styles.buttonContainer}>
           <Button
-            title={isLoading ? 'Registering...' : 'Register'}
+            title={isLoading ? 'Creating account...' : 'Create Account'}
             onPress={handleRegister}
             disabled={isLoading}
+            color={styles.buttonColor.color}
           />
-          {isLoading && <ActivityIndicator size="large" style={{ marginTop: 12 }} />}
+          {isLoading && <ActivityIndicator size="large" color="#2563eb" style={styles.loader} />}
         </View>
 
         {/* Login Link */}
-        <View style={{ alignItems: 'center', marginTop: 20 }}>
-          <Text style={{ marginBottom: 8 }}>Already have an account?</Text>
-          <Button
-            title="Go to Login"
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Already have an account? </Text>
+          <Text
+            style={[styles.footerText, styles.link]}
             onPress={() => navigation.navigate('Login')}
             disabled={isLoading}
-          />
+          >
+            Sign in
+          </Text>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  container: {
+    flexGrow: 1,
+    padding: 20,
+  },
+  header: {
+    marginBottom: 32,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#6b7280',
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 6,
+    padding: 12,
+    fontSize: 16,
+    color: '#1a1a1a',
+    backgroundColor: '#f9fafb',
+  },
+  inputError: {
+    borderColor: '#ef4444',
+    backgroundColor: '#fef2f2',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 6,
+  },
+  errorBox: {
+    backgroundColor: '#fee2e2',
+    borderLeftWidth: 4,
+    borderLeftColor: '#ef4444',
+    padding: 12,
+    borderRadius: 4,
+    marginBottom: 20,
+  },
+  errorBoxText: {
+    color: '#dc2626',
+    fontSize: 14,
+  },
+  buttonContainer: {
+    marginBottom: 20,
+  },
+  buttonColor: {
+    color: '#2563eb',
+  },
+  loader: {
+    marginTop: 12,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 32,
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  link: {
+    color: '#2563eb',
+    fontWeight: '600',
+  },
+});
