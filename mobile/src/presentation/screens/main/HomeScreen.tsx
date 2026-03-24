@@ -133,6 +133,9 @@ const styles = StyleSheet.create({
     color: '#991b1b',
     fontSize: 14,
   },
+  mapButtonContainer: {
+    marginBottom: 16,
+  },
   navigationButtons: {
     flexDirection: 'row',
     gap: 8,
@@ -288,6 +291,15 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
                 <Text style={styles.errorText}>Error: {locationError}</Text>
               </View>
             )}
+
+            {/* View Map Button */}
+            <View style={styles.mapButtonContainer}>
+              <Button
+                title="View Map"
+                onPress={() => navigation.navigate('Map', { schoolId: selectedSchool.id })}
+                disabled={isSending}
+              />
+            </View>
 
             {/* Navigation Buttons */}
             <View style={styles.navigationButtons}>
