@@ -15,13 +15,15 @@
       "**/*"
     ],
     "ios": {
-      "supportsTabletMode": true
+      "supportsTabletMode": true,
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "googleServicesFile": "./google-services.json"
     },
     "platforms": ["ios", "android"],
     "plugins": [
@@ -30,7 +32,10 @@
         {
           "locationAlwaysAndWhenInUsePermission": "This app uses your location to notify the school when you are nearby."
         }
-      ]
+      ],
+      "expo-notifications",
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging"
     ]
   }
 }
