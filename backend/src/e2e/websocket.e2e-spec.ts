@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { io, Socket as ClientSocket } from 'socket.io-client';
 import { AppModule } from '../app.module';
+import { ArrivalsGateway } from '../infrastructure/websocket/arrivals.gateway';
 import { truncateTables, seedSchool } from './helpers';
 
 describe('WebSocket/Arrivals Gateway (E2E)', () => {
@@ -187,7 +188,7 @@ describe('WebSocket/Arrivals Gateway (E2E)', () => {
         client.on('connect', () => {
           client.emit('school:join', { schoolId: testSchoolId }, () => {
             // Simulate server emitting arrivals update
-            const arrivalsGateway = app.get('ArrivalsGateway');
+            const arrivalsGateway = app.get(ArrivalsGateway);
             if (arrivalsGateway) {
               arrivalsGateway.emitArrivalsUpdated(testSchoolId, [], 'Test School');
             }
