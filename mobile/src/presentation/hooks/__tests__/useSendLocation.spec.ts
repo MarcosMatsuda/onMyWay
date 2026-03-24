@@ -111,9 +111,7 @@ describe('useSendLocation', () => {
       resolveFirstSend = resolve;
     });
 
-    const mockExecute = jest.fn().mockImplementationOnce(
-      () => firstSendPromise,
-    );
+    const mockExecute = jest.fn().mockImplementationOnce(() => firstSendPromise);
 
     SendLocationUseCase.mockImplementationOnce(() => ({
       execute: mockExecute,
@@ -129,12 +127,7 @@ describe('useSendLocation', () => {
     };
 
     // Start first send (don't await)
-    let firstSendResolved = false;
-    const send1Promise = result.current
-      .sendLocation('school1', mockLocation)
-      .then(() => {
-        firstSendResolved = true;
-      });
+    const send1Promise = result.current.sendLocation('school1', mockLocation);
 
     // Give it a moment to start
     await act(async () => {
@@ -143,7 +136,7 @@ describe('useSendLocation', () => {
 
     // Try to send while first is in progress - should return early
     await act(async () => {
-      const send2Result = result.current.sendLocation('school1', mockLocation);
+      result.current.sendLocation('school1', mockLocation);
       // This should return immediately if check is working
       expect(result.current.isSending).toBe(true);
       await new Promise((resolve) => setTimeout(resolve, 10));
