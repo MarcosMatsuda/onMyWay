@@ -6,6 +6,8 @@ module.exports = {
     '^@data/(.*)$': '<rootDir>/src/data/$1',
     '^@infrastructure/(.*)$': '<rootDir>/src/infrastructure/$1',
     '^@presentation/(.*)$': '<rootDir>/src/presentation/$1',
+    '^expo-location$': '<rootDir>/src/__mocks__/expo-location.ts',
+    '^expo-task-manager$': '<rootDir>/src/__mocks__/expo-task-manager.ts',
   },
   testEnvironment: 'node',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],

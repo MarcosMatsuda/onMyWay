@@ -34,7 +34,7 @@ module.exports = [
     },
     rules: {
       'prettier/prettier': 'error',
-      'import/no-unresolved': ['error', { ignore: ['^@'] }],
+      'import/no-unresolved': ['error', { ignore: ['^@', '^expo-', '^axios'] }],
     },
   },
 ];
