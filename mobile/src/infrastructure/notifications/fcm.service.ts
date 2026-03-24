@@ -1,4 +1,5 @@
-import messaging from '@react-native-firebase/messaging';
+import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 
 export interface RemoteMessage {
   title: string | undefined;
@@ -15,13 +16,10 @@ export interface IFCMService {
 
 class FCMService implements IFCMService {
   async requestPermission(): Promise<boolean> {
+    if (Platform.OS === 'web') return false;
     try {
-      const authorizationStatus = await messaging().requestPermission();
-      // 1 = granted, 0 = not determined, 2 = denied, 3 = provisional
-      return (
-        authorizationStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authorizationStatus === messaging.AuthorizationStatus.PROVISIONAL
-      );
+      const { status } = await Notifications.requestPermissionsAsync();
+      return status === 'granted';
     } catch (error) {
       console.warn('FCM permission request failed:', error);
       return false;
@@ -30,8 +28,8 @@ class FCMService implements IFCMService {
 
   async getToken(): Promise<string | null> {
     try {
-      const token = await messaging().getToken();
-      return token || null;
+      const { data } = await Notifications.getDevicePushTokenAsync();
+      return data ?? null;
     } catch (error) {
       console.warn('FCM token retrieval failed:', error);
       return null;
@@ -39,43 +37,19 @@ class FCMService implements IFCMService {
   }
 
   onMessage(handler: (notification: RemoteMessage) => void): () => void {
-    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
-      const data: Record<string, string> = {};
-      if (remoteMessage.data) {
-        Object.entries(remoteMessage.data).forEach(([key, value]) => {
-          if (typeof value === 'string') {
-            data[key] = value;
-          }
-        });
-      }
-
+    const subscription = Notifications.addNotificationReceivedListener((notification) => {
       handler({
-        title: remoteMessage.notification?.title,
-        body: remoteMessage.notification?.body,
-        data,
+        title: notification.request.content.title ?? undefined,
+        body: notification.request.content.body ?? undefined,
+        data: (notification.request.content.data as Record<string, string>) ?? {},
       });
     });
-
-    return unsubscribe;
+    return () => subscription.remove();
   }
 
-  onBackgroundMessage(handler: (notification: RemoteMessage) => void): void {
-    messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-      const data: Record<string, string> = {};
-      if (remoteMessage.data) {
-        Object.entries(remoteMessage.data).forEach(([key, value]) => {
-          if (typeof value === 'string') {
-            data[key] = value;
-          }
-        });
-      }
-
-      handler({
-        title: remoteMessage.notification?.title,
-        body: remoteMessage.notification?.body,
-        data,
-      });
-    });
+  onBackgroundMessage(_handler: (notification: RemoteMessage) => void): void {
+    // Background notifications are handled natively by expo-notifications
+    // No explicit listener needed here
   }
 }
 
