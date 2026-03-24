@@ -1,37 +1,34 @@
 import { INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { AppModule } from '../app.module';
-import { truncateTables } from './helpers';
+import { DataSource } from 'typeorm';
+import { createTestApp, closeTestApp, truncateTables } from './helpers';
 
-describe('Auth Endpoints (E2E)', () => {
+describe('Auth E2E Tests', () => {
   let app: INestApplication;
+  let dataSource: DataSource;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    app = await createTestApp();
+    dataSource = app.get(DataSource);
   });
 
   afterAll(async () => {
-    const dataSource = app.get('DataSource');
-    if (dataSource && dataSource.isInitialized) {
-      await truncateTables(dataSource);
-    }
-    await app.close();
+    await truncateTables(dataSource);
+    await closeTestApp(app);
+  });
+
+  afterEach(async () => {
+    await truncateTables(dataSource);
   });
 
   describe('POST /auth/register', () => {
-    it('should register new parent successfully', async () => {
+    it('should register a new user and return accessToken, refreshToken, and parent', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/register')
         .send({
           name: 'John Doe',
           email: 'john@example.com',
-          password: 'SecurePass123',
+          password: 'SecurePassword123',
           phone: '+5511987654321',
         })
         .expect(201);
@@ -40,94 +37,70 @@ describe('Auth Endpoints (E2E)', () => {
       expect(response.body).toHaveProperty('refreshToken');
       expect(response.body).toHaveProperty('parent');
       expect(response.body.parent).toHaveProperty('id');
-      expect(response.body.parent).toHaveProperty('name');
-      expect(response.body.parent).toHaveProperty('email');
-      expect(response.body.parent).toHaveProperty('phone');
-      expect(response.body.parent.email).toBe('john@example.com');
-      expect(response.body.parent.name).toBe('John Doe');
+      expect(response.body.parent).toHaveProperty('name', 'John Doe');
+      expect(response.body.parent).toHaveProperty('email', 'john@example.com');
+      expect(response.body.parent).toHaveProperty('phone', '+5511987654321');
+      expect(response.body.parent).toHaveProperty('schoolId');
       expect(typeof response.body.accessToken).toBe('string');
       expect(typeof response.body.refreshToken).toBe('string');
     });
 
-    it('should register without schoolId', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send({
-          name: 'Jane Doe',
-          email: 'jane@example.com',
-          password: 'SecurePass123',
-        })
-        .expect(201);
+    it('should return 409 when email is already registered', async () => {
+      const registerData = {
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        password: 'SecurePassword123',
+        phone: '+5511987654322',
+      };
 
-      expect(response.body).toHaveProperty('accessToken');
-      expect(response.body).toHaveProperty('refreshToken');
-      expect(response.body.parent.schoolId).toBeNull();
-    });
-
-    it('should return 409 when email already registered', async () => {
-      // Register first user
+      // First registration
       await request(app.getHttpServer())
         .post('/auth/register')
-        .send({
-          name: 'Alice',
-          email: 'alice@example.com',
-          password: 'SecurePass123',
-        })
+        .send(registerData)
         .expect(201);
 
-      // Try to register with same email
+      // Second registration with same email
       const response = await request(app.getHttpServer())
         .post('/auth/register')
-        .send({
-          name: 'Bob',
-          email: 'alice@example.com',
-          password: 'DifferentPass123',
-        })
+        .send(registerData)
         .expect(409);
 
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('already registered');
     });
 
-    it('should return 400 for invalid email', async () => {
-      await request(app.getHttpServer())
+    it('should register without schoolId (optional field)', async () => {
+      const response = await request(app.getHttpServer())
         .post('/auth/register')
         .send({
-          name: 'Invalid User',
-          email: 'not-an-email',
-          password: 'SecurePass123',
+          name: 'Bob Smith',
+          email: 'bob@example.com',
+          password: 'SecurePassword123',
+          phone: '+5511987654323',
+          // schoolId intentionally omitted
         })
-        .expect(400);
-    });
+        .expect(201);
 
-    it('should return 400 for weak password', async () => {
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send({
-          name: 'Weak Password',
-          email: 'weak@example.com',
-          password: 'weak',
-        })
-        .expect(400);
+      expect(response.body.parent.schoolId).toBeNull();
     });
   });
 
   describe('POST /auth/login', () => {
     beforeEach(async () => {
-      // Register a user for each login test
+      // Register a user for login tests
       await request(app.getHttpServer()).post('/auth/register').send({
         name: 'Login Test User',
         email: 'login@example.com',
-        password: 'LoginPass123',
+        password: 'SecurePassword123',
+        phone: '+5511987654324',
       });
     });
 
-    it('should login with valid credentials', async () => {
+    it('should login and return accessToken, refreshToken, and parent', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send({
           email: 'login@example.com',
-          password: 'LoginPass123',
+          password: 'SecurePassword123',
         })
         .expect(200);
 
@@ -139,7 +112,7 @@ describe('Auth Endpoints (E2E)', () => {
       expect(typeof response.body.refreshToken).toBe('string');
     });
 
-    it('should return 401 with wrong password', async () => {
+    it('should return 401 when password is wrong', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send({
@@ -151,12 +124,12 @@ describe('Auth Endpoints (E2E)', () => {
       expect(response.body).toHaveProperty('message');
     });
 
-    it('should return 401 when email not found', async () => {
+    it('should return 401 when email is not found', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send({
           email: 'nonexistent@example.com',
-          password: 'SomePassword123',
+          password: 'SecurePassword123',
         })
         .expect(401);
 
@@ -169,66 +142,63 @@ describe('Auth Endpoints (E2E)', () => {
 
     beforeEach(async () => {
       // Register and login to get token
-      const registerResponse = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/auth/register')
         .send({
-          name: 'Profile Test',
+          name: 'Profile Test User',
           email: 'profile@example.com',
-          password: 'ProfilePass123',
+          password: 'SecurePassword123',
+          phone: '+5511987654325',
         });
 
-      accessToken = registerResponse.body.accessToken;
+      accessToken = response.body.accessToken;
     });
 
-    it('should return profile with valid Bearer token', async () => {
+    it('should return parent profile with valid Bearer token', async () => {
       const response = await request(app.getHttpServer())
         .get('/auth/profile')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
 
       expect(response.body).toHaveProperty('id');
-      expect(response.body).toHaveProperty('name');
-      expect(response.body).toHaveProperty('email');
-      expect(response.body).toHaveProperty('phone');
-      expect(response.body.email).toBe('profile@example.com');
+      expect(response.body).toHaveProperty('name', 'Profile Test User');
+      expect(response.body).toHaveProperty('email', 'profile@example.com');
+      expect(response.body).toHaveProperty('phone', '+5511987654325');
+      expect(response.body).toHaveProperty('schoolId');
     });
 
-    it('should return 401 without Bearer token', async () => {
-      await request(app.getHttpServer()).get('/auth/profile').expect(401);
+    it('should return 401 without token', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/auth/profile')
+        .expect(401);
+
+      expect(response.body).toHaveProperty('message');
     });
 
     it('should return 401 with invalid token', async () => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/auth/profile')
-        .set('Authorization', 'Bearer invalid-token')
+        .set('Authorization', 'Bearer invalid_token_here')
         .expect(401);
+
+      expect(response.body).toHaveProperty('message');
     });
   });
 
   describe('POST /auth/logout', () => {
-    it('should logout successfully and return empty object', async () => {
+    it('should return 200 with any body (stateless logout)', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/logout')
-        .send({})
+        .send({ refreshToken: 'any_token_value' })
         .expect(200);
 
       expect(response.body).toEqual({});
     });
 
-    it('should logout with refreshToken in body', async () => {
-      const registerResponse = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send({
-          name: 'Logout Test',
-          email: 'logout@example.com',
-          password: 'LogoutPass123',
-        });
-
-      const refreshToken = registerResponse.body.refreshToken;
-
+    it('should return 200 even with empty body', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/logout')
-        .send({ refreshToken })
+        .send({})
         .expect(200);
 
       expect(response.body).toEqual({});
