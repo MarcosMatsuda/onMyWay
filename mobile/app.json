@@ -3,6 +3,7 @@
     "name": "onMyWay",
     "slug": "onmyway",
     "version": "1.0.0",
+    "sdkVersion": "55.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -15,15 +16,13 @@
       "**/*"
     ],
     "ios": {
-      "supportsTabletMode": true,
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "supportsTabletMode": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "googleServicesFile": "./google-services.json"
+      }
     },
     "platforms": ["ios", "android"],
     "plugins": [
@@ -38,13 +37,6 @@
         {
           "icon": "./assets/icon.png",
           "color": "#2563eb"
-        }
-      ],
-      "@react-native-firebase/app",
-      [
-        "@react-native-firebase/messaging",
-        {
-          "enabled": true
         }
       ]
     ]
