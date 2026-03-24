@@ -4,3 +4,5 @@ export { useLocation } from './useLocation';
 export type { UseLocation } from './useLocation';
 export { useSendLocation } from './useSendLocation';
 export type { UseSendLocation } from './useSendLocation';
+export { useArrivals } from './useArrivals';
+export type { UseArrivals } from './useArrivals';

@@ -17,6 +17,7 @@
     "expo-secure-store": "^55.0.9",
     "react": "^18.2.0",
     "react-native": "^0.73.0",
+    "react-native-maps": "^1.27.2",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-screens": "^4.24.0",
     "zustand": "^5.0.12"
