@@ -26,6 +26,7 @@ describe('SchoolsController', () => {
         lng: -46.635,
         etaMinutes: 10,
         distanceMeters: 800,
+        routePolyline: 'encoded_polyline_1',
         calculatedAt: new Date('2024-03-20T10:00:00Z'),
       },
       {
@@ -35,6 +36,7 @@ describe('SchoolsController', () => {
         lng: -46.634,
         etaMinutes: 15,
         distanceMeters: 1200,
+        routePolyline: 'encoded_polyline_2',
         calculatedAt: new Date('2024-03-20T10:00:00Z'),
       },
     ],
@@ -145,7 +147,7 @@ describe('SchoolsController', () => {
   });
 
   describe('getArrivals', () => {
-    it('should return arrivals queue sorted by ETA', async () => {
+    it('should return arrivals queue sorted by ETA as flat array', async () => {
       // Arrange
       const schoolId = 'school-456';
       getArrivalsUseCaseMock.execute.mockResolvedValue(mockArrivalsOutput);
@@ -158,11 +160,10 @@ describe('SchoolsController', () => {
         schoolId,
         limit: undefined,
       });
-      expect(result.schoolName).toBe('Springfield Elementary');
-      expect(result.totalCount).toBe(2);
-      expect(result.arrivals).toHaveLength(2);
-      expect(result.arrivals[0].etaMinutes).toBe(10); // Sorted by ETA ascending
-      expect(result.arrivals[1].etaMinutes).toBe(15);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveLength(2);
+      expect(result[0].durationMinutes).toBe(10); // Sorted by ETA ascending
+      expect(result[1].durationMinutes).toBe(15);
     });
 
     it('should include limit parameter when provided', async () => {
@@ -184,7 +185,7 @@ describe('SchoolsController', () => {
         schoolId,
         limit,
       });
-      expect(result.arrivals).toHaveLength(1);
+      expect(result).toHaveLength(1);
     });
 
     it('should parse limit as integer when provided as string', async () => {
@@ -229,8 +230,7 @@ describe('SchoolsController', () => {
       const result = await controller.getArrivals(schoolId);
 
       // Assert
-      expect(result.arrivals).toHaveLength(0);
-      expect(result.totalCount).toBe(0);
+      expect(result).toHaveLength(0);
     });
 
     it('should map arrival DTO fields correctly', async () => {
@@ -242,16 +242,12 @@ describe('SchoolsController', () => {
       const result = await controller.getArrivals(schoolId);
 
       // Assert
-      const firstArrival = result.arrivals[0];
+      const firstArrival = result[0];
       expect(firstArrival).toHaveProperty('parentId');
-      expect(firstArrival).toHaveProperty('parentName');
-      expect(firstArrival).toHaveProperty('lat');
-      expect(firstArrival).toHaveProperty('lng');
-      expect(firstArrival).toHaveProperty('etaMinutes');
       expect(firstArrival).toHaveProperty('distanceMeters');
-      expect(firstArrival).toHaveProperty('calculatedAt');
+      expect(firstArrival).toHaveProperty('durationMinutes');
+      expect(firstArrival).toHaveProperty('routePolyline');
       expect(firstArrival.parentId).toBe('parent-2');
-      expect(firstArrival.parentName).toBe('Jane Smith');
     });
   });
 
@@ -586,7 +582,7 @@ describe('SchoolsController', () => {
   });
 
   describe('listSchools', () => {
-    it('should return list of all schools', async () => {
+    it('should return list of all schools with nested location', async () => {
       // Arrange
       listSchoolsUseCaseMock.execute.mockResolvedValue(mockListSchoolsOutput);
 
@@ -598,14 +594,12 @@ describe('SchoolsController', () => {
         {
           id: 'school-1',
           name: 'School A',
-          lat: -23.5505,
-          lng: -46.6333,
+          location: { lat: -23.5505, lng: -46.6333 },
         },
         {
           id: 'school-2',
           name: 'School B',
-          lat: -23.551,
-          lng: -46.634,
+          location: { lat: -23.551, lng: -46.634 },
         },
       ]);
       expect(listSchoolsUseCaseMock.execute).toHaveBeenCalled();

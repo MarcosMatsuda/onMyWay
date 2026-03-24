@@ -15,6 +15,7 @@ export interface ArrivalInfo {
   lng: number;
   etaMinutes: number;
   distanceMeters: number;
+  routePolyline: string;
   calculatedAt: Date;
 }
 
@@ -93,6 +94,7 @@ export class GetSchoolArrivalsUseCase {
         lng: location.lng,
         etaMinutes: Math.round(eta.durationSeconds / 60),
         distanceMeters: eta.distanceMeters,
+        routePolyline: eta.routePolyline,
         calculatedAt: eta.calculatedAt,
       });
     }

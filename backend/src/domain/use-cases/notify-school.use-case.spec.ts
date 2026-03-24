@@ -39,6 +39,7 @@ describe('NotifySchoolUseCase', () => {
       lng: -46.634,
       etaMinutes: 15,
       distanceMeters: 1200,
+      routePolyline: 'encoded_polyline_1',
       calculatedAt: new Date(),
     },
   ];
@@ -216,6 +217,7 @@ describe('NotifySchoolUseCase', () => {
           lng: -46.634,
           etaMinutes: 10,
           distanceMeters: 1200,
+          routePolyline: 'encoded_polyline_1',
           calculatedAt: new Date(),
         },
         {
@@ -225,6 +227,7 @@ describe('NotifySchoolUseCase', () => {
           lng: -46.635,
           etaMinutes: 15,
           distanceMeters: 1500,
+          routePolyline: 'encoded_polyline_2',
           calculatedAt: new Date(),
         },
         {
@@ -234,6 +237,7 @@ describe('NotifySchoolUseCase', () => {
           lng: -46.636,
           etaMinutes: 20,
           distanceMeters: 1800,
+          routePolyline: 'encoded_polyline_3',
           calculatedAt: new Date(),
         },
       ];

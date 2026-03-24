@@ -44,6 +44,20 @@ export class SchoolResponseDto {
   createdAt: Date;
 }
 
+export class SchoolLocationDto {
+  @ApiProperty({
+    example: -23.5505,
+    description: 'School latitude',
+  })
+  lat: number;
+
+  @ApiProperty({
+    example: -46.6333,
+    description: 'School longitude',
+  })
+  lng: number;
+}
+
 export class SchoolListResponseDto {
   @ApiProperty({
     example: '550e8400-e29b-41d4-a716-446655440000',
@@ -58,14 +72,8 @@ export class SchoolListResponseDto {
   name: string;
 
   @ApiProperty({
-    example: -23.5505,
-    description: 'School latitude',
+    description: 'School location (coordinates)',
+    type: SchoolLocationDto,
   })
-  lat: number;
-
-  @ApiProperty({
-    example: -46.6333,
-    description: 'School longitude',
-  })
-  lng: number;
+  location: SchoolLocationDto;
 }

@@ -8,6 +8,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
@@ -28,7 +29,7 @@ import {
   CreateSchoolInput,
 } from '../../domain/use-cases/create-school.use-case';
 import { ListSchoolsUseCase } from '../../domain/use-cases/list-schools.use-case';
-import { ArrivalsResponseDto } from './dtos/arrival.dto';
+import { ArrivalDto } from './dtos/arrival.dto';
 import { SchoolStatsDto, SchoolConfigDto } from './dtos/school-config.dto';
 import { CreateSchoolDto } from './dtos/create-school.dto';
 import {
@@ -82,9 +83,32 @@ export class SchoolsController {
     return result.schools.map((school) => ({
       id: school.id,
       name: school.name,
-      lat: school.lat,
-      lng: school.lng,
+      location: {
+        lat: school.lat,
+        lng: school.lng,
+      },
     }));
+  }
+
+  @Get(':id')
+  async getSchool(
+    @Param('id') schoolId: string,
+  ): Promise<SchoolListResponseDto> {
+    const result = await this.listSchoolsUseCase.execute();
+    const school = result.schools.find((s) => s.id === schoolId);
+
+    if (!school) {
+      throw new NotFoundException(`School with id ${schoolId} not found`);
+    }
+
+    return {
+      id: school.id,
+      name: school.name,
+      location: {
+        lat: school.lat,
+        lng: school.lng,
+      },
+    };
   }
 
   @Get(':id/arrivals')
@@ -93,7 +117,7 @@ export class SchoolsController {
   async getArrivals(
     @Param('id') schoolId: string,
     @Query('limit') limit?: number,
-  ): Promise<ArrivalsResponseDto> {
+  ): Promise<ArrivalDto[]> {
     const input: GetSchoolArrivalsInput = {
       schoolId,
       limit: limit ? parseInt(limit.toString(), 10) : undefined,
@@ -101,20 +125,13 @@ export class SchoolsController {
 
     const result = await this.getSchoolArrivalsUseCase.execute(input);
 
-    // Map to DTO
-    return {
-      schoolName: result.schoolName,
-      totalCount: result.totalCount,
-      arrivals: result.arrivals.map((arrival) => ({
-        parentId: arrival.parentId,
-        parentName: arrival.parentName,
-        lat: arrival.lat,
-        lng: arrival.lng,
-        etaMinutes: arrival.etaMinutes,
-        distanceMeters: arrival.distanceMeters,
-        calculatedAt: arrival.calculatedAt,
-      })),
-    };
+    // Map to flat array of ArrivalDto (mobile expects array, not wrapper object)
+    return result.arrivals.map((arrival) => ({
+      parentId: arrival.parentId,
+      distanceMeters: arrival.distanceMeters,
+      durationMinutes: arrival.etaMinutes,
+      routePolyline: arrival.routePolyline,
+    }));
   }
 
   @Get(':id/stats')
