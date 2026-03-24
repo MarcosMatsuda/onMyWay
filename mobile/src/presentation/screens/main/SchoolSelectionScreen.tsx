@@ -1,34 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Button } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { School } from '@domain/entities';
 import { schoolRepository } from '@data/repositories';
-import { MainStackParamList } from '@presentation/navigation/types';
+import { MainStackParamList } from '../../navigation/types';
 
-type SchoolSelectionScreenNavigationProp = NativeStackNavigationProp<
-  MainStackParamList,
-  'SchoolSelect'
->;
+type SchoolSelectionScreenProps = NativeStackScreenProps<MainStackParamList, 'SchoolSelect'>;
 
-interface Props {
-  navigation: SchoolSelectionScreenNavigationProp;
-}
-
-export const SchoolSelectionScreen: React.FC<Props> = ({ navigation }) => {
+export function SchoolSelectionScreen({ navigation }: SchoolSelectionScreenProps): JSX.Element {
   const [schools, setSchools] = useState<School[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadSchools();
-  }, []);
-
-  const loadSchools = async () => {
-    setIsLoading(true);
-    setError(null);
-
+  const loadSchools = async (): Promise<void> => {
     try {
+      setIsLoading(true);
+      setError(null);
       const fetchedSchools = await schoolRepository.listSchools();
       setSchools(fetchedSchools);
     } catch (err) {
@@ -39,75 +26,78 @@ export const SchoolSelectionScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const handleSelectSchool = async (school: School) => {
-    try {
-      // Save selected school to secure storage
-      await SecureStore.setItemAsync('selected_school', JSON.stringify(school));
+  useEffect(() => {
+    void loadSchools();
+  }, []);
 
-      // Navigate back to Home
+  const handleSelectSchool = async (school: School): Promise<void> => {
+    try {
+      // TODO: Persist to AsyncStorage when @react-native-async-storage/async-storage is available
+      // await AsyncStorage.setItem(SELECTED_SCHOOL_KEY, JSON.stringify(school));
+
+      // For now, just navigate back
       navigation.navigate('Home');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to save school selection';
+      const message = err instanceof Error ? err.message : 'Failed to save selected school';
       setError(message);
     }
   };
-
-  const renderSchoolItem = ({ item }: { item: School }) => (
-    <TouchableOpacity
-      style={{
-        marginBottom: 12,
-        padding: 16,
-        backgroundColor: '#f9f9f9',
-        borderRadius: 4,
-        borderLeftWidth: 4,
-        borderLeftColor: '#3498db',
-      }}
-      onPress={() => handleSelectSchool(item)}
-    >
-      <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 4 }}>{item.name}</Text>
-      <Text style={{ fontSize: 12, color: '#666' }}>
-        Location: {item.location.lat.toFixed(4)}, {item.location.lng.toFixed(4)}
-      </Text>
-    </TouchableOpacity>
-  );
 
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
+        <Text style={{ marginTop: 10 }}>Loading schools...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={{ flex: 1, padding: 20, justifyContent: 'center' }}>
+        <Text style={{ color: 'red', marginBottom: 20 }}>Error: {error}</Text>
+        <TouchableOpacity
+          onPress={() => {
+            void loadSchools();
+          }}
+          style={{ padding: 10, backgroundColor: '#007AFF', borderRadius: 5 }}
+        >
+          <Text style={{ color: 'white', textAlign: 'center' }}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <View style={{ marginTop: 20, marginBottom: 16 }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Select a School</Text>
-      </View>
+    <View style={{ flex: 1, padding: 20 }}>
+      <Text style={{ fontSize: 24, marginBottom: 20 }}>Select School</Text>
 
-      {error && (
-        <View
-          style={{ marginBottom: 16, padding: 12, backgroundColor: '#ffe0e0', borderRadius: 4 }}
-        >
-          <Text style={{ color: '#ff6b6b', marginBottom: 8 }}>Error: {error}</Text>
-          <Button title="Retry" onPress={loadSchools} />
-        </View>
-      )}
-
-      {schools.length === 0 && !error && (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ fontSize: 16, color: '#666' }}>No schools available</Text>
-        </View>
-      )}
-
-      {schools.length > 0 && (
-        <FlatList
-          data={schools}
-          renderItem={renderSchoolItem}
-          keyExtractor={(school) => school.id}
-          scrollEnabled
-        />
-      )}
+      <FlatList
+        data={schools}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => {
+              void handleSelectSchool(item);
+            }}
+            style={{
+              padding: 15,
+              marginBottom: 10,
+              borderWidth: 1,
+              borderColor: '#ccc',
+              borderRadius: 5,
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{item.name}</Text>
+            <Text style={{ fontSize: 12, color: '#666', marginTop: 5 }}>
+              Location: {item.location.lat.toFixed(4)},{item.location.lng.toFixed(4)}
+            </Text>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={
+          <Text style={{ textAlign: 'center', marginTop: 20 }}>No schools available</Text>
+        }
+      />
     </View>
   );
-};
+}
