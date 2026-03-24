@@ -50,8 +50,10 @@ export class RegisterDto {
 
   @ApiProperty({
     example: '550e8400-e29b-41d4-a716-446655440000',
-    description: 'School UUID',
+    description: 'School UUID (optional, can be selected after registration)',
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  schoolId: string;
+  schoolId?: string;
 }
