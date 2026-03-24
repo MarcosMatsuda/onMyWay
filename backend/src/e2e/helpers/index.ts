@@ -1,3 +1,3 @@
-export { createTestApp, closeTestApp } from './app.helper';
-export { truncateTables } from './db.helper';
-export { seedSchool } from './seed.helper';
+export { createTestApp, closeTestApp, getTestAppInstance } from './app.helper';
+export { truncateTables, truncateAllTables } from './db.helper';
+export { seedSchool, seedMultipleSchools } from './seed.helper';

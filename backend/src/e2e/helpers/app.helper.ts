@@ -1,27 +1,34 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from '../../app.module';
 
-/**
- * Create and initialize a test NestJS application
- * Connects to onmyway_test database (via .env.test)
- */
+let testApp: INestApplication;
+
 export async function createTestApp(): Promise<INestApplication> {
+  if (testApp) {
+    return testApp;
+  }
+
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
   }).compile();
 
-  const testApp = moduleFixture.createNestApplication();
+  testApp = moduleFixture.createNestApplication();
+
+  testApp.useGlobalPipes(new ValidationPipe());
+
   await testApp.init();
 
   return testApp;
 }
 
-/**
- * Close the test application and clean up
- */
-export async function closeTestApp(testApp: INestApplication): Promise<void> {
-  if (testApp) {
-    await testApp.close();
+export async function closeTestApp(app: INestApplication): Promise<void> {
+  if (app) {
+    await app.close();
+    testApp = null;
   }
+}
+
+export async function getTestAppInstance(): Promise<INestApplication> {
+  return createTestApp();
 }

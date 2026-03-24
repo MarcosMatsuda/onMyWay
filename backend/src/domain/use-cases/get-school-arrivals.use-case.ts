@@ -1,7 +1,20 @@
-import { IETARepository } from '../repositories/eta.repository.interface';
-import { ISchoolRepository } from '../repositories/school.repository.interface';
-import { IParentRepository } from '../repositories/parent.repository.interface';
-import { ILocationRepository } from '../repositories/location.repository.interface';
+import { Injectable, Inject } from '@nestjs/common';
+import {
+  IETARepository,
+  ETA_REPOSITORY,
+} from '../repositories/eta.repository.interface';
+import {
+  ISchoolRepository,
+  SCHOOL_REPOSITORY,
+} from '../repositories/school.repository.interface';
+import {
+  IParentRepository,
+  PARENT_REPOSITORY,
+} from '../repositories/parent.repository.interface';
+import {
+  ILocationRepository,
+  LOCATION_REPOSITORY,
+} from '../repositories/location.repository.interface';
 
 export interface GetSchoolArrivalsInput {
   schoolId: string;
@@ -25,11 +38,16 @@ export interface GetSchoolArrivalsOutput {
   totalCount: number;
 }
 
+@Injectable()
 export class GetSchoolArrivalsUseCase {
   constructor(
+    @Inject(ETA_REPOSITORY)
     private readonly etaRepository: IETARepository,
+    @Inject(SCHOOL_REPOSITORY)
     private readonly schoolRepository: ISchoolRepository,
+    @Inject(PARENT_REPOSITORY)
     private readonly parentRepository: IParentRepository,
+    @Inject(LOCATION_REPOSITORY)
     private readonly locationRepository: ILocationRepository,
   ) {}
 

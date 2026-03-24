@@ -48,13 +48,6 @@ module.exports = {
         '^@infrastructure/(.*)$': '<rootDir>/infrastructure/$1',
         '^@presentation/(.*)$': '<rootDir>/presentation/$1',
       },
-      globals: {
-        'ts-jest': {
-          tsconfig: {
-            testPathIgnorePatterns: [],
-          },
-        },
-      },
       testTimeout: 30000,
     },
   ],

@@ -1,37 +1,46 @@
 import { DataSource } from 'typeorm';
-import { School } from '../../domain/entities/school.entity';
-import { v4 as uuid } from 'uuid';
 
-/**
- * Seed a test school into the database
- * Returns the inserted school entity
- */
-export async function seedSchool(dataSource: DataSource): Promise<School> {
-  const schoolId = uuid();
+export async function seedSchool(dataSource: DataSource): Promise<any> {
+  if (!dataSource.isInitialized) {
+    throw new Error('DataSource is not initialized');
+  }
 
-  const schoolEntity = {
-    id: schoolId,
+  const schoolRepository = dataSource.getRepository('School');
+
+  const school = schoolRepository.create({
     name: 'Test School',
     lat: -23.5505,
     lng: -46.6333,
     geofenceRadiusMeters: 1000,
     notificationThresholdMeters: 500,
-    createdAt: new Date(),
-  };
+  });
 
-  await dataSource.query(
-    `INSERT INTO schools (id, name, lat, lng, geofenceRadiusMeters, notificationThresholdMeters, createdAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [
-      schoolEntity.id,
-      schoolEntity.name,
-      schoolEntity.lat,
-      schoolEntity.lng,
-      schoolEntity.geofenceRadiusMeters,
-      schoolEntity.notificationThresholdMeters,
-      schoolEntity.createdAt,
-    ],
-  );
+  return schoolRepository.save(school);
+}
 
-  return schoolEntity as School;
+export async function seedMultipleSchools(
+  dataSource: DataSource,
+  count: number = 3,
+): Promise<any[]> {
+  if (!dataSource.isInitialized) {
+    throw new Error('DataSource is not initialized');
+  }
+
+  const schoolRepository = dataSource.getRepository('School');
+  const schools: any[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const school = schoolRepository.create({
+      name: `Test School ${i + 1}`,
+      lat: -23.5505 + i * 0.01,
+      lng: -46.6333 + i * 0.01,
+      geofenceRadiusMeters: 1000,
+      notificationThresholdMeters: 500,
+    });
+
+    const saved = await schoolRepository.save(school);
+    schools.push(saved);
+  }
+
+  return schools;
 }
