@@ -1,7 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { DataSource } from 'typeorm';
-import { createTestApp, closeTestApp, truncateTables, seedSchool } from './helpers';
+import {
+  createTestApp,
+  closeTestApp,
+  truncateTables,
+  seedSchool,
+} from './helpers';
 
 describe('Schools E2E Tests', () => {
   let app: INestApplication;
@@ -87,9 +92,7 @@ describe('Schools E2E Tests', () => {
 
     it('should return 404 for unknown school id', async () => {
       const fakeId = '00000000-0000-0000-0000-000000000000';
-      await request(app.getHttpServer())
-        .get(`/schools/${fakeId}`)
-        .expect(404);
+      await request(app.getHttpServer()).get(`/schools/${fakeId}`).expect(404);
     });
 
     it('should get arrivals queue as flat array', async () => {
