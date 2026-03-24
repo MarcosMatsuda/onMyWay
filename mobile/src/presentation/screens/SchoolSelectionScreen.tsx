@@ -1,5 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Button } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  Button,
+  StyleSheet,
+  SafeAreaView,
+} from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { School } from '@domain/entities';
 import { SchoolRepository } from '@data/repositories';
@@ -8,7 +17,91 @@ import { MainStackParamList } from '@presentation/navigation/types';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'SchoolSelect'>;
 
-// Mock AsyncStorage for now - will be replaced by actual @react-native-async-storage/async-storage
+const styles = StyleSheet.create<any>({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  header: {
+    padding: 16,
+    paddingBottom: 8,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+  listContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  schoolCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    padding: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  schoolName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  schoolLocation: {
+    fontSize: 14,
+    color: '#64748b',
+  },
+  separator: {
+    height: 12,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#1a1a1a',
+  },
+  errorContainer: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorCard: {
+    backgroundColor: '#fee2e2',
+    borderRadius: 8,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#991b1b',
+    marginBottom: 20,
+    width: '100%',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#991b1b',
+    fontWeight: '500',
+    marginBottom: 12,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+});
+
+// Mock AsyncStorage
 const AsyncStorage = {
   getItem: async (_key: string) => Promise.resolve(null as string | null),
   setItem: async (_key: string, _value: string) => Promise.resolve(),
@@ -50,47 +143,71 @@ export const SchoolSelectionScreen: React.FC<Props> = ({ navigation }) => {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text style={{ marginTop: 10 }}>Loading schools...</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Select your school</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2563eb" />
+          <Text style={styles.loadingText}>Loading schools...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={{ flex: 1, padding: 16, justifyContent: 'center' }}>
-        <Text style={{ fontSize: 16, color: 'red', marginBottom: 20 }}>Error: {error}</Text>
-        <Button title="Retry" onPress={loadSchools} />
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Select your school</Text>
+        </View>
+        <View style={styles.errorContainer}>
+          <View style={styles.errorCard}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+          <Button title="Try again" onPress={loadSchools} color="#991b1b" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (schools.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Select your school</Text>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No schools available</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Select a School</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Select your school</Text>
+      </View>
 
       <FlatList
         data={schools}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={{
-              padding: 16,
-              marginBottom: 10,
-              borderWidth: 1,
-              borderColor: '#ccc',
-              borderRadius: 4,
-            }}
+            style={styles.schoolCard}
             onPress={() => handleSelectSchool(item)}
+            activeOpacity={0.7}
           >
-            <Text style={{ fontSize: 16, fontWeight: '600' }}>{item.name}</Text>
-            <Text style={{ fontSize: 14, color: '#666' }}>
+            <Text style={styles.schoolName}>{item.name}</Text>
+            <Text style={styles.schoolLocation}>
               {`Lat: ${item.location.lat.toFixed(4)}, Lng: ${item.location.lng.toFixed(4)}`}
             </Text>
           </TouchableOpacity>
         )}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
-    </View>
+    </SafeAreaView>
   );
 };
