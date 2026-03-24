@@ -1,29 +1,18 @@
 import { DataSource } from 'typeorm';
 
-export async function truncateTables(dataSource: DataSource): Promise<void> {
-  if (!dataSource.isInitialized) {
-    throw new Error('DataSource is not initialized');
-  }
+export class DbHelper {
+  constructor(private dataSource: DataSource) {}
 
-  try {
-    // Disable foreign key constraints temporarily
-    await dataSource.query('SET session_replication_role = replica;');
-
-    // Truncate tables in order of dependencies (reverse order of creation)
-    const tables = ['etas', 'locations', 'parents', 'schools'];
+  async truncateTables(): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    const tables = await queryRunner.getTables();
 
     for (const table of tables) {
-      await dataSource.query(`TRUNCATE TABLE "${table}" CASCADE;`);
+      await queryRunner.query(
+        `TRUNCATE TABLE "${table.name}" RESTART IDENTITY CASCADE`,
+      );
     }
 
-    // Re-enable foreign key constraints
-    await dataSource.query('SET session_replication_role = default;');
-  } catch (error) {
-    console.error('Error truncating tables:', error);
-    throw error;
+    await queryRunner.release();
   }
-}
-
-export async function truncateAllTables(dataSource: DataSource): Promise<void> {
-  await truncateTables(dataSource);
 }

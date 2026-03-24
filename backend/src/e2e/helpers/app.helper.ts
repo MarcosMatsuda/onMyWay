@@ -1,34 +1,19 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from '../../app.module';
 
-let testApp: INestApplication;
+export class AppHelper {
+  async init(): Promise<INestApplication> {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
 
-export async function createTestApp(): Promise<INestApplication> {
-  if (testApp) {
-    return testApp;
+    const app = moduleFixture.createNestApplication();
+    await app.init();
+    return app;
   }
 
-  const moduleFixture: TestingModule = await Test.createTestingModule({
-    imports: [AppModule],
-  }).compile();
-
-  testApp = moduleFixture.createNestApplication();
-
-  testApp.useGlobalPipes(new ValidationPipe());
-
-  await testApp.init();
-
-  return testApp;
-}
-
-export async function closeTestApp(app: INestApplication): Promise<void> {
-  if (app) {
+  async close(app: INestApplication): Promise<void> {
     await app.close();
-    testApp = null;
   }
-}
-
-export async function getTestAppInstance(): Promise<INestApplication> {
-  return createTestApp();
 }
