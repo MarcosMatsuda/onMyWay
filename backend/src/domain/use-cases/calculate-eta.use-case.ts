@@ -1,9 +1,21 @@
-import { Inject } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { ETA } from '../entities/eta.entity';
-import { IETARepository } from '../repositories/eta.repository.interface';
-import { ILocationRepository } from '../repositories/location.repository.interface';
-import { ISchoolRepository } from '../repositories/school.repository.interface';
-import { IParentRepository } from '../repositories/parent.repository.interface';
+import {
+  IETARepository,
+  ETA_REPOSITORY,
+} from '../repositories/eta.repository.interface';
+import {
+  ILocationRepository,
+  LOCATION_REPOSITORY,
+} from '../repositories/location.repository.interface';
+import {
+  ISchoolRepository,
+  SCHOOL_REPOSITORY,
+} from '../repositories/school.repository.interface';
+import {
+  IParentRepository,
+  PARENT_REPOSITORY,
+} from '../repositories/parent.repository.interface';
 
 export interface CalculateETAInput {
   parentId: string;
@@ -28,11 +40,16 @@ export interface IOSRMServiceAdapter {
   }>;
 }
 
+@Injectable()
 export class CalculateETAUseCase {
   constructor(
+    @Inject(ETA_REPOSITORY)
     private readonly etaRepository: IETARepository,
+    @Inject(LOCATION_REPOSITORY)
     private readonly locationRepository: ILocationRepository,
+    @Inject(SCHOOL_REPOSITORY)
     private readonly schoolRepository: ISchoolRepository,
+    @Inject(PARENT_REPOSITORY)
     private readonly parentRepository: IParentRepository,
     @Inject('IOSRMServiceAdapter')
     private readonly osrmService: IOSRMServiceAdapter,
