@@ -1,34 +1,148 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Button, Switch, ScrollView, ActivityIndicator } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Button, Switch, ScrollView, StyleSheet } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { School } from '@domain/entities';
-import { useAuth, useLocation, useSendLocation } from '@presentation/hooks';
-import { MainStackParamList } from '@presentation/navigation/types';
+import { useAuth, useLocation, useSendLocation } from '../../hooks';
+import { MainStackParamList } from '../../navigation/types';
 
-// Note: AsyncStorage is typically provided by @react-native-async-storage/async-storage
-// For type checking purposes, we define a local interface matching the expected API
-interface AsyncStorageAPI {
-  getItem(key: string): Promise<string | null>;
-  setItem(key: string, value: string): Promise<void>;
-  removeItem(key: string): Promise<void>;
-}
+type HomeScreenProps = NativeStackScreenProps<MainStackParamList, 'Home'>;
 
-// Mock implementation - in production, replace with actual AsyncStorage import
-const AsyncStorage: AsyncStorageAPI = {
-  async getItem(key: string): Promise<string | null> {
-    return null;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
   },
-  async setItem(key: string, value: string): Promise<void> {},
-  async removeItem(key: string): Promise<void> {},
-};
+  scrollContent: {
+    padding: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+  headerButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  schoolCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  schoolName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  schoolLocation: {
+    fontSize: 14,
+    color: '#64748b',
+  },
+  emptyCard: {
+    backgroundColor: '#fef3c7',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#fcd34d',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#92400e',
+    marginBottom: 12,
+  },
+  toggleSection: {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  toggleLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  statusBadge: {
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    alignSelf: 'flex-start',
+  },
+  statusBadgeGreen: {
+    backgroundColor: '#dcfce7',
+  },
+  statusBadgeOrange: {
+    backgroundColor: '#fed7aa',
+  },
+  statusBadgeGray: {
+    backgroundColor: '#e2e8f0',
+  },
+  statusTextGreen: {
+    color: '#16a34a',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  statusTextOrange: {
+    color: '#ea580c',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  statusTextGray: {
+    color: '#64748b',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  lastSentText: {
+    fontSize: 13,
+    color: '#64748b',
+    marginBottom: 12,
+  },
+  currentLocationText: {
+    fontSize: 12,
+    color: '#94a3b8',
+    marginTop: 12,
+  },
+  errorCard: {
+    backgroundColor: '#fee2e2',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  errorText: {
+    color: '#991b1b',
+    fontSize: 14,
+  },
+  navigationButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 24,
+  },
+  buttonContainer: {
+    flex: 1,
+  },
+});
 
-type HomeScreenNavigationProp = NativeStackNavigationProp<MainStackParamList, 'Home'>;
-
-interface Props {
-  navigation: HomeScreenNavigationProp;
-}
-
-export const HomeScreen: React.FC<Props> = ({ navigation }) => {
+export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
   const { parent } = useAuth();
   const {
     currentLocation,
@@ -39,37 +153,11 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     error: locationError,
   } = useLocation();
   const { isSending, lastSentAt, sendLocation } = useSendLocation();
+  const [selectedSchool] = useState<School | null>(null);
 
-  const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
-  const [isLoadingSchool, setIsLoadingSchool] = useState(true);
+  // TODO: Load selectedSchool from AsyncStorage on mount
 
-  // Load selected school from AsyncStorage on mount
-  useEffect(() => {
-    const loadSelectedSchool = async () => {
-      try {
-        const schoolJson = await AsyncStorage.getItem('selected_school');
-        if (schoolJson) {
-          const school = JSON.parse(schoolJson) as School;
-          setSelectedSchool(school);
-        }
-      } catch (error) {
-        console.error('Failed to load selected school:', error);
-      } finally {
-        setIsLoadingSchool(false);
-      }
-    };
-
-    loadSelectedSchool();
-  }, []);
-
-  // Auto-send location when within privacy radius
-  useEffect(() => {
-    if (isTracking && withinPrivacyRadius && currentLocation && selectedSchool && !isSending) {
-      sendLocation(selectedSchool.id, currentLocation);
-    }
-  }, [currentLocation, withinPrivacyRadius, isTracking, selectedSchool, isSending, sendLocation]);
-
-  const handleToggleTracking = (value: boolean) => {
+  const handleToggleSharing = (value: boolean): void => {
     if (value && selectedSchool) {
       startTracking(selectedSchool.location);
     } else {
@@ -77,10 +165,18 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const formatLastSent = (timestamp: number | null): string => {
-    if (!timestamp) return 'Not sent yet';
+  useEffect(() => {
+    if (isTracking && withinPrivacyRadius && currentLocation && selectedSchool) {
+      void sendLocation(selectedSchool.id, currentLocation);
+    }
+  }, [isTracking, withinPrivacyRadius, currentLocation, selectedSchool, sendLocation]);
 
-    const date = new Date(timestamp);
+  const formatLastSent = (): string => {
+    if (!lastSentAt) {
+      return 'Not sent yet';
+    }
+
+    const date = new Date(lastSentAt);
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
@@ -88,123 +184,115 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     return `Last sent: ${hours}:${minutes}:${seconds}`;
   };
 
-  if (isLoadingSchool) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
+  const getStatusBadge = () => {
+    if (!isTracking) {
+      return {
+        container: styles.statusBadgeGray,
+        text: styles.statusTextGray,
+        label: 'Not sharing',
+      };
+    }
 
-  // No school selected
-  if (!selectedSchool) {
-    return (
-      <ScrollView style={{ flex: 1, padding: 16 }}>
-        <View style={{ marginTop: 20 }}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Home</Text>
+    if (!withinPrivacyRadius) {
+      return {
+        container: styles.statusBadgeOrange,
+        text: styles.statusTextOrange,
+        label: 'Tracking — too far from school',
+      };
+    }
 
-          <Text style={{ marginBottom: 16, fontSize: 16 }}>
-            No school selected. Please select a school to start sharing your location.
-          </Text>
+    return {
+      container: styles.statusBadgeGreen,
+      text: styles.statusTextGreen,
+      label: 'Sharing location 🟢',
+    };
+  };
 
-          <Button title="Select School" onPress={() => navigation.navigate('SchoolSelect')} />
-        </View>
-      </ScrollView>
-    );
-  }
+  const statusBadge = getStatusBadge();
 
-  // School selected
   return (
-    <ScrollView style={{ flex: 1, padding: 16 }}>
-      <View style={{ marginTop: 20 }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Home</Text>
-
-        {/* Parent info */}
-        {parent && (
-          <View
-            style={{ marginBottom: 16, padding: 12, backgroundColor: '#f0f0f0', borderRadius: 4 }}
-          >
-            <Text style={{ fontWeight: '600', marginBottom: 4 }}>Welcome, {parent.name}</Text>
-            <Text style={{ fontSize: 12, color: '#666' }}>{parent.email}</Text>
-          </View>
-        )}
-
-        {/* School info */}
-        <View
-          style={{ marginBottom: 16, padding: 12, backgroundColor: '#f0f0f0', borderRadius: 4 }}
-        >
-          <Text style={{ fontWeight: '600', marginBottom: 4 }}>School: {selectedSchool.name}</Text>
-          <Text style={{ fontSize: 12, color: '#666' }}>
-            Location: {selectedSchool.location.lat.toFixed(4)},{' '}
-            {selectedSchool.location.lng.toFixed(4)}
-          </Text>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Welcome, {parent?.name || 'Parent'}!</Text>
         </View>
 
-        {/* Sharing toggle */}
-        <View
-          style={{ marginBottom: 16, padding: 12, backgroundColor: '#f9f9f9', borderRadius: 4 }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 12,
-            }}
-          >
-            <Text style={{ fontWeight: '600', fontSize: 16 }}>Share Location</Text>
-            <Switch value={isTracking} onValueChange={handleToggleTracking} />
-          </View>
-
-          <Text style={{ fontSize: 14, marginBottom: 8 }}>
-            Status: {isTracking ? 'Sharing' : 'Not sharing'}
-          </Text>
-
-          <Text
-            style={{
-              fontSize: 14,
-              marginBottom: 8,
-              color: withinPrivacyRadius ? '#2ecc71' : '#e74c3c',
-            }}
-          >
-            Privacy:{' '}
-            {withinPrivacyRadius ? 'Near school (sharing active)' : 'Too far — location not shared'}
-          </Text>
-
-          <Text style={{ fontSize: 14, marginBottom: 8 }}>{formatLastSent(lastSentAt)}</Text>
-
-          {currentLocation && (
-            <Text style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>
-              Current: {currentLocation.lat.toFixed(4)}, {currentLocation.lng.toFixed(4)}
+        {/* School Selection or Card */}
+        {!selectedSchool ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>No school selected</Text>
+            <Text style={{ fontSize: 14, color: '#92400e', marginBottom: 12 }}>
+              Please select a school to start sharing your location.
             </Text>
-          )}
-
-          {isSending && (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ marginRight: 8 }}>Sending...</Text>
-              <ActivityIndicator size="small" />
-            </View>
-          )}
-        </View>
-
-        {/* Errors */}
-        {locationError && (
-          <View
-            style={{ marginBottom: 16, padding: 12, backgroundColor: '#ffe0e0', borderRadius: 4 }}
-          >
-            <Text style={{ color: '#ff6b6b' }}>Error: {locationError}</Text>
+            <Button title="Select School" onPress={() => navigation.navigate('SchoolSelect')} />
+          </View>
+        ) : (
+          <View style={styles.schoolCard}>
+            <Text style={styles.schoolName}>{selectedSchool.name}</Text>
+            <Text style={styles.schoolLocation}>
+              Location: {selectedSchool.location.lat.toFixed(4)},
+              {selectedSchool.location.lng.toFixed(4)}
+            </Text>
           </View>
         )}
 
-        {/* Navigation buttons */}
-        <View style={{ marginBottom: 16 }}>
-          <Button title="Change School" onPress={() => navigation.navigate('SchoolSelect')} />
-        </View>
+        {selectedSchool && (
+          <>
+            {/* Sharing Toggle */}
+            <View style={styles.toggleSection}>
+              <View style={styles.toggleRow}>
+                <Text style={styles.toggleLabel}>Share my location</Text>
+                <Switch
+                  value={isTracking}
+                  onValueChange={handleToggleSharing}
+                  disabled={isSending}
+                />
+              </View>
+            </View>
 
-        <View>
-          <Button title="Profile" onPress={() => navigation.navigate('Profile')} />
-        </View>
-      </View>
-    </ScrollView>
+            {/* Status Badge */}
+            <View style={[styles.statusBadge, statusBadge.container]}>
+              <Text style={statusBadge.text}>{statusBadge.label}</Text>
+            </View>
+
+            {/* Last Sent */}
+            <Text style={styles.lastSentText}>{formatLastSent()}</Text>
+
+            {/* Current Location */}
+            {currentLocation && (
+              <Text style={styles.currentLocationText}>
+                Current: {currentLocation.lat.toFixed(4)},{currentLocation.lng.toFixed(4)}
+              </Text>
+            )}
+
+            {/* Error Message */}
+            {locationError && (
+              <View style={styles.errorCard}>
+                <Text style={styles.errorText}>Error: {locationError}</Text>
+              </View>
+            )}
+
+            {/* Navigation Buttons */}
+            <View style={styles.navigationButtons}>
+              <View style={styles.buttonContainer}>
+                <Button
+                  title="Change School"
+                  onPress={() => navigation.navigate('SchoolSelect')}
+                  disabled={isSending}
+                />
+              </View>
+              <View style={styles.buttonContainer}>
+                <Button
+                  title="Profile"
+                  onPress={() => navigation.navigate('Profile')}
+                  disabled={isSending}
+                />
+              </View>
+            </View>
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
-};
+}
