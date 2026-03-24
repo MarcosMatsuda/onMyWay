@@ -1,6 +1,10 @@
-import { CurrentLocation } from '@domain/entities';
 import { ILocationRepository } from '@domain/repositories';
+import { CurrentLocation } from '@domain/entities';
 
+/**
+ * SendLocationUseCase
+ * Sends the parent's current location to the backend
+ */
 export class SendLocationUseCase {
   constructor(private readonly locationRepository: ILocationRepository) {}
 
