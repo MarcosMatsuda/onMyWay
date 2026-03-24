@@ -10,6 +10,9 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@types/axios": "^0.9.36",
+    "axios": "^1.13.6",
+    "expo-secure-store": "^55.0.9",
     "react": "^18.2.0",
     "react-native": "^0.73.0"
   },
