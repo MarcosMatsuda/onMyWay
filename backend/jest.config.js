@@ -36,6 +36,20 @@ module.exports = {
       setupFilesAfterEnv: ['<rootDir>/../jest.setup.ts'],
       coverageDirectory: '../coverage',
     },
+    {
+      displayName: 'e2e',
+      testEnvironment: 'node',
+      rootDir: 'src',
+      testRegex: '\\.e2e-spec\\.ts$',
+      transform: { '^.+\\.(t|j)s$': 'ts-jest' },
+      moduleNameMapper: {
+        '^@domain/(.*)$': '<rootDir>/domain/$1',
+        '^@data/(.*)$': '<rootDir>/data/$1',
+        '^@infrastructure/(.*)$': '<rootDir>/infrastructure/$1',
+        '^@presentation/(.*)$': '<rootDir>/presentation/$1',
+      },
+      testTimeout: 30000,
+    },
   ],
   coverageThreshold: {
     global: { lines: 60 },
