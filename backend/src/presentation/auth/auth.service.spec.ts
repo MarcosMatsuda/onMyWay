@@ -97,10 +97,12 @@ describe('AuthService', () => {
       const result = await authService.register(registerDto);
 
       // Assert
-      expect(result.token).toBe('jwt-token');
+      expect(result.accessToken).toBe('jwt-token');
+      expect(result.refreshToken).toBe('jwt-token');
       expect(result.parent.id).toBe(mockParent.id);
       expect(schoolRepositoryMock.findById).toHaveBeenCalledWith('school-456');
       expect(parentRepositoryMock.create).toHaveBeenCalled();
+      expect(jwtServiceMock.sign).toHaveBeenCalledTimes(2);
     });
 
     it('should throw NotFoundException for invalid schoolId', async () => {
@@ -163,6 +165,38 @@ describe('AuthService', () => {
         NotFoundException,
       );
     });
+
+    it('should register parent without schoolId', async () => {
+      // Arrange
+      const registerDto: RegisterDto = {
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        password: 'SecurePassword123',
+        phone: '+5511987654322',
+        // schoolId is optional
+      };
+
+      const mockParentNoSchool = {
+        ...mockParent,
+        id: 'parent-789',
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        schoolId: null,
+      };
+
+      parentRepositoryMock.findByEmail.mockResolvedValue(null);
+      parentRepositoryMock.create.mockResolvedValue(mockParentNoSchool);
+      jwtServiceMock.sign.mockReturnValue('jwt-token');
+
+      // Act
+      const result = await authService.register(registerDto);
+
+      // Assert
+      expect(result.accessToken).toBe('jwt-token');
+      expect(result.refreshToken).toBe('jwt-token');
+      expect(result.parent.schoolId).toBeNull();
+      expect(schoolRepositoryMock.findById).not.toHaveBeenCalled();
+    });
   });
 
   describe('login', () => {
@@ -180,8 +214,10 @@ describe('AuthService', () => {
       const result = await authService.login(loginDto);
 
       // Assert
-      expect(result.token).toBe('jwt-token');
+      expect(result.accessToken).toBe('jwt-token');
+      expect(result.refreshToken).toBe('jwt-token');
       expect(result.parent.id).toBe(mockParent.id);
+      expect(jwtServiceMock.sign).toHaveBeenCalledTimes(2);
     });
 
     it('should throw UnauthorizedException with invalid credentials', async () => {

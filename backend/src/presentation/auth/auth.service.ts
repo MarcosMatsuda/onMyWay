@@ -40,19 +40,21 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
-    // Validate school exists
-    const school = await this.schoolRepository.findById(registerDto.schoolId);
-    if (!school) {
-      throw new NotFoundException(
-        `School with id ${registerDto.schoolId} not found`,
-      );
+    // Validate school exists if provided
+    if (registerDto.schoolId) {
+      const school = await this.schoolRepository.findById(registerDto.schoolId);
+      if (!school) {
+        throw new NotFoundException(
+          `School with id ${registerDto.schoolId} not found`,
+        );
+      }
     }
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(registerDto.password, salt);
 
-    // Create parent
+    // Create parent (schoolId is optional)
     const parent = await this.parentRepository.create({
       name: registerDto.name,
       email: registerDto.email,
@@ -61,10 +63,10 @@ export class AuthService {
       passwordHash,
     });
 
-    // Generate JWT token
-    const token = this.generateToken(parent);
+    // Generate JWT tokens
+    const { accessToken, refreshToken } = this.generateTokens(parent);
 
-    return new AuthResponseDto(token, parent);
+    return new AuthResponseDto(accessToken, refreshToken, parent);
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
@@ -77,10 +79,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Generate JWT token
-    const token = this.generateToken(parent);
+    // Generate JWT tokens
+    const { accessToken, refreshToken } = this.generateTokens(parent);
 
-    return new AuthResponseDto(token, parent);
+    return new AuthResponseDto(accessToken, refreshToken, parent);
   }
 
   async validateParent(email: string, password: string): Promise<Parent> {
@@ -102,11 +104,18 @@ export class AuthService {
     return parent;
   }
 
-  private generateToken(parent: Parent): string {
+  private generateTokens(parent: Parent): {
+    accessToken: string;
+    refreshToken: string;
+  } {
     const payload: JwtPayload = {
       sub: parent.id,
       email: parent.email,
     };
-    return this.jwtService.sign(payload);
+
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+    return { accessToken, refreshToken };
   }
 }

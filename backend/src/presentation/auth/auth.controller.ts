@@ -55,4 +55,17 @@ export class AuthController {
   async getProfile(@Request() req): Promise<Parent> {
     return this.authService.getProfile(req.user.id);
   }
+
+  @Post('logout')
+  @ApiOperation({
+    summary: 'Logout parent account',
+    description: 'Logout parent (stateless JWT, no server-side blacklist)',
+  })
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  async logout(): Promise<Record<string, never>> {
+    // Stateless logout - just validate the request format
+    // JWT validation happens on client side when making protected requests
+    return {};
+  }
 }

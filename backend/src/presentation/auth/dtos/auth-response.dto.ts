@@ -1,11 +1,15 @@
 import { Parent } from '../../../domain/entities/parent.entity';
 
 export class AuthResponseDto {
-  token: string;
+  accessToken: string;
+
+  refreshToken: string;
+
   parent: Omit<Parent, 'passwordHash'>;
 
-  constructor(token: string, parent: Parent) {
-    this.token = token;
+  constructor(accessToken: string, refreshToken: string, parent: Parent) {
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
     this.parent = {
       id: parent.id,
       name: parent.name,
