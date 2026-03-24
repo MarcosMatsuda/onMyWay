@@ -9,6 +9,7 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { School } from '@domain/entities';
 import { SchoolRepository } from '@data/repositories';
@@ -101,12 +102,6 @@ const styles = StyleSheet.create<any>({
   },
 });
 
-// Mock AsyncStorage
-const AsyncStorage = {
-  getItem: async (_key: string) => Promise.resolve(null as string | null),
-  setItem: async (_key: string, _value: string) => Promise.resolve(),
-};
-
 export const SchoolSelectionScreen: React.FC<Props> = ({ navigation }) => {
   const [schools, setSchools] = useState<School[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -133,7 +128,7 @@ export const SchoolSelectionScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleSelectSchool = async (school: School) => {
     try {
-      await AsyncStorage.setItem('selected_school', JSON.stringify(school));
+      await AsyncStorage.setItem('@onmyway:selected_school', JSON.stringify(school));
       navigation.navigate('Home');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save school selection';

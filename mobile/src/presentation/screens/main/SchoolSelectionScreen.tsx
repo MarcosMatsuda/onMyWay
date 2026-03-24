@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { School } from '@domain/entities';
 import { schoolRepository } from '@data/repositories';
@@ -132,7 +133,7 @@ export function SchoolSelectionScreen({ navigation }: SchoolSelectionScreenProps
 
   const handleSelectSchool = async (school: School): Promise<void> => {
     try {
-      // TODO: Persist to AsyncStorage when dependency available
+      await AsyncStorage.setItem('@onmyway:selected_school', JSON.stringify(school));
       navigation.navigate('Home');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save selected school';

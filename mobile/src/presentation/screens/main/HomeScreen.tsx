@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Button, Switch, ScrollView, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { School } from '@domain/entities';
 import { useAuth, useLocation, useSendLocation } from '../../hooks';
@@ -153,9 +154,24 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
     error: locationError,
   } = useLocation();
   const { isSending, lastSentAt, sendLocation } = useSendLocation();
-  const [selectedSchool] = useState<School | null>(null);
+  const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
 
-  // TODO: Load selectedSchool from AsyncStorage on mount
+  // Load selectedSchool from AsyncStorage on mount
+  useEffect(() => {
+    const loadSchool = async (): Promise<void> => {
+      try {
+        const schoolJson = await AsyncStorage.getItem('@onmyway:selected_school');
+        if (schoolJson) {
+          const school = JSON.parse(schoolJson) as School;
+          setSelectedSchool(school);
+        }
+      } catch (error) {
+        console.warn('Failed to load selected school:', error);
+      }
+    };
+
+    void loadSchool();
+  }, []);
 
   const handleToggleSharing = (value: boolean): void => {
     if (value && selectedSchool) {
