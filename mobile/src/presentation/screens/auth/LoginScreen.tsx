@@ -10,7 +10,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAuth } from '@presentation/hooks';
+import { useAuth } from '@presentation/hooks/useAuth';
 import { AuthStackParamList } from '@presentation/navigation/types';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;

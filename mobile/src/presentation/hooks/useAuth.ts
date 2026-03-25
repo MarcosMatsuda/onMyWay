@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useAuthStore } from '../store/auth.store';
 import { Parent } from '@domain/entities';
 
@@ -16,11 +15,6 @@ export interface UseAuth {
 export const useAuth = (): UseAuth => {
   const { isAuthenticated, parent, isLoading, error, login, register, logout, initialize } =
     useAuthStore();
-
-  // Initialize auth on app start
-  useEffect(() => {
-    initialize();
-  }, [initialize]);
 
   return {
     isAuthenticated,
