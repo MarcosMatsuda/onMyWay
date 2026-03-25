@@ -13,18 +13,15 @@ export class SchoolRepository implements ISchoolRepository {
     const response = await this.http.get<{
       id: string;
       name: string;
-      location: {
-        lat: number;
-        lng: number;
-      };
+      location: { lat: string; lng: string };
     }>(`/schools/${schoolId}`);
 
     return {
       id: response.id,
       name: response.name,
       location: {
-        lat: response.location.lat,
-        lng: response.location.lng,
+        lat: Number(response.location.lat),
+        lng: Number(response.location.lng),
       },
     };
   }
@@ -33,10 +30,7 @@ export class SchoolRepository implements ISchoolRepository {
     interface SchoolResponse {
       id: string;
       name: string;
-      location: {
-        lat: number;
-        lng: number;
-      };
+      location: { lat: string; lng: string };
     }
 
     const responses = await this.http.get<SchoolResponse[]>('/schools');
@@ -45,8 +39,8 @@ export class SchoolRepository implements ISchoolRepository {
       id: response.id,
       name: response.name,
       location: {
-        lat: response.location.lat,
-        lng: response.location.lng,
+        lat: Number(response.location.lat),
+        lng: Number(response.location.lng),
       },
     }));
   }

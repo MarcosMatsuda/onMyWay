@@ -263,8 +263,8 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
           <View style={styles.schoolCard}>
             <Text style={styles.schoolName}>{selectedSchool.name}</Text>
             <Text style={styles.schoolLocation}>
-              Location: {selectedSchool.location.lat.toFixed(4)},
-              {selectedSchool.location.lng.toFixed(4)}
+              Location: {selectedSchool.location?.lat != null ? Number(selectedSchool.location.lat).toFixed(4) : '—'},
+              {selectedSchool.location?.lng != null ? Number(selectedSchool.location.lng).toFixed(4) : '—'}
             </Text>
           </View>
         )}
