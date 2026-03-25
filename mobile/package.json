@@ -2,7 +2,7 @@
   "name": "onmyway-mobile",
   "version": "0.1.0",
   "description": "OnMyWay mobile app",
-  "main": "app.tsx",
+  "main": "index.js",
   "scripts": {
     "start": "expo start",
     "start:clear": "expo start --clear",
