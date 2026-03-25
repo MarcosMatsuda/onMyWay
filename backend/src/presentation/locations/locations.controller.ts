@@ -22,7 +22,6 @@ import {
   GetArrivalsQueueOutput,
 } from '../../domain/use-cases/get-arrivals-queue.use-case';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
-import { JwtPayload } from '../../infrastructure/auth/jwt-payload.interface';
 import { CreateLocationDto } from './dtos/create-location.dto';
 import { LocationResponseDto } from './dtos/location-response.dto';
 import { LocationsService } from './locations.service';

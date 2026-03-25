@@ -18,7 +18,14 @@ export class LocationRepository implements ILocationRepository {
     const id = 'id' in location ? location.id : crypto.randomUUID();
     await this.dataSource.query(
       `INSERT INTO locations (id, parent_id, lat, lng, accuracy, timestamp) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [id, location.parentId, location.lat, location.lng, location.accuracy ?? 0, location.timestamp],
+      [
+        id,
+        location.parentId,
+        location.lat,
+        location.lng,
+        location.accuracy ?? 0,
+        location.timestamp,
+      ],
     );
     return { ...location, id };
   }

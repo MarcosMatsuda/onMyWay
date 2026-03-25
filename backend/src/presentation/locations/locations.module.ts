@@ -22,9 +22,27 @@ import { ETA_REPOSITORY } from '../../domain/repositories/eta.repository.interfa
     LocationsService,
     {
       provide: SaveLocationWithETAUseCase,
-      useFactory: (locationRepo, schoolRepo, parentRepo, etaRepo, osrmService) =>
-        new SaveLocationWithETAUseCase(locationRepo, schoolRepo, parentRepo, etaRepo, osrmService),
-      inject: [LOCATION_REPOSITORY, SCHOOL_REPOSITORY, PARENT_REPOSITORY, ETA_REPOSITORY, OSRMServiceAdapter],
+      useFactory: (
+        locationRepo,
+        schoolRepo,
+        parentRepo,
+        etaRepo,
+        osrmService,
+      ) =>
+        new SaveLocationWithETAUseCase(
+          locationRepo,
+          schoolRepo,
+          parentRepo,
+          etaRepo,
+          osrmService,
+        ),
+      inject: [
+        LOCATION_REPOSITORY,
+        SCHOOL_REPOSITORY,
+        PARENT_REPOSITORY,
+        ETA_REPOSITORY,
+        OSRMServiceAdapter,
+      ],
     },
     CalculateETAUseCase,
     GetArrivalsQueueUseCase,
