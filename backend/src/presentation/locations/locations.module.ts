@@ -10,13 +10,22 @@ import { DataModule } from '../../data/data.module';
 import { OSRMModule } from '../../infrastructure/osrm/osrm.module';
 import { WebSocketModule } from '../../infrastructure/websocket/websocket.module';
 import { OSRMServiceAdapter } from '../../infrastructure/osrm/osrm-service.adapter';
+import { LOCATION_REPOSITORY } from '../../domain/repositories/location.repository.interface';
+import { SCHOOL_REPOSITORY } from '../../domain/repositories/school.repository.interface';
+import { PARENT_REPOSITORY } from '../../domain/repositories/parent.repository.interface';
+import { ETA_REPOSITORY } from '../../domain/repositories/eta.repository.interface';
 
 @Module({
   imports: [DataModule, OSRMModule, WebSocketModule],
   controllers: [LocationsController],
   providers: [
     LocationsService,
-    SaveLocationWithETAUseCase,
+    {
+      provide: SaveLocationWithETAUseCase,
+      useFactory: (locationRepo, schoolRepo, parentRepo, etaRepo, osrmService) =>
+        new SaveLocationWithETAUseCase(locationRepo, schoolRepo, parentRepo, etaRepo, osrmService),
+      inject: [LOCATION_REPOSITORY, SCHOOL_REPOSITORY, PARENT_REPOSITORY, ETA_REPOSITORY, OSRMServiceAdapter],
+    },
     CalculateETAUseCase,
     GetArrivalsQueueUseCase,
     GetSchoolArrivalsUseCase,

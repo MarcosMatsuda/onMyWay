@@ -72,8 +72,8 @@ export class SchoolRepository implements ISchoolRepository {
     try {
       const result = await this.schoolRepository.query(query, [
         schoolId,
-        school.lat,
         school.lng,
+        school.lat,
         school.geofenceRadiusMeters,
       ]);
       return result.map((row: any) => row.id);

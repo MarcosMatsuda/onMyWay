@@ -45,10 +45,10 @@ export class LocationsController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   async saveLocation(
-    @Request() req: { user: JwtPayload },
+    @Request() req: { user: any },
     @Body() createLocationDto: CreateLocationDto,
   ): Promise<LocationResponseDto> {
-    const parentId = req.user.sub;
+    const parentId = req.user.id ?? req.user.sub;
     return this.locationsService.saveLocation(parentId, createLocationDto);
   }
 
@@ -60,9 +60,9 @@ export class LocationsController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   async getMyLatestLocation(
-    @Request() req: { user: JwtPayload },
+    @Request() req: { user: any },
   ): Promise<LocationResponseDto | null> {
-    const parentId = req.user.sub;
+    const parentId = req.user.id ?? req.user.sub;
     return this.locationsService.getMyLatestLocation(parentId);
   }
 

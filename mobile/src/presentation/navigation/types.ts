@@ -9,7 +9,7 @@ export type AuthStackParamList = {
 export type MainStackParamList = {
   Home: undefined;
   SchoolSelect: undefined;
-  Map: { schoolId: string };
+  Map: { schoolId: string; currentLat?: number; currentLng?: number };
   Profile: undefined;
 };
 
