@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import { fcmService, type RemoteMessage } from '@infrastructure/notifications';
 
@@ -8,23 +8,25 @@ export interface UseNotifications {
   requestPermission(): Promise<void>;
 }
 
-// Configure how to handle notifications when app is in foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
-
 export const useNotifications = (): UseNotifications => {
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const handlerConfigured = useRef(false);
 
   // Request permission and get token on mount
   useEffect(() => {
+    // Configure notification handler once inside the effect, not at module level
+    if (!handlerConfigured.current) {
+      handlerConfigured.current = true;
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+        }),
+      });
+    }
+
     const initializeNotifications = async (): Promise<() => void> => {
       try {
         // Request FCM permission
