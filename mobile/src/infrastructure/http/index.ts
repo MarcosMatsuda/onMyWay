@@ -1,14 +1,11 @@
-import type { HttpClient } from './http-client';
-
 export type { HttpClient, RequestConfig } from './http-client';
 export { HttpError, AuthenticationError } from './http-client';
 export type { AuthTokenService } from './auth-token.service';
 export { SecureAuthTokenService } from './secure-auth-token.service';
+export { API_BASE_URL } from './config';
 
-// Mock httpClient for now - will be replaced by actual implementation in feat/issue-95
-export const httpClient = {
-  get: async <T>(): Promise<T> => null as unknown as T,
-  post: async <T>(): Promise<T> => null as unknown as T,
-  put: async <T>(): Promise<T> => null as unknown as T,
-  delete: async <T>(): Promise<T> => null as unknown as T,
-} as HttpClient;
+import { AxiosHttpClient } from './axios-http-client';
+
+const axiosClient = new AxiosHttpClient();
+export const httpClient = axiosClient;
+export { axiosClient };

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Parent } from '@domain/entities';
 import { authService } from '@infrastructure/http/auth.service';
-import { SecureAuthTokenService, type AuthTokenService } from '@infrastructure/http';
+import { SecureAuthTokenService, type AuthTokenService, axiosClient } from '@infrastructure/http';
 import { parentRepository } from '@data/repositories';
 
 interface AuthStoreState {
@@ -21,6 +21,7 @@ let tokenService: AuthTokenService;
 const getTokenService = (): AuthTokenService => {
   if (!tokenService) {
     tokenService = new SecureAuthTokenService();
+    axiosClient.setTokenService(tokenService);
   }
   return tokenService;
 };
