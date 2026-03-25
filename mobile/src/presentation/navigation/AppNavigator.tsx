@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { useAuth } from '@presentation/hooks';
@@ -6,12 +6,7 @@ import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 
 export const AppNavigator: React.FC = () => {
-  const { isAuthenticated, isLoading, initialize } = useAuth();
-
-  // Initialize auth on mount
-  useEffect(() => {
-    initialize();
-  }, [initialize]);
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Loading state: show spinner while auth is initializing
   if (isLoading) {

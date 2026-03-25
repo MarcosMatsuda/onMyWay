@@ -125,8 +125,12 @@ export const useAuthStore = create<AuthStoreState>((set) => {
         });
       } catch {
         // Token invalid or expired, clear it
-        const tokenSvc = getTokenService();
-        await tokenSvc.clear();
+        try {
+          const tokenSvc = getTokenService();
+          await tokenSvc.clear();
+        } catch {
+          // ignore clear errors
+        }
         set({
           isAuthenticated: false,
           parent: null,
