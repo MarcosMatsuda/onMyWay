@@ -22,7 +22,6 @@ import {
   GetArrivalsQueueOutput,
 } from '../../domain/use-cases/get-arrivals-queue.use-case';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
-import { JwtPayload } from '../../infrastructure/auth/jwt-payload.interface';
 import { CreateLocationDto } from './dtos/create-location.dto';
 import { LocationResponseDto } from './dtos/location-response.dto';
 import { LocationsService } from './locations.service';
@@ -45,10 +44,10 @@ export class LocationsController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   async saveLocation(
-    @Request() req: { user: JwtPayload },
+    @Request() req: { user: any },
     @Body() createLocationDto: CreateLocationDto,
   ): Promise<LocationResponseDto> {
-    const parentId = req.user.sub;
+    const parentId = req.user.id ?? req.user.sub;
     return this.locationsService.saveLocation(parentId, createLocationDto);
   }
 
@@ -60,9 +59,9 @@ export class LocationsController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   async getMyLatestLocation(
-    @Request() req: { user: JwtPayload },
+    @Request() req: { user: any },
   ): Promise<LocationResponseDto | null> {
-    const parentId = req.user.sub;
+    const parentId = req.user.id ?? req.user.sub;
     return this.locationsService.getMyLatestLocation(parentId);
   }
 

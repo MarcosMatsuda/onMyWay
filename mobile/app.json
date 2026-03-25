@@ -15,7 +15,10 @@
       "**/*"
     ],
     "ios": {
-      "supportsTabletMode": true
+      "supportsTabletMode": true,
+      "infoPlist": {
+        "UIBackgroundModes": ["location"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +31,8 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "This app uses your location to notify the school when you are nearby."
+          "locationAlwaysAndWhenInUsePermission": "This app uses your location to notify the school when you are nearby.",
+          "locationAlwaysUsageDescription": "This app uses your location in the background to notify the school when you are nearby."
         }
       ],
       [

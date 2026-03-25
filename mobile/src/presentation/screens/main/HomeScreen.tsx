@@ -278,7 +278,6 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
                 <Switch
                   value={isTracking}
                   onValueChange={handleToggleSharing}
-                  disabled={isSending}
                 />
               </View>
             </View>
@@ -287,7 +286,7 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
             {selectedSchool && (
               <TouchableOpacity
                 style={styles.mapButton}
-                onPress={() => navigation.navigate('Map', { schoolId: selectedSchool.id })}
+                onPress={() => navigation.navigate('Map', { schoolId: selectedSchool.id, currentLat: currentLocation?.lat, currentLng: currentLocation?.lng })}
               >
                 <Text style={styles.mapButtonText}>View Map</Text>
               </TouchableOpacity>
@@ -319,8 +318,7 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
             <View style={styles.mapButtonContainer}>
               <Button
                 title="View Map"
-                onPress={() => navigation.navigate('Map', { schoolId: selectedSchool.id })}
-                disabled={isSending}
+                onPress={() => navigation.navigate('Map', { schoolId: selectedSchool.id, currentLat: currentLocation?.lat, currentLng: currentLocation?.lng })}
               />
             </View>
 
@@ -330,14 +328,12 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
                 <Button
                   title="Change School"
                   onPress={() => navigation.navigate('SchoolSelect')}
-                  disabled={isSending}
                 />
               </View>
               <View style={styles.buttonContainer}>
                 <Button
                   title="Profile"
                   onPress={() => navigation.navigate('Profile')}
-                  disabled={isSending}
                 />
               </View>
             </View>

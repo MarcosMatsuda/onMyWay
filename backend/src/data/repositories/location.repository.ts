@@ -15,11 +15,19 @@ export class LocationRepository implements ILocationRepository {
   ) {}
 
   async save(location: Location | Omit<Location, 'id'>): Promise<Location> {
-    const model = this.repository.create(
-      LocationMapper.toPersistence(location),
+    const id = 'id' in location ? location.id : crypto.randomUUID();
+    await this.dataSource.query(
+      `INSERT INTO locations (id, parent_id, lat, lng, accuracy, timestamp) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        id,
+        location.parentId,
+        location.lat,
+        location.lng,
+        location.accuracy ?? 0,
+        location.timestamp,
+      ],
     );
-    const saved = await this.repository.save(model);
-    return LocationMapper.toDomain(saved);
+    return { ...location, id };
   }
 
   async findById(id: string): Promise<Location | null> {

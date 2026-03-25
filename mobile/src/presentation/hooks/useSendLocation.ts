@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { CurrentLocation } from '@domain/entities';
 import { SendLocationUseCase } from '@domain/usecases';
 import { locationRepository } from '@data/repositories';
@@ -15,7 +15,7 @@ export const useSendLocation = (): UseSendLocation => {
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const sendLocation = async (schoolId: string, location: CurrentLocation) => {
+  const sendLocation = useCallback(async (schoolId: string, location: CurrentLocation) => {
     if (isSending) return; // Prevent duplicate sends
 
     setIsSending(true);
@@ -34,7 +34,7 @@ export const useSendLocation = (): UseSendLocation => {
     } finally {
       setIsSending(false);
     }
-  };
+  }, [isSending]);
 
   return {
     isSending,
