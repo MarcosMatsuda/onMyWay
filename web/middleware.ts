@@ -31,7 +31,7 @@ export function middleware(request: NextRequest) {
   if (request.nextUrl.pathname === '/login') {
     if (token) {
       const payload = decodeJWT(token);
-      const schoolId = payload?.schoolId || payload?.parentId;
+      const schoolId = payload?.schoolId;
       if (schoolId) {
         return NextResponse.redirect(new URL(`/dashboard/${schoolId}/arrivals`, request.url));
       }
