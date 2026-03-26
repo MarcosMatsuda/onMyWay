@@ -25,24 +25,25 @@ describe('useLogin', () => {
 
   it('sets isLoading=true while loginAction is in flight', async () => {
     const mockLoginAction = loginModule.loginAction as jest.Mock;
-    mockLoginAction.mockImplementation(() => new Promise(resolve => {
-      // Resolve after a delay to simulate async operation
-      setTimeout(() => resolve({ success: true, schoolId: 'school-123' }), 100);
-    }));
+    mockLoginAction.mockResolvedValue({ success: true, schoolId: 'school-123' });
 
     const { result } = renderHook(() => useLogin());
 
+    let loginPromise: Promise<void>;
     act(() => {
-      result.current.login('test@example.com', 'password');
+      loginPromise = result.current.login('test@example.com', 'password');
     });
 
     // Should be loading immediately
     expect(result.current.isLoading).toBe(true);
 
     // Wait for the action to complete
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+    await act(async () => {
+      await loginPromise!;
     });
+
+    // After success, isLoading stays true because of router.push
+    expect(result.current.isLoading).toBe(true);
   });
 
   it('calls router.push with correct dashboard URL on success', async () => {
