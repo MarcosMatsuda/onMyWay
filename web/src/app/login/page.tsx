@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { LoginForm } from '@/components/auth/LoginForm';
+import { getSchoolIdFromToken } from '@/lib/jwt';
 
 export default async function LoginPage() {
   const cookieStore = await cookies();
@@ -8,9 +9,11 @@ export default async function LoginPage() {
 
   // If already authenticated, redirect to dashboard
   if (token) {
-    // TODO: Extract schoolId from token or from session
-    // For now, redirect to a default dashboard route
-    // This will be updated once we have proper session management
+    const schoolId = getSchoolIdFromToken(token);
+    if (schoolId) {
+      redirect(`/dashboard/${schoolId}/arrivals`);
+    }
+    // Fallback if schoolId cannot be extracted (should not happen)
     redirect('/dashboard');
   }
 
