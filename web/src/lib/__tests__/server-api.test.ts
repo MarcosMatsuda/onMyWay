@@ -46,10 +46,33 @@ describe('listSchools', () => {
     );
   });
 
+  it('returns empty array when no schools exist', async () => {
+    mockFetch.mockReturnValueOnce(mockOkResponse([]));
+
+    const result = await listSchools();
+
+    expect(result).toEqual([]);
+  });
+
+  it('does not send Authorization header', async () => {
+    mockFetch.mockReturnValueOnce(mockOkResponse([]));
+
+    await listSchools();
+
+    const [, options] = mockFetch.mock.calls[0];
+    expect(options.headers).not.toHaveProperty('Authorization');
+  });
+
   it('throws on HTTP error', async () => {
     mockFetch.mockReturnValueOnce(mockErrorResponse(500, 'Internal Server Error'));
 
     await expect(listSchools()).rejects.toThrow('API error: 500 Internal Server Error');
+  });
+
+  it('propagates network errors (fetch rejects)', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('Network failure'));
+
+    await expect(listSchools()).rejects.toThrow('Network failure');
   });
 });
 
@@ -67,10 +90,26 @@ describe('getSchool', () => {
     );
   });
 
+  it('does not send Authorization header', async () => {
+    const school = { id: 'school-1', name: 'School A', location: { lat: -23.5, lng: -46.6 } };
+    mockFetch.mockReturnValueOnce(mockOkResponse(school));
+
+    await getSchool('school-1');
+
+    const [, options] = mockFetch.mock.calls[0];
+    expect(options.headers).not.toHaveProperty('Authorization');
+  });
+
   it('throws on 404', async () => {
     mockFetch.mockReturnValueOnce(mockErrorResponse(404, 'Not Found'));
 
     await expect(getSchool('missing-id')).rejects.toThrow('API error: 404 Not Found');
+  });
+
+  it('propagates network errors (fetch rejects)', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('Network failure'));
+
+    await expect(getSchool('school-1')).rejects.toThrow('Network failure');
   });
 });
 
@@ -98,6 +137,20 @@ describe('getSchoolArrivals', () => {
     await expect(getSchoolArrivals('school-1', 'bad-token')).rejects.toThrow(
       'API error: 401 Unauthorized',
     );
+  });
+
+  it('returns empty array when no arrivals exist', async () => {
+    mockFetch.mockReturnValueOnce(mockOkResponse([]));
+
+    const result = await getSchoolArrivals('school-1', 'my-token');
+
+    expect(result).toEqual([]);
+  });
+
+  it('propagates network errors (fetch rejects)', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('Network failure'));
+
+    await expect(getSchoolArrivals('school-1', 'my-token')).rejects.toThrow('Network failure');
   });
 });
 
@@ -129,5 +182,11 @@ describe('getSchoolStats', () => {
     await expect(getSchoolStats('school-1', 'bad-token')).rejects.toThrow(
       'API error: 403 Forbidden',
     );
+  });
+
+  it('propagates network errors (fetch rejects)', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('Network failure'));
+
+    await expect(getSchoolStats('school-1', 'my-token')).rejects.toThrow('Network failure');
   });
 });
