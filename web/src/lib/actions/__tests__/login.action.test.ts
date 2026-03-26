@@ -25,7 +25,7 @@ describe('loginAction', () => {
     mockedAxios.post.mockResolvedValue({
       data: {
         token: 'jwt-token-123',
-        parent: { id: 'school-456' },
+        parent: { schoolId: 'school-456' },
       },
     });
 
@@ -38,7 +38,7 @@ describe('loginAction', () => {
     mockedAxios.post.mockResolvedValue({
       data: {
         token: 'jwt-token-123',
-        parent: { id: 'school-456' },
+        parent: { schoolId: 'school-456' },
       },
     });
 
@@ -48,7 +48,7 @@ describe('loginAction', () => {
       'onmyway_token',
       'jwt-token-123',
       expect.objectContaining({
-        httpOnly: false,
+        httpOnly: true,
         maxAge: 7 * 24 * 60 * 60,
         path: '/',
         sameSite: 'strict',
