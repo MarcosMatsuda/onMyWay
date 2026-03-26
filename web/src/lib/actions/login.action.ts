@@ -21,11 +21,11 @@ export async function loginAction(
       },
     );
 
-    const { token, parent } = response.data;
+    const { accessToken, parent } = response.data;
 
     // Set the cookie on the server
     const cookieStore = await cookies();
-    cookieStore.set('onmyway_token', token, {
+    cookieStore.set('onmyway_token', accessToken, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: '/',
