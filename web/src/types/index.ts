@@ -5,25 +5,34 @@ export interface AuthResponse {
     id: string;
     name: string;
     email: string;
+    phone: string;
     schoolId: string;
+    createdAt: string;
   };
 }
 
-export interface ETA {
+export interface SchoolLocation {
+  lat: number;
+  lng: number;
+}
+
+export interface School {
+  id: string;
+  name: string;
+  location: SchoolLocation;
+}
+
+export interface Arrival {
   parentId: string;
   distanceMeters: number;
   durationMinutes: number;
   routePolyline: string;
 }
 
-export interface Arrival {
-  parentId: string;
-  parentName: string;
-  eta: ETA;
-}
-
 export interface SchoolStats {
   totalParents: number;
-  arrivingCount: number;
   avgETA: number;
+  etaLessThan5Min: number;
+  eta5To15Min: number;
+  etaGreaterThan15Min: number;
 }
