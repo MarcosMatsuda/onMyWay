@@ -26,14 +26,14 @@ export async function loginAction(
     // Set the cookie on the server
     const cookieStore = await cookies();
     cookieStore.set('onmyway_token', token, {
-      httpOnly: false,
+      httpOnly: true,
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: '/',
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
     });
 
-    return { success: true, schoolId: parent.id };
+    return { success: true, schoolId: parent.schoolId };
   } catch (error) {
     // Handle different error scenarios
     if (axios.isAxiosError(error)) {
