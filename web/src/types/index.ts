@@ -10,7 +10,7 @@ export interface AuthResponse {
 export interface ETA {
   parentId: string;
   distanceMeters: number;
-  durationSeconds: number;
+  durationMinutes: number;
   routePolyline: string;
 }
 
