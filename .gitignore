@@ -1,31 +1,39 @@
-  # Dependencies
-  node_modules/
-  /backend/node_modules/
-  /mobile/node_modules/
-  /web/node_modules/
+# Dependencies
+**/node_modules/
 
-  # Build
-  dist/
-  build/
-  .next/
-  out/
-  .expo/
+# Build
+**/dist/
+**/build/
+**/.next/
+**/out/
+**/.expo/
+**/tsconfig.tsbuildinfo
 
-  # Environment
-  .env
-  .env.local
+# Environment
+**/.env
+**/.env.local
+**/.env.production
 
-  # IDE
-  .vscode/
-  .idea/
-  *.swp
+# IDE
+.vscode/
+.idea/
+*.swp
 
-  # OS
-  .DS_Store
+# OS
+.DS_Store
 
-  # Logs
-  npm-debug.log
+# Logs
+npm-debug.log
+*.log
 
-  # Firebase configuration (secrets)
-  google-services.json
-  GoogleService-Info.plist
+# Firebase configuration (secrets)
+google-services.json
+GoogleService-Info.plist
+
+# Expo generated
+ios/
+android/
+
+# Docker (secrets in prod configs)
+*.pem
+*.key
