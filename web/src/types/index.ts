@@ -1,9 +1,11 @@
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
   parent: {
     id: string;
     name: string;
     email: string;
+    schoolId: string;
   };
 }
 

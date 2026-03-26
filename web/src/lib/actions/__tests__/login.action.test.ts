@@ -24,8 +24,8 @@ describe('loginAction', () => {
   it('returns success with schoolId on successful login', async () => {
     mockedAxios.post.mockResolvedValue({
       data: {
-        token: 'jwt-token-123',
-        parent: { id: 'school-456' },
+        accessToken: 'jwt-token-123',
+        parent: { schoolId: 'school-456' },
       },
     });
 
@@ -37,8 +37,8 @@ describe('loginAction', () => {
   it('sets onmyway_token cookie on successful login', async () => {
     mockedAxios.post.mockResolvedValue({
       data: {
-        token: 'jwt-token-123',
-        parent: { id: 'school-456' },
+        accessToken: 'jwt-token-123',
+        parent: { schoolId: 'school-456' },
       },
     });
 
@@ -48,7 +48,7 @@ describe('loginAction', () => {
       'onmyway_token',
       'jwt-token-123',
       expect.objectContaining({
-        httpOnly: false,
+        httpOnly: true,
         maxAge: 7 * 24 * 60 * 60,
         path: '/',
         sameSite: 'strict',
@@ -59,8 +59,8 @@ describe('loginAction', () => {
   it('posts to correct API endpoint', async () => {
     mockedAxios.post.mockResolvedValue({
       data: {
-        token: 'jwt-token-123',
-        parent: { id: 'school-456' },
+        accessToken: 'jwt-token-123',
+        parent: { schoolId: 'school-456' },
       },
     });
 
@@ -154,8 +154,8 @@ describe('loginAction', () => {
   it('passes correct headers and timeout to axios', async () => {
     mockedAxios.post.mockResolvedValue({
       data: {
-        token: 'jwt-token-123',
-        parent: { id: 'school-456' },
+        accessToken: 'jwt-token-123',
+        parent: { schoolId: 'school-456' },
       },
     });
 
