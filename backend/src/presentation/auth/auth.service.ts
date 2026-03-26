@@ -111,6 +111,7 @@ export class AuthService {
     const payload: JwtPayload = {
       sub: parent.id,
       email: parent.email,
+      schoolId: parent.schoolId ?? null,
     };
 
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });

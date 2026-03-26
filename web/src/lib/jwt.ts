@@ -1,5 +1,4 @@
 export interface JWTPayload {
-  parentId?: string;
   schoolId?: string;
   [key: string]: any;
 }
@@ -30,6 +29,5 @@ export function getSchoolIdFromToken(token: string): string | null {
   if (!payload) {
     return null;
   }
-  // Try both schoolId and parentId
-  return payload.schoolId || payload.parentId || null;
+  return payload.schoolId || null;
 }

@@ -103,6 +103,14 @@ describe('AuthService', () => {
       expect(schoolRepositoryMock.findById).toHaveBeenCalledWith('school-456');
       expect(parentRepositoryMock.create).toHaveBeenCalled();
       expect(jwtServiceMock.sign).toHaveBeenCalledTimes(2);
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sub: mockParent.id,
+          email: mockParent.email,
+          schoolId: mockParent.schoolId,
+        }),
+        expect.anything(),
+      );
     });
 
     it('should throw NotFoundException for invalid schoolId', async () => {
@@ -196,6 +204,14 @@ describe('AuthService', () => {
       expect(result.refreshToken).toBe('jwt-token');
       expect(result.parent.schoolId).toBeNull();
       expect(schoolRepositoryMock.findById).not.toHaveBeenCalled();
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sub: mockParentNoSchool.id,
+          email: mockParentNoSchool.email,
+          schoolId: null,
+        }),
+        expect.anything(),
+      );
     });
   });
 
@@ -218,6 +234,14 @@ describe('AuthService', () => {
       expect(result.refreshToken).toBe('jwt-token');
       expect(result.parent.id).toBe(mockParent.id);
       expect(jwtServiceMock.sign).toHaveBeenCalledTimes(2);
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sub: mockParent.id,
+          email: mockParent.email,
+          schoolId: mockParent.schoolId,
+        }),
+        expect.anything(),
+      );
     });
 
     it('should throw UnauthorizedException with invalid credentials', async () => {
