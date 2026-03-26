@@ -13,6 +13,9 @@ const mockTokenService = {
 
 jest.mock('@infrastructure/http', () => ({
   SecureAuthTokenService: jest.fn(() => mockTokenService),
+  axiosClient: {
+    setTokenService: jest.fn(),
+  },
 }));
 
 // Mock authService
@@ -173,9 +176,8 @@ describe('useAuth', () => {
 
     const { result } = renderHook(() => useAuth());
 
-    // Wait for initialize effect
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await result.current.initialize();
     });
 
     expect(result.current.isAuthenticated).toBe(true);

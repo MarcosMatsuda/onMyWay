@@ -13,7 +13,11 @@ type MapScreenProps = NativeStackScreenProps<MainStackParamList, 'Map'>;
 export const MapScreen: React.FC<MapScreenProps> = ({ route }) => {
   const { schoolId, currentLat, currentLng } = route.params;
   const { currentLocation: liveLocation, error: locationError } = useLocation();
-  const currentLocation = liveLocation ?? (currentLat && currentLng ? { lat: currentLat, lng: currentLng, accuracy: 0, timestamp: Date.now() } : null);
+  const currentLocation =
+    liveLocation ??
+    (currentLat && currentLng
+      ? { lat: currentLat, lng: currentLng, accuracy: 0, timestamp: Date.now() }
+      : null);
   const { eta, isLoading: etaLoading, error: etaError, refresh } = useArrivals();
   const [school, setSchool] = useState<School | null>(null);
   const [schoolLoading, setSchoolLoading] = useState(true);

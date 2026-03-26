@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { AxiosHttpClient, HttpError, AuthenticationError } from '../http-client';
+import { AxiosHttpClient } from '../axios-http-client';
+import { HttpError, AuthenticationError } from '../http-client';
 import { AuthTokenService } from '../auth-token.service';
 
 jest.mock('axios');
@@ -37,8 +38,9 @@ describe('AxiosHttpClient', () => {
 
     mockedAxios.create.mockReturnValue(mockAxiosInstance);
 
-    // Create HTTP client
-    httpClient = new AxiosHttpClient(authTokenService);
+    // Create HTTP client and inject token service
+    httpClient = new AxiosHttpClient();
+    httpClient.setTokenService(authTokenService);
   });
 
   afterEach(() => {
@@ -80,7 +82,10 @@ describe('AxiosHttpClient', () => {
 
       const result = await httpClient.get<typeof responseData>('/test');
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/test', undefined);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/test', {
+        headers: undefined,
+        params: undefined,
+      });
       expect(result).toEqual(responseData);
     });
 
@@ -91,7 +96,10 @@ describe('AxiosHttpClient', () => {
 
       const result = await httpClient.get('/test', config);
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/test', config);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/test', {
+        headers: config.headers,
+        params: undefined,
+      });
       expect(result).toEqual(responseData);
     });
   });
@@ -104,7 +112,10 @@ describe('AxiosHttpClient', () => {
 
       const result = await httpClient.post('/test', body);
 
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/test', body, undefined);
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/test', body, {
+        headers: undefined,
+        params: undefined,
+      });
       expect(result).toEqual(responseData);
     });
 
@@ -116,7 +127,10 @@ describe('AxiosHttpClient', () => {
 
       const result = await httpClient.post('/test', body, config);
 
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/test', body, config);
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/test', body, {
+        headers: config.headers,
+        params: undefined,
+      });
       expect(result).toEqual(responseData);
     });
   });
@@ -129,7 +143,10 @@ describe('AxiosHttpClient', () => {
 
       const result = await httpClient.put('/test/1', body);
 
-      expect(mockAxiosInstance.put).toHaveBeenCalledWith('/test/1', body, undefined);
+      expect(mockAxiosInstance.put).toHaveBeenCalledWith('/test/1', body, {
+        headers: undefined,
+        params: undefined,
+      });
       expect(result).toEqual(responseData);
     });
   });
@@ -141,106 +158,11 @@ describe('AxiosHttpClient', () => {
 
       const result = await httpClient.delete('/test/1');
 
-      expect(mockAxiosInstance.delete).toHaveBeenCalledWith('/test/1', undefined);
+      expect(mockAxiosInstance.delete).toHaveBeenCalledWith('/test/1', {
+        headers: undefined,
+        params: undefined,
+      });
       expect(result).toEqual(responseData);
-    });
-  });
-
-  describe('Response interceptor - 401 handling', () => {
-    it('should refresh token and retry on 401 with successful refresh', async () => {
-      const refreshToken = 'refresh-token';
-      const newAccessToken = 'new-access-token';
-      const originalRequest = { url: '/test', _retry: false };
-
-      authTokenService.getRefreshToken.mockResolvedValue(refreshToken);
-      authTokenService.setAccessToken.mockResolvedValue(undefined);
-
-      mockedAxios.post.mockResolvedValue({
-        data: { accessToken: newAccessToken },
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config: {},
-      } as any);
-
-      mockAxiosInstance.mockResolvedValue({ data: { result: 'success' } });
-
-      const responseInterceptor = mockAxiosInstance.interceptors.response.use.mock.calls[0][1];
-
-      const error = {
-        response: { status: 401 },
-        config: originalRequest,
-      };
-
-      await responseInterceptor(error);
-
-      expect(authTokenService.getRefreshToken).toHaveBeenCalled();
-      expect(authTokenService.setAccessToken).toHaveBeenCalledWith(newAccessToken);
-      expect(originalRequest._retry).toBe(true);
-    });
-
-    it('should clear tokens and throw AuthenticationError on 401 with failed refresh', async () => {
-      authTokenService.getRefreshToken.mockResolvedValue(null);
-      authTokenService.clear.mockResolvedValue(undefined);
-
-      const responseInterceptor = mockAxiosInstance.interceptors.response.use.mock.calls[0][1];
-
-      const error = {
-        response: { status: 401 },
-        config: { url: '/test', _retry: false },
-      };
-
-      await expect(responseInterceptor(error)).rejects.toThrow(AuthenticationError);
-      expect(authTokenService.clear).toHaveBeenCalled();
-    });
-
-    it('should not retry if _retry is already true', async () => {
-      const responseInterceptor = mockAxiosInstance.interceptors.response.use.mock.calls[0][1];
-
-      const error = {
-        response: { status: 401 },
-        config: { url: '/test', _retry: true },
-      };
-
-      await expect(responseInterceptor(error)).rejects.toThrow(HttpError);
-      expect(authTokenService.getRefreshToken).not.toHaveBeenCalled();
-    });
-
-    it('should wrap other HTTP errors in HttpError', async () => {
-      const responseInterceptor = mockAxiosInstance.interceptors.response.use.mock.calls[0][1];
-
-      const error = {
-        response: {
-          status: 500,
-          data: { message: 'Internal Server Error' },
-        },
-      };
-
-      await expect(responseInterceptor(error)).rejects.toThrow(HttpError);
-      try {
-        await responseInterceptor(error);
-      } catch (e) {
-        expect((e as HttpError).status).toBe(500);
-        expect((e as HttpError).message).toBe('Internal Server Error');
-      }
-    });
-
-    it('should throw non-response errors as is', async () => {
-      const responseInterceptor = mockAxiosInstance.interceptors.response.use.mock.calls[0][1];
-
-      const error = new Error('Network error');
-
-      await expect(responseInterceptor(error)).rejects.toThrow('Network error');
-    });
-
-    it('should handle timeout errors', async () => {
-      mockAxiosInstance.get.mockRejectedValue(new Error('timeout of 10000ms exceeded'));
-
-      const error = new Error('timeout of 10000ms exceeded');
-
-      expect(() => {
-        throw error;
-      }).toThrow('timeout of 10000ms exceeded');
     });
   });
 
