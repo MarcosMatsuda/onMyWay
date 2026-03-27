@@ -1,0 +1,215 @@
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import ArrivalsContainer from '../ArrivalsContainer';
+import { useArrivals } from '@/hooks/useArrivals';
+import { Arrival } from '@/types';
+
+jest.mock('@/hooks/useArrivals');
+
+const mockUseArrivals = useArrivals as jest.Mock;
+
+const sampleArrivals: Arrival[] = [
+  { parentId: 'parent-1', distanceMeters: 500, durationMinutes: 10, routePolyline: '' },
+  { parentId: 'parent-2', distanceMeters: 200, durationMinutes: 3, routePolyline: '' },
+];
+
+describe('ArrivalsContainer', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseArrivals.mockReturnValue({
+      arrivals: [],
+      isConnected: false,
+      lastUpdatedAt: null,
+    });
+  });
+
+  it('renders the school name as heading', () => {
+    render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={[]}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Escola Primavera' })).toBeInTheDocument();
+  });
+
+  it('shows empty state message when no arrivals', () => {
+    render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={[]}
+      />,
+    );
+
+    expect(
+      screen.getByText('Nenhum pai a caminho no momento.'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders arrivals list when arrivals are present', () => {
+    mockUseArrivals.mockReturnValue({
+      arrivals: sampleArrivals,
+      isConnected: true,
+      lastUpdatedAt: null,
+    });
+
+    render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={sampleArrivals}
+      />,
+    );
+
+    expect(screen.getByText('Parent ID: parent-1')).toBeInTheDocument();
+    expect(screen.getByText('Parent ID: parent-2')).toBeInTheDocument();
+  });
+
+  it('displays ETA and distance for each arrival', () => {
+    mockUseArrivals.mockReturnValue({
+      arrivals: sampleArrivals,
+      isConnected: true,
+      lastUpdatedAt: null,
+    });
+
+    render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={sampleArrivals}
+      />,
+    );
+
+    expect(screen.getByText('10 min · 500 m')).toBeInTheDocument();
+    expect(screen.getByText('3 min · 200 m')).toBeInTheDocument();
+  });
+
+  it('shows "Ao vivo" indicator when connected', () => {
+    mockUseArrivals.mockReturnValue({
+      arrivals: [],
+      isConnected: true,
+      lastUpdatedAt: null,
+    });
+
+    render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={[]}
+      />,
+    );
+
+    expect(screen.getByText(/Ao vivo/)).toBeInTheDocument();
+  });
+
+  it('shows "Desconectado" indicator when not connected', () => {
+    mockUseArrivals.mockReturnValue({
+      arrivals: [],
+      isConnected: false,
+      lastUpdatedAt: null,
+    });
+
+    render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={[]}
+      />,
+    );
+
+    expect(screen.getByText(/Desconectado/)).toBeInTheDocument();
+  });
+
+  it('shows "Atualizando..." when lastUpdatedAt is null', () => {
+    mockUseArrivals.mockReturnValue({
+      arrivals: [],
+      isConnected: false,
+      lastUpdatedAt: null,
+    });
+
+    render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={[]}
+      />,
+    );
+
+    expect(screen.getByText('Atualizando...')).toBeInTheDocument();
+  });
+
+  it('shows formatted time when lastUpdatedAt is set', () => {
+    const fixedDate = new Date('2024-01-15T14:30:45');
+    mockUseArrivals.mockReturnValue({
+      arrivals: [],
+      isConnected: true,
+      lastUpdatedAt: fixedDate,
+    });
+
+    render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={[]}
+      />,
+    );
+
+    expect(screen.getByText(/Atualizado às/)).toBeInTheDocument();
+  });
+
+  it('passes schoolId and initialArrivals to useArrivals', () => {
+    render(
+      <ArrivalsContainer
+        schoolId="school-42"
+        schoolName="Escola Teste"
+        initialArrivals={sampleArrivals}
+      />,
+    );
+
+    expect(mockUseArrivals).toHaveBeenCalledWith('school-42', sampleArrivals);
+  });
+
+  it('does not render arrival list items when arrivals array is empty', () => {
+    mockUseArrivals.mockReturnValue({
+      arrivals: [],
+      isConnected: false,
+      lastUpdatedAt: null,
+    });
+
+    render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={[]}
+      />,
+    );
+
+    expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
+  });
+
+  it('renders one list item per arrival', () => {
+    const threeArrivals: Arrival[] = [
+      { parentId: 'p-1', distanceMeters: 100, durationMinutes: 2, routePolyline: '' },
+      { parentId: 'p-2', distanceMeters: 200, durationMinutes: 4, routePolyline: '' },
+      { parentId: 'p-3', distanceMeters: 300, durationMinutes: 8, routePolyline: '' },
+    ];
+    mockUseArrivals.mockReturnValue({
+      arrivals: threeArrivals,
+      isConnected: true,
+      lastUpdatedAt: null,
+    });
+
+    render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={threeArrivals}
+      />,
+    );
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+  });
+});
