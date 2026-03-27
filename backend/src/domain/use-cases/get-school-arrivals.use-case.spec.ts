@@ -163,10 +163,10 @@ describe('GetSchoolArrivalsUseCase', () => {
     );
 
     // Verify bulk methods were called instead of individual ones
-    expect(etaRepositoryMock.findLatestBulkByParentIds).toHaveBeenCalledWith([
-      'parent-1',
-      'parent-2',
-    ]);
+    expect(etaRepositoryMock.findLatestBulkByParentIds).toHaveBeenCalledWith(
+      ['parent-1', 'parent-2'],
+      5, // ETA_TTL_MINUTES
+    );
     expect(parentRepositoryMock.findByIds).toHaveBeenCalledWith([
       'parent-1',
       'parent-2',
@@ -297,5 +297,55 @@ describe('GetSchoolArrivalsUseCase', () => {
 
     // Assert
     expect(result.arrivals).toHaveLength(0);
+  });
+
+  it('should filter out ETAs older than TTL (6 min) and include recent ones (4 min)', async () => {
+    // Arrange
+    const input = { schoolId: 'school-456' };
+
+    schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
+    schoolRepositoryMock.findParentsWithinGeofence.mockResolvedValue([
+      'parent-1',
+      'parent-2',
+    ]);
+
+    const now = Date.now();
+    // parent-1 has stale ETA (6 min ago) - filtered out by repository
+    // parent-2 has recent ETA (4 min ago) - should be included
+    const recentETA = {
+      ...mockETAs[1],
+      parentId: 'parent-2',
+      calculatedAt: new Date(now - 4 * 60 * 1000), // 4 minutes ago (should be included)
+    };
+
+    // Mock repository to return only the recent ETA (TTL filter applied)
+    const etasMap = new Map([['parent-2', recentETA]]);
+    etaRepositoryMock.findLatestBulkByParentIds.mockResolvedValue(etasMap);
+
+    const parentsMap = new Map([
+      ['parent-1', mockParents[0]],
+      ['parent-2', mockParents[1]],
+    ]);
+    parentRepositoryMock.findByIds.mockResolvedValue(parentsMap);
+
+    const locationsMap = new Map([
+      ['parent-1', mockLocations[0]],
+      ['parent-2', mockLocations[1]],
+    ]);
+    locationRepositoryMock.findLatestBulkByParentIds.mockResolvedValue(
+      locationsMap,
+    );
+
+    // Act
+    const result = await useCase.execute(input);
+
+    // Assert
+    expect(etaRepositoryMock.findLatestBulkByParentIds).toHaveBeenCalledWith(
+      ['parent-1', 'parent-2'],
+      5, // ETA_TTL_MINUTES
+    );
+    expect(result.arrivals).toHaveLength(1);
+    expect(result.arrivals[0].parentId).toBe('parent-2'); // Only recent ETA
+    expect(result.totalCount).toBe(1);
   });
 });

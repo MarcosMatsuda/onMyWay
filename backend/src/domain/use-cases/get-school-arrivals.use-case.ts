@@ -15,6 +15,7 @@ import {
   ILocationRepository,
   LOCATION_REPOSITORY,
 } from '../repositories/location.repository.interface';
+import { ETA_TTL_MINUTES } from '@infrastructure/config/eta.config';
 
 export interface GetSchoolArrivalsInput {
   schoolId: string;
@@ -75,6 +76,7 @@ export class GetSchoolArrivalsUseCase {
     // Query 3: Get bulk ETAs for all parents (single query instead of N)
     const etas = await this.etaRepository.findLatestBulkByParentIds(
       parentIdsWithinGeofence,
+      ETA_TTL_MINUTES,
     );
 
     // Query 4: Get bulk locations for all parents (single query instead of N)

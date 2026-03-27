@@ -21,6 +21,7 @@ describe('ETARepository', () => {
             find: jest.fn(),
             create: jest.fn(),
             save: jest.fn(),
+            createQueryBuilder: jest.fn(),
           },
         },
       ],
@@ -160,30 +161,104 @@ describe('ETARepository', () => {
         calculatedAt: now,
       };
 
-      jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(mockModel);
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockModel),
+      };
+
+      jest
+        .spyOn(etaRepositoryMock, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
       jest.spyOn(ETAMapper, 'toDomain').mockReturnValue(expectedEntity);
 
       const result = await repository.findLatestByParentId(parentId);
 
       expect(result).toEqual(expectedEntity);
-      expect(etaRepositoryMock.findOne).toHaveBeenCalledWith({
-        where: { parentId },
-        order: { calculatedAt: 'DESC' },
-      });
+      expect(etaRepositoryMock.createQueryBuilder).toHaveBeenCalledWith('eta');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'eta.parentId = :parentId',
+        { parentId },
+      );
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'eta.calculatedAt',
+        'DESC',
+      );
       expect(ETAMapper.toDomain).toHaveBeenCalledWith(mockModel);
     });
 
     it('should return null when no ETA exists for parent', async () => {
       const parentId = 'parent-1';
-      jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(null);
+
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(null),
+      };
+
+      jest
+        .spyOn(etaRepositoryMock, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
 
       const result = await repository.findLatestByParentId(parentId);
 
       expect(result).toBeNull();
-      expect(etaRepositoryMock.findOne).toHaveBeenCalledWith({
-        where: { parentId },
-        order: { calculatedAt: 'DESC' },
-      });
+      expect(etaRepositoryMock.createQueryBuilder).toHaveBeenCalledWith('eta');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'eta.parentId = :parentId',
+        { parentId },
+      );
+    });
+
+    it('should filter by maxAgeMinutes when provided', async () => {
+      const parentId = 'parent-1';
+      const maxAgeMinutes = 5;
+      const now = new Date();
+      const mockModel: ETAModel = {
+        id: 'eta-1',
+        parentId,
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
+        calculatedAt: now,
+      };
+
+      const expectedEntity: ETA = {
+        id: 'eta-1',
+        parentId,
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
+        calculatedAt: now,
+      };
+
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockModel),
+      };
+
+      jest
+        .spyOn(etaRepositoryMock, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
+      jest.spyOn(ETAMapper, 'toDomain').mockReturnValue(expectedEntity);
+
+      const result = await repository.findLatestByParentId(
+        parentId,
+        maxAgeMinutes,
+      );
+
+      expect(result).toEqual(expectedEntity);
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        "eta.calculatedAt > NOW() - INTERVAL ':maxAgeMinutes minutes'",
+        { maxAgeMinutes },
+      );
+      expect(ETAMapper.toDomain).toHaveBeenCalledWith(mockModel);
     });
   });
 
