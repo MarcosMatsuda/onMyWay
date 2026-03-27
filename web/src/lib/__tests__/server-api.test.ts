@@ -3,6 +3,7 @@ import {
   getSchool,
   getSchoolArrivals,
   getSchoolStats,
+  updateSchoolConfig,
 } from '../server-api';
 
 const mockFetch = jest.fn();
@@ -188,5 +189,41 @@ describe('getSchoolStats', () => {
     mockFetch.mockRejectedValueOnce(new Error('Network failure'));
 
     await expect(getSchoolStats('school-1', 'my-token')).rejects.toThrow('Network failure');
+  });
+});
+
+describe('updateSchoolConfig', () => {
+  const config = { geofenceRadiusMeters: 500, notificationThresholdMeters: 300 };
+
+  it('sends POST to /schools/:id/config with Authorization header and body', async () => {
+    mockFetch.mockReturnValueOnce(mockOkResponse(config));
+
+    const result = await updateSchoolConfig('school-1', config, 'my-token');
+
+    expect(result).toEqual(config);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/schools/school-1/config'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify(config),
+        headers: expect.objectContaining({ Authorization: 'Bearer my-token' }),
+      }),
+    );
+  });
+
+  it('throws on HTTP error', async () => {
+    mockFetch.mockReturnValueOnce(mockErrorResponse(401, 'Unauthorized'));
+
+    await expect(updateSchoolConfig('school-1', config, 'bad-token')).rejects.toThrow(
+      'API error: 401 Unauthorized',
+    );
+  });
+
+  it('propagates network errors (fetch rejects)', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('Network failure'));
+
+    await expect(updateSchoolConfig('school-1', config, 'my-token')).rejects.toThrow(
+      'Network failure',
+    );
   });
 });
