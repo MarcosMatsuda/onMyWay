@@ -7,4 +7,5 @@ export interface IETARepository {
   findLatestByParentId(parentId: string): Promise<ETA | null>;
   findBySchoolId(schoolId: string): Promise<ETA[]>;
   findLatestBulkByParentIds(parentIds: string[]): Promise<Map<string, ETA>>;
+  deleteByParentId(parentId: string): Promise<void>;
 }

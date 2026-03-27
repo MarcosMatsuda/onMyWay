@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LocationsService } from './locations.service';
 import { SaveLocationWithETAUseCase } from '../../domain/use-cases/save-location-with-eta.use-case';
 import { NotifySchoolUseCase } from '../../domain/use-cases/notify-school.use-case';
+import { StopSharingUseCase } from '../../domain/use-cases/stop-sharing.use-case';
 import {
   ILocationRepository,
   LOCATION_REPOSITORY,
@@ -23,6 +24,7 @@ describe('LocationsService', () => {
   let service: LocationsService;
   let saveLocationWithETAUseCaseMock: jest.Mocked<SaveLocationWithETAUseCase>;
   let notifySchoolUseCaseMock: jest.Mocked<NotifySchoolUseCase>;
+  let stopSharingUseCaseMock: jest.Mocked<StopSharingUseCase>;
   let locationRepositoryMock: jest.Mocked<ILocationRepository>;
   let etaRepositoryMock: jest.Mocked<IETARepository>;
   let parentRepositoryMock: jest.Mocked<IParentRepository>;
@@ -78,6 +80,10 @@ describe('LocationsService', () => {
       execute: jest.fn(),
     } as any;
 
+    stopSharingUseCaseMock = {
+      execute: jest.fn(),
+    } as any;
+
     locationRepositoryMock = {
       save: jest.fn(),
       findById: jest.fn(),
@@ -110,6 +116,10 @@ describe('LocationsService', () => {
         {
           provide: NotifySchoolUseCase,
           useValue: notifySchoolUseCaseMock,
+        },
+        {
+          provide: StopSharingUseCase,
+          useValue: stopSharingUseCaseMock,
         },
         {
           provide: LOCATION_REPOSITORY,

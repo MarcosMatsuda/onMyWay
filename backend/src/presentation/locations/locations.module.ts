@@ -6,6 +6,7 @@ import { CalculateETAUseCase } from '../../domain/use-cases/calculate-eta.use-ca
 import { GetArrivalsQueueUseCase } from '../../domain/use-cases/get-arrivals-queue.use-case';
 import { GetSchoolArrivalsUseCase } from '../../domain/use-cases/get-school-arrivals.use-case';
 import { NotifySchoolUseCase } from '../../domain/use-cases/notify-school.use-case';
+import { StopSharingUseCase } from '../../domain/use-cases/stop-sharing.use-case';
 import { DataModule } from '../../data/data.module';
 import { OSRMModule } from '../../infrastructure/osrm/osrm.module';
 import { WebSocketModule } from '../../infrastructure/websocket/websocket.module';
@@ -48,6 +49,7 @@ import { ETA_REPOSITORY } from '../../domain/repositories/eta.repository.interfa
     GetArrivalsQueueUseCase,
     GetSchoolArrivalsUseCase,
     NotifySchoolUseCase,
+    StopSharingUseCase,
     {
       provide: 'IOSRMServiceAdapter',
       useClass: OSRMServiceAdapter,

@@ -9,6 +9,7 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  Delete,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import {
@@ -63,6 +64,19 @@ export class LocationsController {
   ): Promise<LocationResponseDto | null> {
     const parentId = req.user.id ?? req.user.sub;
     return this.locationsService.getMyLatestLocation(parentId);
+  }
+
+  @Delete('me')
+  @ApiOperation({
+    summary: 'Stop location sharing',
+    description: 'Delete all ETA records and remove from arrivals queue',
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async stopSharing(@Request() req: { user: any }): Promise<void> {
+    const parentId = req.user.id ?? req.user.sub;
+    await this.locationsService.stopSharing(parentId);
   }
 
   @Post(':parentId/calculate-eta')

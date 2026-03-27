@@ -68,4 +68,8 @@ export class ETARepository implements IETARepository {
 
     return resultMap;
   }
+
+  async deleteByParentId(parentId: string): Promise<void> {
+    await this.repository.delete({ parentId });
+  }
 }
