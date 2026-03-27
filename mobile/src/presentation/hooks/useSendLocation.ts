@@ -15,26 +15,29 @@ export const useSendLocation = (): UseSendLocation => {
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const sendLocation = useCallback(async (schoolId: string, location: CurrentLocation) => {
-    if (isSending) return; // Prevent duplicate sends
+  const sendLocation = useCallback(
+    async (schoolId: string, location: CurrentLocation) => {
+      if (isSending) return; // Prevent duplicate sends
 
-    setIsSending(true);
-    setError(null);
+      setIsSending(true);
+      setError(null);
 
-    try {
-      // Use the SendLocationUseCase
-      const useCase = new SendLocationUseCase(locationRepository);
-      await useCase.execute(schoolId, location);
+      try {
+        // Use the SendLocationUseCase
+        const useCase = new SendLocationUseCase(locationRepository);
+        await useCase.execute(schoolId, location);
 
-      setLastSentAt(Date.now());
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to send location';
-      setError(message);
-      throw err;
-    } finally {
-      setIsSending(false);
-    }
-  }, [isSending]);
+        setLastSentAt(Date.now());
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to send location';
+        setError(message);
+        throw err;
+      } finally {
+        setIsSending(false);
+      }
+    },
+    [isSending],
+  );
 
   return {
     isSending,

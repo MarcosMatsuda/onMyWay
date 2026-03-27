@@ -169,7 +169,7 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
     stopTracking,
     error: locationError,
   } = useLocation();
-  const { isSending, lastSentAt, sendLocation } = useSendLocation();
+  const { lastSentAt, sendLocation } = useSendLocation();
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
 
   // Load selectedSchool from AsyncStorage on mount
@@ -263,8 +263,14 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
           <View style={styles.schoolCard}>
             <Text style={styles.schoolName}>{selectedSchool.name}</Text>
             <Text style={styles.schoolLocation}>
-              Location: {selectedSchool.location?.lat != null ? Number(selectedSchool.location.lat).toFixed(4) : '—'},
-              {selectedSchool.location?.lng != null ? Number(selectedSchool.location.lng).toFixed(4) : '—'}
+              Location:{' '}
+              {selectedSchool.location?.lat != null
+                ? Number(selectedSchool.location.lat).toFixed(4)
+                : '—'}
+              ,
+              {selectedSchool.location?.lng != null
+                ? Number(selectedSchool.location.lng).toFixed(4)
+                : '—'}
             </Text>
           </View>
         )}
@@ -275,10 +281,7 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
             <View style={styles.toggleSection}>
               <View style={styles.toggleRow}>
                 <Text style={styles.toggleLabel}>Share my location</Text>
-                <Switch
-                  value={isTracking}
-                  onValueChange={handleToggleSharing}
-                />
+                <Switch value={isTracking} onValueChange={handleToggleSharing} />
               </View>
             </View>
 
@@ -286,7 +289,13 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
             {selectedSchool && (
               <TouchableOpacity
                 style={styles.mapButton}
-                onPress={() => navigation.navigate('Map', { schoolId: selectedSchool.id, currentLat: currentLocation?.lat, currentLng: currentLocation?.lng })}
+                onPress={() =>
+                  navigation.navigate('Map', {
+                    schoolId: selectedSchool.id,
+                    currentLat: currentLocation?.lat,
+                    currentLng: currentLocation?.lng,
+                  })
+                }
               >
                 <Text style={styles.mapButtonText}>View Map</Text>
               </TouchableOpacity>
@@ -318,23 +327,23 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
             <View style={styles.mapButtonContainer}>
               <Button
                 title="View Map"
-                onPress={() => navigation.navigate('Map', { schoolId: selectedSchool.id, currentLat: currentLocation?.lat, currentLng: currentLocation?.lng })}
+                onPress={() =>
+                  navigation.navigate('Map', {
+                    schoolId: selectedSchool.id,
+                    currentLat: currentLocation?.lat,
+                    currentLng: currentLocation?.lng,
+                  })
+                }
               />
             </View>
 
             {/* Navigation Buttons */}
             <View style={styles.navigationButtons}>
               <View style={styles.buttonContainer}>
-                <Button
-                  title="Change School"
-                  onPress={() => navigation.navigate('SchoolSelect')}
-                />
+                <Button title="Change School" onPress={() => navigation.navigate('SchoolSelect')} />
               </View>
               <View style={styles.buttonContainer}>
-                <Button
-                  title="Profile"
-                  onPress={() => navigation.navigate('Profile')}
-                />
+                <Button title="Profile" onPress={() => navigation.navigate('Profile')} />
               </View>
             </View>
           </>
