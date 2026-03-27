@@ -208,6 +208,32 @@ describe('ArrivalsContainer', () => {
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
   });
 
+  it('shows stats skeleton when stats prop is null', () => {
+    const { container } = render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={[]}
+        stats={null}
+      />,
+    );
+    const skeletons = container.querySelectorAll('.animate-pulse');
+    expect(skeletons).toHaveLength(4);
+  });
+
+  it('renders stat cards when stats prop is provided', () => {
+    render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={[]}
+        stats={sampleStats}
+      />,
+    );
+    expect(screen.getByText('Pais a caminho')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+  });
+
   it('renders one list item per arrival', () => {
     const threeArrivals: Arrival[] = [
       { parentId: 'p-1', distanceMeters: 100, durationMinutes: 2, routePolyline: '' },

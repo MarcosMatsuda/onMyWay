@@ -89,4 +89,37 @@ describe('ArrivalsStats', () => {
     expect(gridDiv).toHaveClass('grid-cols-2');
     expect(gridDiv).toHaveClass('md:grid-cols-4');
   });
+
+  it('does not render a card for etaGreaterThan15Min', () => {
+    const stats: SchoolStats = {
+      totalParents: 5,
+      avgETA: 20,
+      etaLessThan5Min: 0,
+      eta5To15Min: 1,
+      etaGreaterThan15Min: 4,
+    };
+    render(<ArrivalsStats stats={stats} />);
+    expect(screen.queryByText('mais de 15 min')).not.toBeInTheDocument();
+    expect(screen.queryByText('4')).not.toBeInTheDocument();
+  });
+
+  it('renders exactly 4 stat cards when stats provided', () => {
+    const stats: SchoolStats = {
+      totalParents: 3,
+      avgETA: 7,
+      etaLessThan5Min: 1,
+      eta5To15Min: 2,
+      etaGreaterThan15Min: 0,
+    };
+    const { container } = render(<ArrivalsStats stats={stats} />);
+    const cards = container.querySelectorAll('.bg-white.rounded-lg');
+    expect(cards).toHaveLength(4);
+  });
+
+  it('skeleton grid uses same layout as data grid', () => {
+    const { container } = render(<ArrivalsStats stats={null} />);
+    const gridDiv = container.querySelector('.grid');
+    expect(gridDiv).toHaveClass('grid-cols-2');
+    expect(gridDiv).toHaveClass('md:grid-cols-4');
+  });
 });
