@@ -299,6 +299,28 @@ describe('GetSchoolArrivalsUseCase', () => {
     expect(result.arrivals).toHaveLength(0);
   });
 
+  it('should return empty arrivals when no parents are within geofence', async () => {
+    // Arrange
+    const input = { schoolId: 'school-456' };
+
+    schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
+    schoolRepositoryMock.findParentsWithinGeofence.mockResolvedValue([]);
+
+    // Act
+    const result = await useCase.execute(input);
+
+    // Assert
+    expect(result.arrivals).toHaveLength(0);
+    expect(result.totalCount).toBe(0);
+    expect(result.schoolName).toBe('Springfield Elementary');
+    // Bulk queries should NOT be called when geofence is empty
+    expect(etaRepositoryMock.findLatestBulkByParentIds).not.toHaveBeenCalled();
+    expect(parentRepositoryMock.findByIds).not.toHaveBeenCalled();
+    expect(
+      locationRepositoryMock.findLatestBulkByParentIds,
+    ).not.toHaveBeenCalled();
+  });
+
   it('should filter out ETAs older than TTL (6 min) and include recent ones (4 min)', async () => {
     // Arrange
     const input = { schoolId: 'school-456' };
