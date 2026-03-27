@@ -23,4 +23,11 @@ describe('ConnectionHeader', () => {
     render(<ConnectionHeader isConnected={true} lastUpdatedAt={testDate} />);
     expect(screen.getByText(/Atualizado às/)).toBeInTheDocument();
   });
+
+  it('shows formatted time even when disconnected', () => {
+    const testDate = new Date('2024-06-01T09:15:00');
+    render(<ConnectionHeader isConnected={false} lastUpdatedAt={testDate} />);
+    expect(screen.getByText(/Atualizado às/)).toBeInTheDocument();
+    expect(screen.getByText(/Desconectado/)).toBeInTheDocument();
+  });
 });

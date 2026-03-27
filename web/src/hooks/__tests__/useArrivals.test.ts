@@ -209,4 +209,40 @@ describe('useArrivals', () => {
 
     process.env.NEXT_PUBLIC_WS_URL = originalEnv;
   });
+
+  it('should keep ws:// protocol for 127.0.0.1', () => {
+    const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
+
+    process.env.NEXT_PUBLIC_WS_URL = 'ws://127.0.0.1:3000';
+    renderHook(() => useArrivals(schoolId, initialArrivals));
+
+    expect(mockIoFn).toHaveBeenCalledWith(
+      'ws://127.0.0.1:3000',
+      expect.any(Object),
+    );
+
+    process.env.NEXT_PUBLIC_WS_URL = originalEnv;
+  });
+
+  it('should initialise with empty arrivals when no initialArrivals provided', () => {
+    const { result } = renderHook(() => useArrivals(schoolId, []));
+
+    expect(result.current.arrivals).toHaveLength(0);
+    expect(result.current.isConnected).toBe(false);
+    expect(result.current.lastUpdatedAt).toBeNull();
+  });
+
+  it('should convert https:// to wss:// for production', () => {
+    const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
+
+    process.env.NEXT_PUBLIC_WS_URL = 'https://api.example.com';
+    renderHook(() => useArrivals(schoolId, initialArrivals));
+
+    expect(mockIoFn).toHaveBeenCalledWith(
+      'wss://api.example.com',
+      expect.any(Object),
+    );
+
+    process.env.NEXT_PUBLIC_WS_URL = originalEnv;
+  });
 });
