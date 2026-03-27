@@ -1,24 +1,9 @@
 import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Arrival } from '@/types';
-import { getToken } from '@/lib/auth';
 
-// Ensure secure WebSocket protocol in production
-function getSecureWsUrl(url: string): string {
-  if (typeof window === 'undefined') return url;
-
-  // If explicitly using localhost, keep ws://
-  if (url.includes('localhost') || url.includes('127.0.0.1')) {
-    return url;
-  }
-
-  // Otherwise, enforce wss:// for production
-  return url.replace(/^ws:/, 'wss:').replace(/^http:/, 'wss:').replace(/^https:/, 'wss:');
-}
-
-function getWsUrl(): string {
-  return process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000';
-}
+const WS_URL =
+  process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3000';
 
 export function useArrivals(
   schoolId: string,
@@ -37,19 +22,11 @@ export function useArrivals(
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => {
-    const token = getToken();
-    const secureUrl = getSecureWsUrl(getWsUrl());
-
-    const socket: Socket = io(secureUrl, {
-      autoConnect: true,
-      auth: {
-        token,
-      },
-    });
+    const socket: Socket = io(WS_URL, { autoConnect: true });
 
     socket.on('connect', () => {
       setIsConnected(true);
-      socket.emit('joinSchool', { schoolId, token });
+      socket.emit('joinSchool', { schoolId });
     });
 
     socket.on('disconnect', () => {
