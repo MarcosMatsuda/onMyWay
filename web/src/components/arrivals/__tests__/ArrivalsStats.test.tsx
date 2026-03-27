@@ -48,4 +48,24 @@ describe('ArrivalsStats', () => {
     expect(screen.getByText('Tempo médio')).toBeInTheDocument();
     expect(screen.getByText('Próxima chegada')).toBeInTheDocument();
   });
+
+  it('shows single arrival stats correctly', () => {
+    const arrivals: Arrival[] = [
+      { parentId: 'p-1', distanceMeters: 300, durationMinutes: 8, routePolyline: '' },
+    ];
+    render(<ArrivalsStats arrivals={arrivals} />);
+    expect(screen.getByText('1')).toBeInTheDocument();
+    // avg duration and closest arrival are both 8 min for a single arrival
+    expect(screen.getAllByText('8 min')).toHaveLength(2);
+  });
+
+  it('rounds average duration to nearest integer', () => {
+    const arrivals: Arrival[] = [
+      { parentId: 'p-1', distanceMeters: 100, durationMinutes: 1, routePolyline: '' },
+      { parentId: 'p-2', distanceMeters: 200, durationMinutes: 2, routePolyline: '' },
+    ];
+    render(<ArrivalsStats arrivals={arrivals} />);
+    // average = 1.5 → rounds to 2
+    expect(screen.getByText('2 min')).toBeInTheDocument();
+  });
 });
