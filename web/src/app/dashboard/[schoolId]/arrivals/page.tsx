@@ -13,6 +13,8 @@ export default async function ArrivalsPage({ params }: ArrivalsPageProps) {
 
   let arrivals: Arrival[] = [];
   let schoolName = schoolId;
+  let schoolLat = -23.5505;
+  let schoolLng = -46.6333;
 
   try {
     const cookieStore = await cookies();
@@ -26,6 +28,8 @@ export default async function ArrivalsPage({ params }: ArrivalsPageProps) {
 
       arrivals = arrivalsData;
       schoolName = schoolData?.name ?? schoolId;
+      schoolLat = schoolData?.location.lat ?? -23.5505;
+      schoolLng = schoolData?.location.lng ?? -46.6333;
     }
   } catch (error) {
     console.error('Error loading arrivals:', error);
@@ -35,6 +39,8 @@ export default async function ArrivalsPage({ params }: ArrivalsPageProps) {
     <ArrivalsContainer
       schoolId={schoolId}
       schoolName={schoolName}
+      schoolLat={schoolLat}
+      schoolLng={schoolLng}
       initialArrivals={arrivals}
     />
   );
