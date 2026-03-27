@@ -31,6 +31,42 @@ beforeEach(() => {
   mockFetch.mockReset();
 });
 
+describe('base URL resolution', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  it('uses API_URL env var when set', async () => {
+    process.env.API_URL = 'http://backend.example.com:4000';
+    mockFetch.mockReturnValueOnce(mockOkResponse([]));
+
+    await listSchools();
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://backend.example.com:4000/schools',
+      expect.any(Object),
+    );
+  });
+
+  it('falls back to http://localhost:3000 when API_URL is not set', async () => {
+    delete process.env.API_URL;
+    mockFetch.mockReturnValueOnce(mockOkResponse([]));
+
+    await listSchools();
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://localhost:3000/schools',
+      expect.any(Object),
+    );
+  });
+});
+
 describe('listSchools', () => {
   it('returns list of schools', async () => {
     const schools = [

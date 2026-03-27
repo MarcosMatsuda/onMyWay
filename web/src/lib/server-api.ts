@@ -1,6 +1,8 @@
 import { Arrival, School, SchoolStats, SchoolConfig } from '@/types';
 
-const baseURL = process.env.API_URL || 'http://localhost:3000';
+function getBaseURL(): string {
+  return process.env.API_URL || 'http://localhost:3000';
+}
 
 async function serverFetch<T>(
   path: string,
@@ -15,7 +17,7 @@ async function serverFetch<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${baseURL}${path}`, {
+  const response = await fetch(`${getBaseURL()}${path}`, {
     ...options,
     headers: {
       ...headers,
