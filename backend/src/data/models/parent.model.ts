@@ -20,9 +20,9 @@ export class ParentModel {
   @Column({ length: 20, nullable: true })
   phone: string;
 
-  @Column({ name: 'school_id', type: 'uuid', nullable: true })
+  @Column({ name: 'school_id', type: 'uuid' })
   @Index()
-  schoolId: string | null;
+  schoolId: string;
 
   @Column({ name: 'password_hash', length: 255 })
   passwordHash: string;

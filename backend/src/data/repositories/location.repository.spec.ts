@@ -41,7 +41,7 @@ describe('LocationRepository', () => {
   });
 
   describe('save', () => {
-    it('should persist and return location using raw SQL', async () => {
+    it('should persist and return location', async () => {
       const createData = {
         parentId: 'parent-1',
         lat: 23.5505,
@@ -50,29 +50,51 @@ describe('LocationRepository', () => {
         timestamp: new Date(),
       };
 
-      jest.spyOn(dataSourceMock, 'query').mockResolvedValue([]);
+      const mockSavedModel: LocationModel = {
+        id: 'location-1',
+        parentId: 'parent-1',
+        lat: 23.5505,
+        lng: -46.6333,
+        point: 'POINT(-46.6333 23.5505)',
+        accuracy: 10,
+        timestamp: createData.timestamp,
+      };
 
-      const result = await repository.save(createData);
-
-      expect(dataSourceMock.query).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO locations'),
-        expect.arrayContaining([
-          expect.any(String), // id (UUID)
-          'parent-1',
-          23.5505,
-          -46.6333,
-          10,
-          createData.timestamp,
-        ]),
-      );
-      expect(result).toMatchObject({
+      const expectedEntity: Location = {
+        id: 'location-1',
         parentId: 'parent-1',
         lat: 23.5505,
         lng: -46.6333,
         accuracy: 10,
         timestamp: createData.timestamp,
-        id: expect.any(String),
-      });
+      };
+
+      const mockModelData = {
+        parentId: 'parent-1',
+        lat: 23.5505,
+        lng: -46.6333,
+        accuracy: 10,
+        timestamp: createData.timestamp,
+      };
+
+      jest
+        .spyOn(LocationMapper, 'toPersistence')
+        .mockReturnValue(mockModelData);
+      jest
+        .spyOn(locationRepositoryMock, 'create')
+        .mockReturnValue(mockSavedModel);
+      jest
+        .spyOn(locationRepositoryMock, 'save')
+        .mockResolvedValue(mockSavedModel);
+      jest.spyOn(LocationMapper, 'toDomain').mockReturnValue(expectedEntity);
+
+      const result = await repository.save(createData);
+
+      expect(result).toEqual(expectedEntity);
+      expect(LocationMapper.toPersistence).toHaveBeenCalledWith(createData);
+      expect(locationRepositoryMock.create).toHaveBeenCalledWith(mockModelData);
+      expect(locationRepositoryMock.save).toHaveBeenCalledWith(mockSavedModel);
+      expect(LocationMapper.toDomain).toHaveBeenCalledWith(mockSavedModel);
     });
   });
 

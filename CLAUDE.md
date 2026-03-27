@@ -110,15 +110,12 @@ IDLE (reset)
 
 ```bash
 cd backend
-npm run start:dev       # Dev server (watch mode, porta 3000)
-npm run build           # Build + TypeScript check (nest build)
-npm run lint            # ESLint (0 warnings max)
-npm test                # Jest unit tests only (default for WIP)
-npm run test:unit       # Explicit unit tests
-npm run test:coverage   # Unit tests + coverage report
-npm run test:integration # Integration tests (requires PostgreSQL)
-npm run test:all        # Both unit + integration
-npm run test:watch      # Unit tests in watch mode
+npm run start:dev     # Dev server (watch mode, porta 3000)
+npm run build         # Build
+npm run lint          # ESLint (0 warnings max)
+npm test              # Jest (--passWithNoTests)
+npm run test:cov      # Coverage
+npx tsc --noEmit      # Type check
 ```
 
 ### Docker (PostgreSQL + PostGIS)
@@ -130,21 +127,9 @@ docker-compose up -d  # Sobe PostgreSQL + PostGIS
 
 ### Testes
 
-**Multi-project Jest setup:**
-- **Unit tests** (`*.spec.ts` — excludes `*.integration.spec.ts`)
-  - Rodam sem dependências externas (mocks de HTTP, DB)
-  - Padrão: unit tests para use cases, services, controllers
-  - Rápido (~6s)
-- **Integration tests** (`*.integration.spec.ts`)
-  - Requerem PostgreSQL + PostGIS
-  - Atualmente: apenas testes de database module
-  - Não rodam em WIP
-
-**Configuração:**
-- Jest config: `jest.config.js` (multi-project)
-- Setup global: `jest.setup.ts` (clearAllMocks beforeEach)
-- Path aliases mapeados: `@domain/*`, `@data/*`, `@infrastructure/*`, `@presentation/*`
-- Mocks: `src/__mocks__/axios.ts` (HTTP calls)
+- Jest + ts-jest, environment node
+- Pattern: `*.spec.ts`
+- `@nestjs/testing` para testes de módulos
 
 ---
 
@@ -177,18 +162,6 @@ docker-compose up -d  # Sobe PostgreSQL + PostGIS
 - **Nunca mencionar IA, Claude ou ferramentas automatizadas** em commits ou PRs
 - PRs devem referenciar issues: `Closes #N`
 
-### Ciclo de vida das Issues
-
-**Ao abrir um PR:**
-- Sempre incluir `Closes #N` no corpo do PR para que o GitHub feche a issue automaticamente no merge
-
-**Ao encontrar um problema numa issue já implementada:**
-1. **Fechar a issue original** — com comentário explicando que a implementação foi entregue
-2. **Abrir nova issue** — descrevendo especificamente o problema encontrado, com contexto, escopo e critérios de aceite próprios
-3. Nunca reaproveitar uma issue fechada para rastrear problemas novos
-
-**Nunca deixar issue aberta se a implementação já foi entregue** — mesmo que com imperfeições. O histórico deve refletir o que foi feito, e os problemas devem ter rastreabilidade própria.
-
 ### Branches
 - `main` — produção
 - `develop` — desenvolvimento
@@ -202,38 +175,31 @@ docker-compose up -d  # Sobe PostgreSQL + PostGIS
 
 ## Pipeline de Qualidade
 
-### Testes obrigatórios (antes de abrir PR)
+### Testes obrigatórios
 
 - **Use cases** → unit tests (`.spec.ts`)
-- **Repositories** → unit tests com mocks (`.spec.ts`)
-- **Controllers** → unit tests com `@nestjs/testing` (`.spec.ts`)
+- **Repositories** → integration tests com `@nestjs/testing` (`.spec.ts`)
+- **Controllers** → e2e tests com Supertest
 - **Services** (OSRM, geofence) → unit tests com mocks
 - Novos módulos **devem ter testes** antes de abrir PR
-- E2E tests: não implementados por enquanto
 
-### Checklist de PR (antes de abrir)
+### Checklist de PR
 
-**Local verification (Developer WIP):**
-1. ✅ `npm run lint` passa (0 warnings)
-2. ✅ `npm run build` passa (TypeScript compile)
-3. ✅ `npm test` passa (unit tests)
-
-**Code review (após PR aberta):**
+1. `npm run lint` passa (0 warnings)
+2. `npx tsc --noEmit` passa
+3. `npm test` passa
 4. Segue Clean Architecture (ver seção Regras de dependência)
 5. Domain não importa de outras camadas
 6. DTOs com `class-validator` decorators para input validation
-7. Testes cobrem happy path + edge cases
-8. PR referencia issue: `Closes #N`
+7. PR referencia issue: `Closes #N`
 
-### CI automático (PRs para develop/main)
+### CI automático (`backend-ci.yml` — PRs para develop/main)
 
-**Pipeline esperado:**
-1. Security Audit (dependências vulneráveis)
-2. Lint + TypeScript (paralelo)
-3. Unit tests (não requer DB)
+Pipeline: Security Audit → Lint + TypeScript (paralelo) → Tests (com PostgreSQL + PostGIS real)
 
-- Se qualquer step falhar → comenta no PR com link para logs
-- Developer corrige e faz push novamente
+- CI sobe container `postgis/postgis:15-3.3` para testes
+- Se qualquer step falhar, comenta automaticamente no PR com link para os logs
+- Corrigir antes de pedir review
 
 ### Labels de status
 

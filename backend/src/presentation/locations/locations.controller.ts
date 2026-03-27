@@ -6,11 +6,12 @@ import {
   Param,
   Query,
   UseGuards,
-  Request,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  SaveLocationUseCase,
+  SaveLocationInput,
+  SaveLocationOutput,
+} from '../../domain/use-cases/save-location.use-case';
 import {
   CalculateETAUseCase,
   CalculateETAInput,
@@ -22,51 +23,24 @@ import {
   GetArrivalsQueueOutput,
 } from '../../domain/use-cases/get-arrivals-queue.use-case';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
-import { CreateLocationDto } from './dtos/create-location.dto';
-import { LocationResponseDto } from './dtos/location-response.dto';
-import { LocationsService } from './locations.service';
 
-@ApiTags('locations')
 @Controller('locations')
+@UseGuards(JwtAuthGuard)
 export class LocationsController {
   constructor(
-    private readonly locationsService: LocationsService,
+    private readonly saveLocationUseCase: SaveLocationUseCase,
     private readonly calculateETAUseCase: CalculateETAUseCase,
     private readonly getArrivalsQueueUseCase: GetArrivalsQueueUseCase,
   ) {}
 
   @Post()
-  @ApiOperation({
-    summary: 'Save parent location',
-    description: 'Update parent location coordinates',
-  })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.CREATED)
   async saveLocation(
-    @Request() req: { user: any },
-    @Body() createLocationDto: CreateLocationDto,
-  ): Promise<LocationResponseDto> {
-    const parentId = req.user.id ?? req.user.sub;
-    return this.locationsService.saveLocation(parentId, createLocationDto);
-  }
-
-  @Get('me')
-  @ApiOperation({
-    summary: 'Get my latest location',
-    description: 'Retrieve current location and ETA information',
-  })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  async getMyLatestLocation(
-    @Request() req: { user: any },
-  ): Promise<LocationResponseDto | null> {
-    const parentId = req.user.id ?? req.user.sub;
-    return this.locationsService.getMyLatestLocation(parentId);
+    @Body() input: SaveLocationInput,
+  ): Promise<SaveLocationOutput> {
+    return this.saveLocationUseCase.execute(input);
   }
 
   @Post(':parentId/calculate-eta')
-  @UseGuards(JwtAuthGuard)
   async calculateETA(
     @Param('parentId') parentId: string,
   ): Promise<CalculateETAOutput> {
@@ -75,7 +49,6 @@ export class LocationsController {
   }
 
   @Get('schools/:schoolId/arrivals-queue')
-  @UseGuards(JwtAuthGuard)
   async getArrivalsQueue(
     @Param('schoolId') schoolId: string,
     @Query('limit') limit?: number,
