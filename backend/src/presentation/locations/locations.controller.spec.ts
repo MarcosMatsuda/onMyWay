@@ -71,6 +71,7 @@ describe('LocationsController', () => {
     locationsServiceMock = {
       saveLocation: jest.fn(),
       getMyLatestLocation: jest.fn(),
+      stopSharing: jest.fn(),
     };
 
     calculateETAUseCaseMock = {
@@ -180,6 +181,48 @@ describe('LocationsController', () => {
         parentId: mockParentId,
       });
       expect(result).toEqual(mockCalculateETAOutput);
+    });
+  });
+
+  describe('stopSharing', () => {
+    it('should call stopSharing with parentId from JWT sub and return void', async () => {
+      // Arrange
+      locationsServiceMock.stopSharing.mockResolvedValue(undefined);
+
+      // Act
+      const result = await controller.stopSharing({ user: mockJwtPayload });
+
+      // Assert
+      expect(locationsServiceMock.stopSharing).toHaveBeenCalledWith(
+        mockParentId,
+      );
+      expect(result).toBeUndefined();
+    });
+
+    it('should prefer id over sub when both are present in JWT', async () => {
+      // Arrange
+      const jwtWithId = { sub: 'sub-id', id: 'actual-id', email: 'x@x.com' };
+      locationsServiceMock.stopSharing.mockResolvedValue(undefined);
+
+      // Act
+      await controller.stopSharing({ user: jwtWithId });
+
+      // Assert
+      expect(locationsServiceMock.stopSharing).toHaveBeenCalledWith(
+        'actual-id',
+      );
+    });
+
+    it('should propagate errors from stopSharing service', async () => {
+      // Arrange
+      locationsServiceMock.stopSharing.mockRejectedValue(
+        new Error('Failed to stop sharing'),
+      );
+
+      // Act & Assert
+      await expect(
+        controller.stopSharing({ user: mockJwtPayload }),
+      ).rejects.toThrow('Failed to stop sharing');
     });
   });
 

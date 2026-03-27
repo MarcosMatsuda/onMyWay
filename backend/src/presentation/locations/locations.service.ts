@@ -1,6 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { SaveLocationWithETAUseCase } from '../../domain/use-cases/save-location-with-eta.use-case';
 import { NotifySchoolUseCase } from '../../domain/use-cases/notify-school.use-case';
+import { StopSharingUseCase } from '../../domain/use-cases/stop-sharing.use-case';
 import {
   ILocationRepository,
   LOCATION_REPOSITORY,
@@ -23,6 +24,7 @@ export class LocationsService {
   constructor(
     private readonly saveLocationWithETAUseCase: SaveLocationWithETAUseCase,
     private readonly notifySchoolUseCase: NotifySchoolUseCase,
+    private readonly stopSharingUseCase: StopSharingUseCase,
     @Inject(LOCATION_REPOSITORY)
     private readonly locationRepository: ILocationRepository,
     @Inject(ETA_REPOSITORY)
@@ -162,5 +164,25 @@ export class LocationsService {
     }
 
     return response;
+  }
+
+  async stopSharing(parentId: string): Promise<void> {
+    try {
+      // Get parent's school
+      const parent = await this.getParentWithSchool(parentId);
+
+      // Execute stop sharing use case
+      await this.stopSharingUseCase.execute({
+        parentId,
+        schoolId: parent.schoolId,
+      });
+
+      this.logger.log(
+        `Parent ${parentId} stopped sharing location for school ${parent.schoolId}`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to stop sharing: ${error.message}`);
+      throw error;
+    }
   }
 }

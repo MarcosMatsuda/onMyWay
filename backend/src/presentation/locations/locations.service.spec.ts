@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LocationsService } from './locations.service';
 import { SaveLocationWithETAUseCase } from '../../domain/use-cases/save-location-with-eta.use-case';
 import { NotifySchoolUseCase } from '../../domain/use-cases/notify-school.use-case';
+import { StopSharingUseCase } from '../../domain/use-cases/stop-sharing.use-case';
 import {
   ILocationRepository,
   LOCATION_REPOSITORY,
@@ -23,6 +24,7 @@ describe('LocationsService', () => {
   let service: LocationsService;
   let saveLocationWithETAUseCaseMock: jest.Mocked<SaveLocationWithETAUseCase>;
   let notifySchoolUseCaseMock: jest.Mocked<NotifySchoolUseCase>;
+  let stopSharingUseCaseMock: jest.Mocked<StopSharingUseCase>;
   let locationRepositoryMock: jest.Mocked<ILocationRepository>;
   let etaRepositoryMock: jest.Mocked<IETARepository>;
   let parentRepositoryMock: jest.Mocked<IParentRepository>;
@@ -78,6 +80,10 @@ describe('LocationsService', () => {
       execute: jest.fn(),
     } as any;
 
+    stopSharingUseCaseMock = {
+      execute: jest.fn(),
+    } as any;
+
     locationRepositoryMock = {
       save: jest.fn(),
       findById: jest.fn(),
@@ -90,6 +96,7 @@ describe('LocationsService', () => {
       save: jest.fn(),
       findLatestByParentId: jest.fn(),
       findBySchoolId: jest.fn(),
+      deleteByParentId: jest.fn(),
     } as any;
 
     parentRepositoryMock = {
@@ -110,6 +117,10 @@ describe('LocationsService', () => {
         {
           provide: NotifySchoolUseCase,
           useValue: notifySchoolUseCaseMock,
+        },
+        {
+          provide: StopSharingUseCase,
+          useValue: stopSharingUseCaseMock,
         },
         {
           provide: LOCATION_REPOSITORY,
@@ -233,6 +244,62 @@ describe('LocationsService', () => {
       });
 
       expect(result.accuracy).toBeUndefined();
+    });
+  });
+
+  describe('stopSharing', () => {
+    it('should call stopSharingUseCase with parentId and schoolId from parent', async () => {
+      // Arrange
+      const parentId = 'parent-456';
+      parentRepositoryMock.findById.mockResolvedValue(mockParent);
+      stopSharingUseCaseMock.execute.mockResolvedValue({ deleted: true });
+
+      // Act
+      await service.stopSharing(parentId);
+
+      // Assert
+      expect(parentRepositoryMock.findById).toHaveBeenCalledWith(parentId);
+      expect(stopSharingUseCaseMock.execute).toHaveBeenCalledWith({
+        parentId,
+        schoolId: 'school-123',
+      });
+    });
+
+    it('should fall back to ETA schoolId when parent has no schoolId', async () => {
+      // Arrange
+      const parentId = 'parent-456';
+      const parentWithoutSchool: typeof mockParent = {
+        ...mockParent,
+        schoolId: undefined as any,
+      };
+      parentRepositoryMock.findById.mockResolvedValue(parentWithoutSchool);
+      etaRepositoryMock.findLatestByParentId.mockResolvedValue(mockETA);
+      stopSharingUseCaseMock.execute.mockResolvedValue({ deleted: true });
+
+      // Act
+      await service.stopSharing(parentId);
+
+      // Assert
+      expect(etaRepositoryMock.findLatestByParentId).toHaveBeenCalledWith(
+        parentId,
+      );
+      expect(stopSharingUseCaseMock.execute).toHaveBeenCalledWith({
+        parentId,
+        schoolId: 'school-123',
+      });
+    });
+
+    it('should throw when school cannot be determined', async () => {
+      // Arrange
+      const parentId = 'parent-456';
+      parentRepositoryMock.findById.mockResolvedValue(null);
+      etaRepositoryMock.findLatestByParentId.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.stopSharing(parentId)).rejects.toThrow(
+        `Cannot determine school for parent ${parentId}`,
+      );
+      expect(stopSharingUseCaseMock.execute).not.toHaveBeenCalled();
     });
   });
 
