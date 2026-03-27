@@ -1,12 +1,13 @@
-import { Arrival, School, SchoolStats } from '@/types';
+import { Arrival, School, SchoolStats, SchoolConfig } from '@/types';
 
 const baseURL = process.env.API_URL || 'http://localhost:3000';
 
 async function serverFetch<T>(
   path: string,
   token?: string,
+  options?: RequestInit,
 ): Promise<T> {
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
@@ -14,7 +15,13 @@ async function serverFetch<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${baseURL}${path}`, { headers });
+  const response = await fetch(`${baseURL}${path}`, {
+    ...options,
+    headers: {
+      ...headers,
+      ...options?.headers,
+    },
+  });
 
   if (!response.ok) {
     throw new Error(`API error: ${response.status} ${response.statusText}`);
@@ -43,4 +50,15 @@ export async function getSchoolStats(
   token: string,
 ): Promise<SchoolStats> {
   return serverFetch<SchoolStats>(`/schools/${schoolId}/stats`, token);
+}
+
+export async function updateSchoolConfig(
+  schoolId: string,
+  config: SchoolConfig,
+  token: string,
+): Promise<SchoolConfig> {
+  return serverFetch<SchoolConfig>(`/schools/${schoolId}/config`, token, {
+    method: 'POST',
+    body: JSON.stringify(config),
+  });
 }
