@@ -96,6 +96,7 @@ describe('LocationsService', () => {
       save: jest.fn(),
       findLatestByParentId: jest.fn(),
       findBySchoolId: jest.fn(),
+      deleteByParentId: jest.fn(),
     } as any;
 
     parentRepositoryMock = {
@@ -243,6 +244,62 @@ describe('LocationsService', () => {
       });
 
       expect(result.accuracy).toBeUndefined();
+    });
+  });
+
+  describe('stopSharing', () => {
+    it('should call stopSharingUseCase with parentId and schoolId from parent', async () => {
+      // Arrange
+      const parentId = 'parent-456';
+      parentRepositoryMock.findById.mockResolvedValue(mockParent);
+      stopSharingUseCaseMock.execute.mockResolvedValue({ deleted: true });
+
+      // Act
+      await service.stopSharing(parentId);
+
+      // Assert
+      expect(parentRepositoryMock.findById).toHaveBeenCalledWith(parentId);
+      expect(stopSharingUseCaseMock.execute).toHaveBeenCalledWith({
+        parentId,
+        schoolId: 'school-123',
+      });
+    });
+
+    it('should fall back to ETA schoolId when parent has no schoolId', async () => {
+      // Arrange
+      const parentId = 'parent-456';
+      const parentWithoutSchool: typeof mockParent = {
+        ...mockParent,
+        schoolId: undefined as any,
+      };
+      parentRepositoryMock.findById.mockResolvedValue(parentWithoutSchool);
+      etaRepositoryMock.findLatestByParentId.mockResolvedValue(mockETA);
+      stopSharingUseCaseMock.execute.mockResolvedValue({ deleted: true });
+
+      // Act
+      await service.stopSharing(parentId);
+
+      // Assert
+      expect(etaRepositoryMock.findLatestByParentId).toHaveBeenCalledWith(
+        parentId,
+      );
+      expect(stopSharingUseCaseMock.execute).toHaveBeenCalledWith({
+        parentId,
+        schoolId: 'school-123',
+      });
+    });
+
+    it('should throw when school cannot be determined', async () => {
+      // Arrange
+      const parentId = 'parent-456';
+      parentRepositoryMock.findById.mockResolvedValue(null);
+      etaRepositoryMock.findLatestByParentId.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.stopSharing(parentId)).rejects.toThrow(
+        `Cannot determine school for parent ${parentId}`,
+      );
+      expect(stopSharingUseCaseMock.execute).not.toHaveBeenCalled();
     });
   });
 
