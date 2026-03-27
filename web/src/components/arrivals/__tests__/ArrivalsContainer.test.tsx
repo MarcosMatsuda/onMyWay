@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ArrivalsContainer from '../ArrivalsContainer';
 import { useArrivals } from '@/hooks/useArrivals';
-import { Arrival } from '@/types';
+import { Arrival, SchoolStats } from '@/types';
 
 jest.mock('@/hooks/useArrivals');
 jest.mock('@/components/map/ArrivalsMap', () => {
@@ -19,12 +19,21 @@ const sampleArrivals: Arrival[] = [
   { parentId: 'parent-2', distanceMeters: 200, durationMinutes: 3, routePolyline: '' },
 ];
 
+const sampleStats: SchoolStats = {
+  totalParents: 2,
+  avgETA: 6,
+  etaLessThan5Min: 1,
+  eta5To15Min: 1,
+  etaGreaterThan15Min: 0,
+};
+
 const defaultContainerProps = {
   schoolId: 'school-1',
   schoolName: 'Escola Primavera',
   schoolLat: -23.5505,
   schoolLng: -46.6333,
   initialArrivals: [] as Arrival[],
+  stats: null as SchoolStats | null,
 };
 
 describe('ArrivalsContainer', () => {
@@ -59,7 +68,11 @@ describe('ArrivalsContainer', () => {
     });
 
     render(
-      <ArrivalsContainer {...defaultContainerProps} initialArrivals={sampleArrivals} />,
+      <ArrivalsContainer
+        {...defaultContainerProps}
+        initialArrivals={sampleArrivals}
+        stats={sampleStats}
+      />,
     );
 
     expect(screen.getByText('Parent ID: parent-1')).toBeInTheDocument();
@@ -74,7 +87,11 @@ describe('ArrivalsContainer', () => {
     });
 
     render(
-      <ArrivalsContainer {...defaultContainerProps} initialArrivals={sampleArrivals} />,
+      <ArrivalsContainer
+        {...defaultContainerProps}
+        initialArrivals={sampleArrivals}
+        stats={sampleStats}
+      />,
     );
 
     expect(screen.getByText('10 min · 500 m')).toBeInTheDocument();
@@ -125,6 +142,7 @@ describe('ArrivalsContainer', () => {
         schoolId="school-42"
         schoolName="Escola Teste"
         initialArrivals={sampleArrivals}
+        stats={null}
       />,
     );
 
@@ -135,6 +153,32 @@ describe('ArrivalsContainer', () => {
     render(<ArrivalsContainer {...defaultContainerProps} />);
 
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
+  });
+
+  it('shows stats skeleton when stats prop is null', () => {
+    const { container } = render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={[]}
+        stats={null}
+      />,
+    );
+    const skeletons = container.querySelectorAll('.animate-pulse');
+    expect(skeletons).toHaveLength(4);
+  });
+
+  it('renders stat cards when stats prop is provided', () => {
+    render(
+      <ArrivalsContainer
+        schoolId="school-1"
+        schoolName="Escola Primavera"
+        initialArrivals={[]}
+        stats={sampleStats}
+      />,
+    );
+    expect(screen.getByText('Pais a caminho')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
   });
 
   it('renders one list item per arrival', () => {

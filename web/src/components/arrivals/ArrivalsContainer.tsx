@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Arrival } from '@/types';
+import { Arrival, SchoolStats } from '@/types';
 import { useArrivals } from '@/hooks/useArrivals';
 import ConnectionHeader from './ConnectionHeader';
 import ArrivalsStats from './ArrivalsStats';
@@ -17,6 +17,7 @@ interface ArrivalsContainerProps {
   schoolLat: number;
   schoolLng: number;
   initialArrivals: Arrival[];
+  stats: SchoolStats | null;
 }
 
 export default function ArrivalsContainer({
@@ -25,6 +26,7 @@ export default function ArrivalsContainer({
   schoolLat,
   schoolLng,
   initialArrivals,
+  stats,
 }: ArrivalsContainerProps) {
   const { arrivals, isConnected, lastUpdatedAt } = useArrivals(
     schoolId,
@@ -44,7 +46,7 @@ export default function ArrivalsContainer({
         arrivals={arrivals}
       />
 
-      <ArrivalsStats arrivals={arrivals} />
+      <ArrivalsStats stats={stats} />
 
       <ArrivalsQueue arrivals={arrivals} />
     </div>
