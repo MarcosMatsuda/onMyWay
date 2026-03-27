@@ -5,6 +5,12 @@ import { useArrivals } from '@/hooks/useArrivals';
 import { Arrival, SchoolStats } from '@/types';
 
 jest.mock('@/hooks/useArrivals');
+jest.mock('@/components/map/ArrivalsMap', () => {
+  function MockArrivalsMap() {
+    return <div data-testid="arrivals-map" />;
+  }
+  return MockArrivalsMap;
+});
 
 const mockUseArrivals = useArrivals as jest.Mock;
 
@@ -21,6 +27,15 @@ const sampleStats: SchoolStats = {
   etaGreaterThan15Min: 0,
 };
 
+const defaultContainerProps = {
+  schoolId: 'school-1',
+  schoolName: 'Escola Primavera',
+  schoolLat: -23.5505,
+  schoolLng: -46.6333,
+  initialArrivals: [] as Arrival[],
+  stats: null as SchoolStats | null,
+};
+
 describe('ArrivalsContainer', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -32,27 +47,13 @@ describe('ArrivalsContainer', () => {
   });
 
   it('renders the school name as heading', () => {
-    render(
-      <ArrivalsContainer
-        schoolId="school-1"
-        schoolName="Escola Primavera"
-        initialArrivals={[]}
-        stats={null}
-      />,
-    );
+    render(<ArrivalsContainer {...defaultContainerProps} />);
 
     expect(screen.getByRole('heading', { name: 'Escola Primavera' })).toBeInTheDocument();
   });
 
   it('shows empty state message when no arrivals', () => {
-    render(
-      <ArrivalsContainer
-        schoolId="school-1"
-        schoolName="Escola Primavera"
-        initialArrivals={[]}
-        stats={null}
-      />,
-    );
+    render(<ArrivalsContainer {...defaultContainerProps} />);
 
     expect(
       screen.getByText('Nenhum pai a caminho no momento.'),
@@ -68,8 +69,7 @@ describe('ArrivalsContainer', () => {
 
     render(
       <ArrivalsContainer
-        schoolId="school-1"
-        schoolName="Escola Primavera"
+        {...defaultContainerProps}
         initialArrivals={sampleArrivals}
         stats={sampleStats}
       />,
@@ -88,8 +88,7 @@ describe('ArrivalsContainer', () => {
 
     render(
       <ArrivalsContainer
-        schoolId="school-1"
-        schoolName="Escola Primavera"
+        {...defaultContainerProps}
         initialArrivals={sampleArrivals}
         stats={sampleStats}
       />,
@@ -106,52 +105,19 @@ describe('ArrivalsContainer', () => {
       lastUpdatedAt: null,
     });
 
-    render(
-      <ArrivalsContainer
-        schoolId="school-1"
-        schoolName="Escola Primavera"
-        initialArrivals={[]}
-        stats={null}
-      />,
-    );
+    render(<ArrivalsContainer {...defaultContainerProps} />);
 
     expect(screen.getByText(/Ao vivo/)).toBeInTheDocument();
   });
 
   it('shows "Desconectado" indicator when not connected', () => {
-    mockUseArrivals.mockReturnValue({
-      arrivals: [],
-      isConnected: false,
-      lastUpdatedAt: null,
-    });
-
-    render(
-      <ArrivalsContainer
-        schoolId="school-1"
-        schoolName="Escola Primavera"
-        initialArrivals={[]}
-        stats={null}
-      />,
-    );
+    render(<ArrivalsContainer {...defaultContainerProps} />);
 
     expect(screen.getByText(/Desconectado/)).toBeInTheDocument();
   });
 
   it('shows "Atualizando..." when lastUpdatedAt is null', () => {
-    mockUseArrivals.mockReturnValue({
-      arrivals: [],
-      isConnected: false,
-      lastUpdatedAt: null,
-    });
-
-    render(
-      <ArrivalsContainer
-        schoolId="school-1"
-        schoolName="Escola Primavera"
-        initialArrivals={[]}
-        stats={null}
-      />,
-    );
+    render(<ArrivalsContainer {...defaultContainerProps} />);
 
     expect(screen.getByText('Atualizando...')).toBeInTheDocument();
   });
@@ -164,14 +130,7 @@ describe('ArrivalsContainer', () => {
       lastUpdatedAt: fixedDate,
     });
 
-    render(
-      <ArrivalsContainer
-        schoolId="school-1"
-        schoolName="Escola Primavera"
-        initialArrivals={[]}
-        stats={null}
-      />,
-    );
+    render(<ArrivalsContainer {...defaultContainerProps} />);
 
     expect(screen.getByText(/Atualizado às/)).toBeInTheDocument();
   });
@@ -179,6 +138,7 @@ describe('ArrivalsContainer', () => {
   it('passes schoolId and initialArrivals to useArrivals', () => {
     render(
       <ArrivalsContainer
+        {...defaultContainerProps}
         schoolId="school-42"
         schoolName="Escola Teste"
         initialArrivals={sampleArrivals}
@@ -190,20 +150,7 @@ describe('ArrivalsContainer', () => {
   });
 
   it('does not render arrival list items when arrivals array is empty', () => {
-    mockUseArrivals.mockReturnValue({
-      arrivals: [],
-      isConnected: false,
-      lastUpdatedAt: null,
-    });
-
-    render(
-      <ArrivalsContainer
-        schoolId="school-1"
-        schoolName="Escola Primavera"
-        initialArrivals={[]}
-        stats={null}
-      />,
-    );
+    render(<ArrivalsContainer {...defaultContainerProps} />);
 
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
   });
@@ -247,14 +194,28 @@ describe('ArrivalsContainer', () => {
     });
 
     render(
-      <ArrivalsContainer
-        schoolId="school-1"
-        schoolName="Escola Primavera"
-        initialArrivals={threeArrivals}
-        stats={null}
-      />,
+      <ArrivalsContainer {...defaultContainerProps} initialArrivals={threeArrivals} />,
     );
 
     expect(screen.getAllByRole('listitem')).toHaveLength(3);
+  });
+
+  it('renders the arrivals map component', () => {
+    render(<ArrivalsContainer {...defaultContainerProps} />);
+
+    expect(screen.getByTestId('arrivals-map')).toBeInTheDocument();
+  });
+
+  it('passes correct school coordinates to map', () => {
+    render(
+      <ArrivalsContainer
+        {...defaultContainerProps}
+        schoolLat={-22.9068}
+        schoolLng={-43.1729}
+        schoolName="Escola Rio"
+      />,
+    );
+
+    expect(screen.getByTestId('arrivals-map')).toBeInTheDocument();
   });
 });
