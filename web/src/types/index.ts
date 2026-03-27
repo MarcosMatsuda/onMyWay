@@ -36,3 +36,8 @@ export interface SchoolStats {
   eta5To15Min: number;
   etaGreaterThan15Min: number;
 }
+
+export interface SchoolConfig {
+  geofenceRadiusMeters: number;
+  notificationThresholdMeters: number;
+}
