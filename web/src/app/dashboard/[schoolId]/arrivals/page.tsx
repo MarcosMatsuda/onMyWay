@@ -1,20 +1,41 @@
-'use client';
+import { cookies } from 'next/headers';
+import { getSchoolArrivals, getSchool } from '@/lib/server-api';
+import { TOKEN_KEY } from '@/lib/auth';
+import ArrivalsContainer from '@/components/arrivals/ArrivalsContainer';
+import { Arrival } from '@/types';
 
-import { useParams } from 'next/navigation';
+interface ArrivalsPageProps {
+  params: Promise<{ schoolId: string }>;
+}
 
-export default function ArrivalsPage() {
-  const params = useParams();
-  const schoolId = params?.schoolId;
+export default async function ArrivalsPage({ params }: ArrivalsPageProps) {
+  const { schoolId } = await params;
+
+  let arrivals: Arrival[] = [];
+  let schoolName = schoolId;
+
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(TOKEN_KEY)?.value;
+
+    if (token) {
+      const [arrivalsData, schoolData] = await Promise.all([
+        getSchoolArrivals(schoolId, token),
+        getSchool(schoolId).catch(() => null),
+      ]);
+
+      arrivals = arrivalsData;
+      schoolName = schoolData?.name ?? schoolId;
+    }
+  } catch (error) {
+    console.error('Error loading arrivals:', error);
+  }
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Arrivals Queue</h1>
-      <div className="bg-white rounded-lg shadow p-6">
-        {/* School arrivals list will be implemented in following tasks */}
-        <p className="text-gray-500">
-          Loading arrivals for school {schoolId}...
-        </p>
-      </div>
-    </div>
+    <ArrivalsContainer
+      schoolId={schoolId}
+      schoolName={schoolName}
+      initialArrivals={arrivals}
+    />
   );
 }
