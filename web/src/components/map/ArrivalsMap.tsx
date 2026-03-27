@@ -32,7 +32,7 @@ export default function ArrivalsMap({
   arrivals,
 }: ArrivalsMapProps) {
   return (
-    <div className="w-full h-[400px] md:h-[260px] rounded-lg overflow-hidden shadow-md mb-6">
+    <div className="w-full h-[260px] md:h-[400px] rounded-lg overflow-hidden shadow-md mb-6">
       <MapContainer
         center={[schoolLat, schoolLng]}
         zoom={13}
