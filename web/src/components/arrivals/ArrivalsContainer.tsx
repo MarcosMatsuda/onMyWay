@@ -1,6 +1,6 @@
 'use client';
 
-import { Arrival } from '@/types';
+import { Arrival, SchoolStats } from '@/types';
 import { useArrivals } from '@/hooks/useArrivals';
 import ConnectionHeader from './ConnectionHeader';
 import ArrivalsStats from './ArrivalsStats';
@@ -10,12 +10,14 @@ interface ArrivalsContainerProps {
   schoolId: string;
   schoolName: string;
   initialArrivals: Arrival[];
+  stats: SchoolStats | null;
 }
 
 export default function ArrivalsContainer({
   schoolId,
   schoolName,
   initialArrivals,
+  stats,
 }: ArrivalsContainerProps) {
   const { arrivals, isConnected, lastUpdatedAt } = useArrivals(
     schoolId,
@@ -28,7 +30,7 @@ export default function ArrivalsContainer({
 
       <ConnectionHeader isConnected={isConnected} lastUpdatedAt={lastUpdatedAt} />
 
-      <ArrivalsStats arrivals={arrivals} />
+      <ArrivalsStats stats={stats} />
 
       <ArrivalsQueue arrivals={arrivals} />
     </div>

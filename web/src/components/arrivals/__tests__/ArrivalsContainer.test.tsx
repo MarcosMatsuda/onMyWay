@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ArrivalsContainer from '../ArrivalsContainer';
 import { useArrivals } from '@/hooks/useArrivals';
-import { Arrival } from '@/types';
+import { Arrival, SchoolStats } from '@/types';
 
 jest.mock('@/hooks/useArrivals');
 
@@ -12,6 +12,14 @@ const sampleArrivals: Arrival[] = [
   { parentId: 'parent-1', distanceMeters: 500, durationMinutes: 10, routePolyline: '' },
   { parentId: 'parent-2', distanceMeters: 200, durationMinutes: 3, routePolyline: '' },
 ];
+
+const sampleStats: SchoolStats = {
+  totalParents: 2,
+  avgETA: 6,
+  etaLessThan5Min: 1,
+  eta5To15Min: 1,
+  etaGreaterThan15Min: 0,
+};
 
 describe('ArrivalsContainer', () => {
   beforeEach(() => {
@@ -29,6 +37,7 @@ describe('ArrivalsContainer', () => {
         schoolId="school-1"
         schoolName="Escola Primavera"
         initialArrivals={[]}
+        stats={null}
       />,
     );
 
@@ -41,6 +50,7 @@ describe('ArrivalsContainer', () => {
         schoolId="school-1"
         schoolName="Escola Primavera"
         initialArrivals={[]}
+        stats={null}
       />,
     );
 
@@ -61,6 +71,7 @@ describe('ArrivalsContainer', () => {
         schoolId="school-1"
         schoolName="Escola Primavera"
         initialArrivals={sampleArrivals}
+        stats={sampleStats}
       />,
     );
 
@@ -80,6 +91,7 @@ describe('ArrivalsContainer', () => {
         schoolId="school-1"
         schoolName="Escola Primavera"
         initialArrivals={sampleArrivals}
+        stats={sampleStats}
       />,
     );
 
@@ -99,6 +111,7 @@ describe('ArrivalsContainer', () => {
         schoolId="school-1"
         schoolName="Escola Primavera"
         initialArrivals={[]}
+        stats={null}
       />,
     );
 
@@ -117,6 +130,7 @@ describe('ArrivalsContainer', () => {
         schoolId="school-1"
         schoolName="Escola Primavera"
         initialArrivals={[]}
+        stats={null}
       />,
     );
 
@@ -135,6 +149,7 @@ describe('ArrivalsContainer', () => {
         schoolId="school-1"
         schoolName="Escola Primavera"
         initialArrivals={[]}
+        stats={null}
       />,
     );
 
@@ -154,6 +169,7 @@ describe('ArrivalsContainer', () => {
         schoolId="school-1"
         schoolName="Escola Primavera"
         initialArrivals={[]}
+        stats={null}
       />,
     );
 
@@ -166,6 +182,7 @@ describe('ArrivalsContainer', () => {
         schoolId="school-42"
         schoolName="Escola Teste"
         initialArrivals={sampleArrivals}
+        stats={null}
       />,
     );
 
@@ -184,6 +201,7 @@ describe('ArrivalsContainer', () => {
         schoolId="school-1"
         schoolName="Escola Primavera"
         initialArrivals={[]}
+        stats={null}
       />,
     );
 
@@ -207,6 +225,7 @@ describe('ArrivalsContainer', () => {
         schoolId="school-1"
         schoolName="Escola Primavera"
         initialArrivals={threeArrivals}
+        stats={null}
       />,
     );
 
