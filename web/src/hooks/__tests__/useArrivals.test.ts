@@ -6,15 +6,26 @@ import { Arrival } from '@/types';
 const mockEmit = jest.fn();
 const mockOn = jest.fn();
 const mockDisconnect = jest.fn();
-const mockSocket = {
-  on: mockOn,
-  emit: mockEmit,
-  disconnect: mockDisconnect,
-};
+
+const mockIoFn = jest.fn();
 
 jest.mock('socket.io-client', () => ({
-  io: jest.fn(() => mockSocket),
+  io: (...args: any[]) => {
+    mockIoFn(...args);
+    return {
+      on: mockOn,
+      emit: mockEmit,
+      disconnect: mockDisconnect,
+    };
+  },
 }));
+
+// Mock auth module
+jest.mock('@/lib/auth', () => ({
+  getToken: jest.fn(),
+}));
+
+import { getToken as mockGetToken } from '@/lib/auth';
 
 describe('useArrivals', () => {
   const schoolId = 'school-123';
@@ -35,6 +46,7 @@ describe('useArrivals', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (mockGetToken as jest.Mock).mockReturnValue('mock-jwt-token');
   });
 
   it('should render initial arrivals sorted by durationMinutes', () => {
@@ -49,7 +61,7 @@ describe('useArrivals', () => {
     expect(result.current.lastUpdatedAt).toBeNull();
   });
 
-  it('should emit joinSchool on connect event', () => {
+  it('should emit joinSchool with JWT token on connect event', () => {
     renderHook(() => useArrivals(schoolId, initialArrivals));
 
     // Find the connect callback
@@ -64,7 +76,10 @@ describe('useArrivals', () => {
       connectCallback();
     });
 
-    expect(mockEmit).toHaveBeenCalledWith('joinSchool', { schoolId });
+    expect(mockEmit).toHaveBeenCalledWith('joinSchool', {
+      schoolId,
+      token: 'mock-jwt-token',
+    });
   });
 
   it('should update arrivals state on arrivals:updated event', async () => {
@@ -150,5 +165,48 @@ describe('useArrivals', () => {
     unmount();
 
     expect(mockDisconnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('should pass JWT token in socket connection auth', () => {
+    renderHook(() => useArrivals(schoolId, initialArrivals));
+
+    expect(mockIoFn).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        autoConnect: true,
+        auth: {
+          token: 'mock-jwt-token',
+        },
+      }),
+    );
+  });
+
+  it('should use secure WebSocket protocol for production URLs', () => {
+    const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
+
+    // Test production URL gets converted to wss://
+    process.env.NEXT_PUBLIC_WS_URL = 'ws://api.example.com';
+    renderHook(() => useArrivals(schoolId, initialArrivals));
+
+    expect(mockIoFn).toHaveBeenCalledWith(
+      'wss://api.example.com',
+      expect.any(Object),
+    );
+
+    process.env.NEXT_PUBLIC_WS_URL = originalEnv;
+  });
+
+  it('should keep ws:// protocol for localhost', () => {
+    const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
+
+    process.env.NEXT_PUBLIC_WS_URL = 'ws://localhost:3000';
+    renderHook(() => useArrivals(schoolId, initialArrivals));
+
+    expect(mockIoFn).toHaveBeenCalledWith(
+      'ws://localhost:3000',
+      expect.any(Object),
+    );
+
+    process.env.NEXT_PUBLIC_WS_URL = originalEnv;
   });
 });
