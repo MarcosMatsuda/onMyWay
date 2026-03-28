@@ -10,6 +10,7 @@ import { StopSharingUseCase } from '../../domain/use-cases/stop-sharing.use-case
 import { DataModule } from '../../data/data.module';
 import { OSRMModule } from '../../infrastructure/osrm/osrm.module';
 import { WebSocketModule } from '../../infrastructure/websocket/websocket.module';
+import { ArrivalsGateway } from '../../infrastructure/websocket/arrivals.gateway';
 import { OSRMServiceAdapter } from '../../infrastructure/osrm/osrm-service.adapter';
 import { LOCATION_REPOSITORY } from '../../domain/repositories/location.repository.interface';
 import { SCHOOL_REPOSITORY } from '../../domain/repositories/school.repository.interface';
@@ -48,7 +49,12 @@ import { ETA_REPOSITORY } from '../../domain/repositories/eta.repository.interfa
     CalculateETAUseCase,
     GetArrivalsQueueUseCase,
     GetSchoolArrivalsUseCase,
-    NotifySchoolUseCase,
+    {
+      provide: NotifySchoolUseCase,
+      useFactory: (getSchoolArrivals, schoolRepo, arrivalsGateway) =>
+        new NotifySchoolUseCase(getSchoolArrivals, schoolRepo, arrivalsGateway),
+      inject: [GetSchoolArrivalsUseCase, SCHOOL_REPOSITORY, ArrivalsGateway],
+    },
     StopSharingUseCase,
     {
       provide: 'IOSRMServiceAdapter',

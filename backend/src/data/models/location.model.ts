@@ -26,6 +26,6 @@ export class LocationModel {
   @Column('float', { nullable: true })
   accuracy: number;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   timestamp: Date;
 }

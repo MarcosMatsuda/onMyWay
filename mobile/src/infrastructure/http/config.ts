@@ -7,11 +7,11 @@ function getApiBaseUrl(): string {
       Constants.expoConfig?.hostUri ?? Constants.manifest2?.extra?.expoGo?.debuggerHost;
     const host = debuggerHost?.split(':')[0];
     if (host) {
-      return `http://${host}:3000`;
+      return `http://${host}:3001`;
     }
   }
   // Fallback / production
-  return 'http://localhost:3000';
+  return 'http://localhost:3001';
 }
 
 export const API_BASE_URL = getApiBaseUrl();

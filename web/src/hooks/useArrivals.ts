@@ -28,6 +28,7 @@ interface GatewayArrival {
   lng: number;
   etaMinutes: number;
   distanceMeters: number;
+  routePolyline?: string;
   calculatedAt?: string;
 }
 
@@ -44,7 +45,7 @@ function mapGatewayArrivals(payload: ArrivalsUpdatedPayload): Arrival[] {
     parentId: a.parentId,
     distanceMeters: a.distanceMeters,
     durationMinutes: a.etaMinutes,
-    routePolyline: '',
+    routePolyline: a.routePolyline || '',
   }));
 }
 
@@ -65,6 +66,7 @@ export function useArrivals(
   const [isConnected, setIsConnected] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
+  // WebSocket connection
   useEffect(() => {
     const secureUrl = getSecureWsUrl(getWsUrl());
 
@@ -97,6 +99,27 @@ export function useArrivals(
       socket.disconnect();
     };
   }, [schoolId, token]);
+
+  // Clear stale arrivals when no update received within TTL (5 min)
+  useEffect(() => {
+    if (!lastUpdatedAt || arrivals.length === 0) return;
+
+    const TTL_MS = 5 * 60 * 1000;
+    const elapsed = Date.now() - lastUpdatedAt.getTime();
+    const remaining = TTL_MS - elapsed;
+
+    if (remaining <= 0) {
+      setArrivals([]);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setArrivals([]);
+      setLastUpdatedAt(new Date());
+    }, remaining);
+
+    return () => clearTimeout(timer);
+  }, [lastUpdatedAt, arrivals.length]);
 
   return { arrivals, isConnected, lastUpdatedAt };
 }
