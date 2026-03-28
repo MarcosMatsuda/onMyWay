@@ -4,3 +4,4 @@ export * from './parent.entity';
 export * from './school.entity';
 export * from './location.entity';
 export * from './eta.entity';
+export * from './user.entity';
