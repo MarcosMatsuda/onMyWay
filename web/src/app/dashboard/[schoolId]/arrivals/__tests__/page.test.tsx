@@ -9,11 +9,24 @@ jest.mock('next/headers', () => ({
   cookies: jest.fn(),
 }));
 
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  redirect: jest.fn().mockImplementation(() => {
+    throw new Error('NEXT_REDIRECT');
+  }),
+}));
+
 // Mock server-api
 jest.mock('@/lib/server-api', () => ({
   getSchoolArrivals: jest.fn(),
   getSchool: jest.fn(),
   getSchoolStats: jest.fn(),
+  UnauthorizedError: class UnauthorizedError extends Error {
+    constructor() {
+      super('Unauthorized');
+      this.name = 'UnauthorizedError';
+    }
+  },
 }));
 
 // Mock ArrivalsContainer to isolate page behaviour
@@ -40,8 +53,10 @@ jest.mock('@/components/arrivals/ArrivalsContainer', () => ({
 }));
 
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 const mockCookies = cookies as jest.Mock;
+const mockRedirect = redirect as jest.Mock;
 const mockGetSchoolArrivals = getSchoolArrivals as jest.Mock;
 const mockGetSchool = getSchool as jest.Mock;
 const mockGetSchoolStats = getSchoolStats as jest.Mock;
@@ -66,6 +81,7 @@ function buildParams(schoolId: string) {
 describe('ArrivalsPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRedirect.mockImplementation(() => {});
   });
 
   it('renders ArrivalsContainer with arrivals and school name when token is present', async () => {
@@ -99,25 +115,34 @@ describe('ArrivalsPage', () => {
     expect(screen.getByTestId('school-name')).toHaveTextContent('school-42');
   });
 
-  it('renders with empty arrivals when no token is present', async () => {
+  it('redirects to login when no token is present', async () => {
     mockCookies.mockResolvedValue({
       get: () => undefined,
     });
 
-    const Page = await ArrivalsPage({ params: buildParams('school-1') });
-    render(Page);
-
-    expect(screen.getByTestId('arrivals-count')).toHaveTextContent('0');
-    expect(screen.getByTestId('stats-exists')).toHaveTextContent('no');
-    expect(mockGetSchoolArrivals).not.toHaveBeenCalled();
-    expect(mockGetSchoolStats).not.toHaveBeenCalled();
+    await ArrivalsPage({ params: buildParams('school-1') });
+    expect(mockRedirect).toHaveBeenCalledWith('/login');
   });
 
-  it('renders with empty arrivals when getSchoolArrivals throws', async () => {
+  it('redirects to login when getSchoolArrivals throws UnauthorizedError', async () => {
+    mockCookies.mockResolvedValue({
+      get: (key: string) => (key === TOKEN_KEY ? { value: 'expired-token' } : undefined),
+    });
+
+    const { UnauthorizedError } = jest.requireMock('@/lib/server-api');
+    mockGetSchoolArrivals.mockRejectedValue(new UnauthorizedError());
+    mockGetSchool.mockResolvedValue({ id: 'school-1', name: 'Escola Primavera', location: {} });
+    mockGetSchoolStats.mockResolvedValue(sampleStats);
+
+    await ArrivalsPage({ params: buildParams('school-1') });
+    expect(mockRedirect).toHaveBeenCalledWith('/login');
+  });
+
+  it('renders with empty arrivals when getSchoolArrivals throws non-auth error', async () => {
     mockCookies.mockResolvedValue({
       get: (key: string) => (key === TOKEN_KEY ? { value: 'valid-token' } : undefined),
     });
-    mockGetSchoolArrivals.mockRejectedValue(new Error('Unauthorized'));
+    mockGetSchoolArrivals.mockRejectedValue(new Error('Network error'));
     mockGetSchool.mockResolvedValue({ id: 'school-1', name: 'Escola Primavera', location: {} });
     mockGetSchoolStats.mockResolvedValue(sampleStats);
 
@@ -129,14 +154,16 @@ describe('ArrivalsPage', () => {
 
   it('passes correct schoolId from route params to ArrivalsContainer', async () => {
     mockCookies.mockResolvedValue({
-      get: () => undefined,
+      get: (key: string) => (key === TOKEN_KEY ? { value: 'valid-token' } : undefined),
     });
+    mockGetSchoolArrivals.mockResolvedValue([]);
+    mockGetSchool.mockResolvedValue({ id: 'school-xyz', name: 'Escola XYZ', location: {} });
+    mockGetSchoolStats.mockResolvedValue(sampleStats);
 
     const Page = await ArrivalsPage({ params: buildParams('school-xyz') });
     render(Page);
 
     expect(screen.getByTestId('school-id')).toHaveTextContent('school-xyz');
-    expect(screen.getByTestId('stats-exists')).toHaveTextContent('no');
   });
 
   it('calls getSchoolArrivals with correct schoolId and token', async () => {

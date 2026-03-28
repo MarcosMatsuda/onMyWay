@@ -4,6 +4,7 @@ import {
   getSchoolArrivals,
   getSchoolStats,
   updateSchoolConfig,
+  UnauthorizedError,
 } from '../server-api';
 
 const mockFetch = jest.fn();
@@ -168,11 +169,11 @@ describe('getSchoolArrivals', () => {
     );
   });
 
-  it('throws on HTTP error', async () => {
+  it('throws UnauthorizedError on 401', async () => {
     mockFetch.mockReturnValueOnce(mockErrorResponse(401, 'Unauthorized'));
 
     await expect(getSchoolArrivals('school-1', 'bad-token')).rejects.toThrow(
-      'API error: 401 Unauthorized',
+      UnauthorizedError,
     );
   });
 
@@ -247,11 +248,11 @@ describe('updateSchoolConfig', () => {
     );
   });
 
-  it('throws on HTTP error', async () => {
+  it('throws UnauthorizedError on 401', async () => {
     mockFetch.mockReturnValueOnce(mockErrorResponse(401, 'Unauthorized'));
 
     await expect(updateSchoolConfig('school-1', config, 'bad-token')).rejects.toThrow(
-      'API error: 401 Unauthorized',
+      UnauthorizedError,
     );
   });
 
