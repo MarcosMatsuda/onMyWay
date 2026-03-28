@@ -165,14 +165,14 @@ describe('ParentMarker', () => {
   });
 
   describe('parent position from polyline', () => {
-    it('uses last point of decoded polyline as parent position', () => {
+    it('uses first point of decoded polyline as parent position', () => {
       mockPolylineDecode.mockReturnValue([
         [-23.551, -46.634],
         [-23.552, -46.635],
         [-23.5505, -46.6333],
       ]);
 
-      // Renders without crashing — parent position is last coordinate
+      // Renders without crashing — parent position is first coordinate (start of route)
       render(<ParentMarker {...defaultProps} />);
       expect(screen.getByTestId('marker')).toBeInTheDocument();
     });

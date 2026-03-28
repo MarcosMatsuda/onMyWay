@@ -58,7 +58,7 @@ export default function ParentMarker({
     return null;
   }
 
-  const parentPosition = coordinates[coordinates.length - 1];
+  const parentPosition = coordinates[0];
   const color = getMarkerColor(arrival.durationMinutes);
   const icon = createMarkerIcon(color);
 
