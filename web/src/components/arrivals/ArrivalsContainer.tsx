@@ -11,13 +11,14 @@ const ArrivalsMap = dynamic(() => import('@/components/map/ArrivalsMap'), {
   ssr: false,
 });
 
-interface ArrivalsContainerProps {
+export interface ArrivalsContainerProps {
   schoolId: string;
   schoolName: string;
   schoolLat: number;
   schoolLng: number;
   initialArrivals: Arrival[];
   stats: SchoolStats | null;
+  token: string;
 }
 
 export default function ArrivalsContainer({
@@ -27,10 +28,12 @@ export default function ArrivalsContainer({
   schoolLng,
   initialArrivals,
   stats,
+  token,
 }: ArrivalsContainerProps) {
   const { arrivals, isConnected, lastUpdatedAt } = useArrivals(
     schoolId,
     initialArrivals,
+    token,
   );
 
   return (

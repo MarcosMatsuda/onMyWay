@@ -34,6 +34,7 @@ const defaultContainerProps = {
   schoolLng: -46.6333,
   initialArrivals: [] as Arrival[],
   stats: null as SchoolStats | null,
+  token: 'mock-token',
 };
 
 describe('ArrivalsContainer', () => {
@@ -146,7 +147,7 @@ describe('ArrivalsContainer', () => {
       />,
     );
 
-    expect(mockUseArrivals).toHaveBeenCalledWith('school-42', sampleArrivals);
+    expect(mockUseArrivals).toHaveBeenCalledWith('school-42', sampleArrivals, 'mock-token');
   });
 
   it('does not render arrival list items when arrivals array is empty', () => {
@@ -164,6 +165,7 @@ describe('ArrivalsContainer', () => {
         schoolLng={-46.6333}
         initialArrivals={[]}
         stats={null}
+        token="mock-token"
       />,
     );
     const skeletons = container.querySelectorAll('.animate-pulse');
@@ -179,6 +181,7 @@ describe('ArrivalsContainer', () => {
         schoolLng={-46.6333}
         initialArrivals={[]}
         stats={sampleStats}
+        token="mock-token"
       />,
     );
     expect(screen.getByText('Pais a caminho')).toBeInTheDocument();
