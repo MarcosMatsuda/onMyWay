@@ -169,7 +169,7 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
     stopTracking,
     error: locationError,
   } = useLocation();
-  const { lastSentAt, sendLocation } = useSendLocation();
+  const { lastSentAt, sendLocation, stopSharing } = useSendLocation();
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
 
   // Load selectedSchool from AsyncStorage on mount
@@ -194,6 +194,7 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
       startTracking(selectedSchool.location);
     } else {
       stopTracking();
+      void stopSharing();
     }
   };
 

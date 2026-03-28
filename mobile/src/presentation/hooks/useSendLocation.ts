@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { CurrentLocation } from '@domain/entities';
-import { SendLocationUseCase } from '@domain/usecases';
+import { SendLocationUseCase, StopSharingUseCase } from '@domain/usecases';
 import { locationRepository } from '@data/repositories';
 
 export interface UseSendLocation {
@@ -8,6 +8,7 @@ export interface UseSendLocation {
   lastSentAt: number | null;
   error: string | null;
   sendLocation(schoolId: string, location: CurrentLocation): Promise<void>;
+  stopSharing(): Promise<void>;
 }
 
 export const useSendLocation = (): UseSendLocation => {
@@ -39,10 +40,21 @@ export const useSendLocation = (): UseSendLocation => {
     [isSending],
   );
 
+  const stopSharing = useCallback(async () => {
+    try {
+      const useCase = new StopSharingUseCase(locationRepository);
+      await useCase.execute();
+    } catch (err) {
+      // Silent failure - log but don't throw
+      console.warn('Failed to stop sharing:', err);
+    }
+  }, []);
+
   return {
     isSending,
     lastSentAt,
     error,
     sendLocation,
+    stopSharing,
   };
 };
