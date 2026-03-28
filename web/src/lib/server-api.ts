@@ -1,5 +1,12 @@
 import { Arrival, School, SchoolStats, SchoolConfig } from '@/types';
 
+export class UnauthorizedError extends Error {
+  constructor() {
+    super('Unauthorized');
+    this.name = 'UnauthorizedError';
+  }
+}
+
 function getBaseURL(): string {
   return process.env.API_URL || 'http://localhost:3000';
 }
@@ -24,6 +31,10 @@ async function serverFetch<T>(
       ...options?.headers,
     },
   });
+
+  if (response.status === 401) {
+    throw new UnauthorizedError();
+  }
 
   if (!response.ok) {
     throw new Error(`API error: ${response.status} ${response.statusText}`);

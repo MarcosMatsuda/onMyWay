@@ -160,6 +160,8 @@ describe('ArrivalsContainer', () => {
       <ArrivalsContainer
         schoolId="school-1"
         schoolName="Escola Primavera"
+        schoolLat={-23.5505}
+        schoolLng={-46.6333}
         initialArrivals={[]}
         stats={null}
       />,
@@ -173,6 +175,8 @@ describe('ArrivalsContainer', () => {
       <ArrivalsContainer
         schoolId="school-1"
         schoolName="Escola Primavera"
+        schoolLat={-23.5505}
+        schoolLng={-46.6333}
         initialArrivals={[]}
         stats={sampleStats}
       />,
