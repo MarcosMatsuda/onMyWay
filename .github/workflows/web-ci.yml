@@ -8,6 +8,9 @@ on:
     paths:
       - "web/**"
 
+permissions:
+  pull-requests: write
+
 jobs:
   audit:
     name: Security Audit

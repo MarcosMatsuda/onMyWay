@@ -78,7 +78,7 @@ describe('loginAction', () => {
       response: { status: 401 },
       isAxiosError: true,
     });
-    mockedAxios.isAxiosError = jest.fn(() => true);
+    (mockedAxios as any).isAxiosError = jest.fn(() => true);
 
     const result = await loginAction('test@example.com', 'wrongpassword');
 
@@ -90,7 +90,7 @@ describe('loginAction', () => {
       response: { status: 400, data: { message: 'Invalid request' } },
       isAxiosError: true,
     });
-    mockedAxios.isAxiosError = jest.fn(() => true);
+    (mockedAxios as any).isAxiosError = jest.fn(() => true);
 
     const result = await loginAction('test@example.com', 'password');
 
@@ -105,7 +105,7 @@ describe('loginAction', () => {
       },
       isAxiosError: true,
     });
-    mockedAxios.isAxiosError = jest.fn(() => true);
+    (mockedAxios as any).isAxiosError = jest.fn(() => true);
 
     const result = await loginAction('test@example.com', 'password');
 
@@ -117,7 +117,7 @@ describe('loginAction', () => {
       response: { status: 400, data: {} },
       isAxiosError: true,
     });
-    mockedAxios.isAxiosError = jest.fn(() => true);
+    (mockedAxios as any).isAxiosError = jest.fn(() => true);
 
     const result = await loginAction('test@example.com', 'password');
 
@@ -126,7 +126,7 @@ describe('loginAction', () => {
 
   it('returns generic error message on network error', async () => {
     mockedAxios.post.mockRejectedValue(new Error('Network error'));
-    mockedAxios.isAxiosError = jest.fn(() => false);
+    (mockedAxios as any).isAxiosError = jest.fn(() => false);
 
     const result = await loginAction('test@example.com', 'password');
 
@@ -141,7 +141,7 @@ describe('loginAction', () => {
       response: { status: 500 },
       isAxiosError: true,
     });
-    mockedAxios.isAxiosError = jest.fn(() => true);
+    (mockedAxios as any).isAxiosError = jest.fn(() => true);
 
     const result = await loginAction('test@example.com', 'password');
 

@@ -55,8 +55,8 @@ jest.mock('@/components/arrivals/ArrivalsContainer', () => ({
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-const mockCookies = cookies as jest.Mock;
-const mockRedirect = redirect as jest.Mock;
+const mockCookies = cookies as unknown as jest.Mock;
+const mockRedirect = redirect as unknown as jest.Mock;
 const mockGetSchoolArrivals = getSchoolArrivals as jest.Mock;
 const mockGetSchool = getSchool as jest.Mock;
 const mockGetSchoolStats = getSchoolStats as jest.Mock;

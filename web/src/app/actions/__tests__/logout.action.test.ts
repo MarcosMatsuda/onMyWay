@@ -15,8 +15,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { logoutAction } from '../logout.action';
 
-const mockCookies = cookies as jest.Mock;
-const mockRedirectFn = redirect as jest.Mock;
+const mockCookies = cookies as unknown as jest.Mock;
+const mockRedirectFn = redirect as unknown as jest.Mock;
 
 describe('logoutAction', () => {
   beforeEach(() => {
