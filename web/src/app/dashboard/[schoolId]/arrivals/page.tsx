@@ -18,13 +18,17 @@ export default async function ArrivalsPage({ params }: ArrivalsPageProps) {
   let schoolLng = -46.6333;
   let stats: SchoolStats | null = null;
 
+  let token = '';
+
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get(TOKEN_KEY)?.value;
+    const tokenValue = cookieStore.get(TOKEN_KEY)?.value;
 
-    if (!token) {
+    if (!tokenValue) {
       redirect('/login');
     }
+
+    token = tokenValue;
 
     const [arrivalsData, schoolData, statsData] = await Promise.all([
       getSchoolArrivals(schoolId, token),
@@ -52,6 +56,7 @@ export default async function ArrivalsPage({ params }: ArrivalsPageProps) {
       schoolLng={schoolLng}
       initialArrivals={arrivals}
       stats={stats}
+      token={token}
     />
   );
 }
