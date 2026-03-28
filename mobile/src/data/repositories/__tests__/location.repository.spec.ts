@@ -91,4 +91,28 @@ describe('LocationRepository', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('stopSharing', () => {
+    it('should call DELETE /locations/me', async () => {
+      mockHttpClient.delete.mockResolvedValue(undefined);
+
+      await repository.stopSharing();
+
+      expect(mockHttpClient.delete).toHaveBeenCalledWith('/locations/me');
+      expect(mockHttpClient.delete).toHaveBeenCalledTimes(1);
+    });
+
+    it('should propagate HTTP errors', async () => {
+      mockHttpClient.delete.mockRejectedValue(new Error('Network error'));
+
+      await expect(repository.stopSharing()).rejects.toThrow('Network error');
+    });
+
+    it('should propagate 401 errors (JWT expired)', async () => {
+      const error = new Error('Unauthorized');
+      mockHttpClient.delete.mockRejectedValue(error);
+
+      await expect(repository.stopSharing()).rejects.toThrow('Unauthorized');
+    });
+  });
 });

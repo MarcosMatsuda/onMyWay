@@ -1,10 +1,13 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useSendLocation } from '../useSendLocation';
 
-// Mock SendLocationUseCase
+// Mock SendLocationUseCase and StopSharingUseCase
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 jest.mock('@domain/usecases', () => ({
   SendLocationUseCase: jest.fn().mockImplementation(() => ({
+    execute: jest.fn().mockResolvedValue(undefined),
+  })),
+  StopSharingUseCase: jest.fn().mockImplementation(() => ({
     execute: jest.fn().mockResolvedValue(undefined),
   })),
 }));
@@ -14,6 +17,7 @@ jest.mock('@domain/usecases', () => ({
 jest.mock('@data/repositories', () => ({
   locationRepository: {
     sendLocation: jest.fn(),
+    stopSharing: jest.fn(),
   },
 }));
 
@@ -152,6 +156,56 @@ describe('useSendLocation', () => {
 
     await act(async () => {
       await send1Promise;
+    });
+  });
+
+  describe('stopSharing', () => {
+    it('should call StopSharingUseCase on stopSharing', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { StopSharingUseCase } = require('@domain/usecases');
+      const { result } = renderHook(() => useSendLocation());
+
+      await act(async () => {
+        await result.current.stopSharing();
+      });
+
+      expect(StopSharingUseCase).toHaveBeenCalled();
+    });
+
+    it('should succeed silently when StopSharingUseCase succeeds', async () => {
+      const { result } = renderHook(() => useSendLocation());
+
+      // Should not throw
+      await act(async () => {
+        await result.current.stopSharing();
+      });
+
+      expect(result.current.error).toBeNull();
+    });
+
+    it('should not throw when StopSharingUseCase fails (silent failure)', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { StopSharingUseCase } = require('@domain/usecases');
+
+      StopSharingUseCase.mockImplementationOnce(() => ({
+        execute: jest.fn().mockRejectedValue(new Error('Network error')),
+      }));
+
+      const { result } = renderHook(() => useSendLocation());
+
+      // Should NOT throw — silent failure
+      await act(async () => {
+        await result.current.stopSharing();
+      });
+
+      // Error state should remain null (stopSharing doesn't set error state)
+      expect(result.current.error).toBeNull();
+    });
+
+    it('should expose stopSharing in hook return value', () => {
+      const { result } = renderHook(() => useSendLocation());
+
+      expect(typeof result.current.stopSharing).toBe('function');
     });
   });
 });
