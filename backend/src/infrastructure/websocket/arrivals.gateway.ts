@@ -99,6 +99,7 @@ export class ArrivalsGateway
         lng: arrival.lng,
         etaMinutes: arrival.etaMinutes,
         distanceMeters: arrival.distanceMeters,
+        routePolyline: arrival.routePolyline,
         calculatedAt: arrival.calculatedAt,
       })),
       timestamp: new Date(),

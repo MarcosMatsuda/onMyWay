@@ -24,7 +24,7 @@ export class ETAModel {
 
   @Column({
     name: 'calculated_at',
-    type: 'timestamp',
+    type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
   })
   calculatedAt: Date;

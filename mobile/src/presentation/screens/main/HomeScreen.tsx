@@ -194,7 +194,10 @@ export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
       startTracking(selectedSchool.location);
     } else {
       stopTracking();
-      void stopSharing();
+      void (async () => {
+        await new Promise((r) => setTimeout(r, 2000));
+        await stopSharing();
+      })();
     }
   };
 

@@ -45,7 +45,6 @@ export const useSendLocation = (): UseSendLocation => {
       const useCase = new StopSharingUseCase(locationRepository);
       await useCase.execute();
     } catch (err) {
-      // Silent failure - log but don't throw
       console.warn('Failed to stop sharing:', err);
     }
   }, []);
