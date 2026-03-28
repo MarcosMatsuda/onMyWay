@@ -42,6 +42,10 @@ export class LocationRepository implements ILocationRepository {
       return null;
     }
   }
+
+  async stopSharing(): Promise<void> {
+    await this.http.delete('/locations/me');
+  }
 }
 
 export const locationRepository = new LocationRepository();
