@@ -34,7 +34,7 @@ export class ETARepository implements IETARepository {
 
     if (maxAgeMinutes !== undefined && maxAgeMinutes !== null) {
       queryBuilder.andWhere(
-        "eta.calculatedAt > NOW() - INTERVAL ':maxAgeMinutes minutes'",
+        "eta.calculatedAt > NOW() - (:maxAgeMinutes * INTERVAL '1 minute')",
         { maxAgeMinutes },
       );
     }
@@ -69,7 +69,7 @@ export class ETARepository implements IETARepository {
 
     if (maxAgeMinutes !== undefined && maxAgeMinutes !== null) {
       queryBuilder.andWhere(
-        "eta.calculatedAt > NOW() - INTERVAL ':maxAgeMinutes minutes'",
+        "eta.calculatedAt > NOW() - (:maxAgeMinutes * INTERVAL '1 minute')",
         { maxAgeMinutes },
       );
     }
