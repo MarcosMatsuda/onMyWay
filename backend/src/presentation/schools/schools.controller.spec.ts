@@ -595,11 +595,15 @@ describe('SchoolsController', () => {
           id: 'school-1',
           name: 'School A',
           location: { lat: -23.5505, lng: -46.6333 },
+          geofenceRadiusMeters: 1000,
+          notificationThresholdMeters: 500,
         },
         {
           id: 'school-2',
           name: 'School B',
           location: { lat: -23.551, lng: -46.634 },
+          geofenceRadiusMeters: 1000,
+          notificationThresholdMeters: 500,
         },
       ]);
       expect(listSchoolsUseCaseMock.execute).toHaveBeenCalled();

@@ -76,4 +76,16 @@ export class SchoolListResponseDto {
     type: SchoolLocationDto,
   })
   location: SchoolLocationDto;
+
+  @ApiProperty({
+    example: 1000,
+    description: 'Geofence radius in meters',
+  })
+  geofenceRadiusMeters: number;
+
+  @ApiProperty({
+    example: 500,
+    description: 'Notification threshold in meters',
+  })
+  notificationThresholdMeters: number;
 }
