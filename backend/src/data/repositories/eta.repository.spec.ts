@@ -255,7 +255,7 @@ describe('ETARepository', () => {
 
       expect(result).toEqual(expectedEntity);
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        "eta.calculatedAt > NOW() - INTERVAL ':maxAgeMinutes minutes'",
+        "eta.calculatedAt > NOW() - (:maxAgeMinutes * INTERVAL '1 minute')",
         { maxAgeMinutes },
       );
       expect(ETAMapper.toDomain).toHaveBeenCalledWith(mockModel);
@@ -498,7 +498,7 @@ describe('ETARepository', () => {
       );
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        "eta.calculatedAt > NOW() - INTERVAL ':maxAgeMinutes minutes'",
+        "eta.calculatedAt > NOW() - (:maxAgeMinutes * INTERVAL '1 minute')",
         { maxAgeMinutes },
       );
       expect(result.size).toBe(1);
@@ -582,7 +582,7 @@ describe('ETARepository', () => {
 
       expect(result.size).toBe(0);
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        "eta.calculatedAt > NOW() - INTERVAL ':maxAgeMinutes minutes'",
+        "eta.calculatedAt > NOW() - (:maxAgeMinutes * INTERVAL '1 minute')",
         { maxAgeMinutes },
       );
     });
