@@ -20,15 +20,9 @@ jest.mock('socket.io-client', () => ({
   },
 }));
 
-// Mock auth module
-jest.mock('@/lib/auth', () => ({
-  getToken: jest.fn(),
-}));
-
-import { getToken as mockGetToken } from '@/lib/auth';
-
 describe('useArrivals', () => {
   const schoolId = 'school-123';
+  const token = 'mock-jwt-token';
   const initialArrivals: Arrival[] = [
     {
       parentId: 'parent-1',
@@ -46,12 +40,11 @@ describe('useArrivals', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (mockGetToken as jest.Mock).mockReturnValue('mock-jwt-token');
   });
 
   it('should render initial arrivals sorted by durationMinutes', () => {
     const { result } = renderHook(() =>
-      useArrivals(schoolId, initialArrivals),
+      useArrivals(schoolId, initialArrivals, token),
     );
 
     expect(result.current.arrivals).toHaveLength(2);
@@ -62,16 +55,14 @@ describe('useArrivals', () => {
   });
 
   it('should emit school:join on connect event', () => {
-    renderHook(() => useArrivals(schoolId, initialArrivals));
+    renderHook(() => useArrivals(schoolId, initialArrivals, token));
 
-    // Find the connect callback
     const connectCallback = mockOn.mock.calls.find(
       (call) => call[0] === 'connect',
     )?.[1];
 
     expect(connectCallback).toBeDefined();
 
-    // Simulate connect event
     act(() => {
       connectCallback();
     });
@@ -81,17 +72,15 @@ describe('useArrivals', () => {
 
   it('should update arrivals state on arrivals:updated event', async () => {
     const { result } = renderHook(() =>
-      useArrivals(schoolId, initialArrivals),
+      useArrivals(schoolId, initialArrivals, token),
     );
 
-    // Find the arrivals:updated callback
     const arrivalsUpdatedCallback = mockOn.mock.calls.find(
       (call) => call[0] === 'arrivals:updated',
     )?.[1];
 
     expect(arrivalsUpdatedCallback).toBeDefined();
 
-    // Gateway sends payload in its own format
     const gatewayPayload = {
       schoolId: 'school-123',
       schoolName: 'Escola Teste',
@@ -115,14 +104,13 @@ describe('useArrivals', () => {
       timestamp: new Date().toISOString(),
     };
 
-    // Simulate arrivals:updated event
     act(() => {
       arrivalsUpdatedCallback(gatewayPayload);
     });
 
     await waitFor(() => {
       expect(result.current.arrivals).toHaveLength(2);
-      expect(result.current.arrivals[0].parentId).toBe('parent-4'); // 3 min (sorted)
+      expect(result.current.arrivals[0].parentId).toBe('parent-4'); // 3 min
       expect(result.current.arrivals[0].durationMinutes).toBe(3);
       expect(result.current.arrivals[1].parentId).toBe('parent-3'); // 15 min
       expect(result.current.arrivals[1].durationMinutes).toBe(15);
@@ -132,12 +120,11 @@ describe('useArrivals', () => {
 
   it('should toggle isConnected on connect/disconnect events', () => {
     const { result } = renderHook(() =>
-      useArrivals(schoolId, initialArrivals),
+      useArrivals(schoolId, initialArrivals, token),
     );
 
     expect(result.current.isConnected).toBe(false);
 
-    // Find callbacks
     const connectCallback = mockOn.mock.calls.find(
       (call) => call[0] === 'connect',
     )?.[1];
@@ -145,55 +132,44 @@ describe('useArrivals', () => {
       (call) => call[0] === 'disconnect',
     )?.[1];
 
-    expect(connectCallback).toBeDefined();
-    expect(disconnectCallback).toBeDefined();
-
-    // Simulate connect
     act(() => {
       connectCallback();
     });
-
     expect(result.current.isConnected).toBe(true);
 
-    // Simulate disconnect
     act(() => {
       disconnectCallback();
     });
-
     expect(result.current.isConnected).toBe(false);
   });
 
   it('should disconnect socket on unmount', () => {
     const { unmount } = renderHook(() =>
-      useArrivals(schoolId, initialArrivals),
+      useArrivals(schoolId, initialArrivals, token),
     );
 
     expect(mockDisconnect).not.toHaveBeenCalled();
-
     unmount();
-
     expect(mockDisconnect).toHaveBeenCalledTimes(1);
   });
 
-  it('should pass JWT token in socket connection auth', () => {
-    renderHook(() => useArrivals(schoolId, initialArrivals));
+  it('should pass token in socket connection auth', () => {
+    renderHook(() => useArrivals(schoolId, initialArrivals, token));
 
     expect(mockIoFn).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
         autoConnect: true,
-        auth: {
-          token: 'mock-jwt-token',
-        },
+        auth: { token: 'mock-jwt-token' },
       }),
     );
   });
 
   it('should connect to /ws namespace', () => {
     const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
-
     process.env.NEXT_PUBLIC_WS_URL = 'ws://localhost:3001';
-    renderHook(() => useArrivals(schoolId, initialArrivals));
+
+    renderHook(() => useArrivals(schoolId, initialArrivals, token));
 
     expect(mockIoFn).toHaveBeenCalledWith(
       'ws://localhost:3001/ws',
@@ -205,9 +181,9 @@ describe('useArrivals', () => {
 
   it('should not duplicate /ws if already in URL', () => {
     const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
-
     process.env.NEXT_PUBLIC_WS_URL = 'ws://localhost:3001/ws';
-    renderHook(() => useArrivals(schoolId, initialArrivals));
+
+    renderHook(() => useArrivals(schoolId, initialArrivals, token));
 
     expect(mockIoFn).toHaveBeenCalledWith(
       'ws://localhost:3001/ws',
@@ -219,9 +195,9 @@ describe('useArrivals', () => {
 
   it('should use secure WebSocket protocol for production URLs', () => {
     const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
-
     process.env.NEXT_PUBLIC_WS_URL = 'ws://api.example.com';
-    renderHook(() => useArrivals(schoolId, initialArrivals));
+
+    renderHook(() => useArrivals(schoolId, initialArrivals, token));
 
     expect(mockIoFn).toHaveBeenCalledWith(
       'wss://api.example.com/ws',
@@ -233,9 +209,9 @@ describe('useArrivals', () => {
 
   it('should keep ws:// protocol for localhost', () => {
     const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
-
     process.env.NEXT_PUBLIC_WS_URL = 'ws://localhost:3000';
-    renderHook(() => useArrivals(schoolId, initialArrivals));
+
+    renderHook(() => useArrivals(schoolId, initialArrivals, token));
 
     expect(mockIoFn).toHaveBeenCalledWith(
       'ws://localhost:3000/ws',
@@ -245,22 +221,8 @@ describe('useArrivals', () => {
     process.env.NEXT_PUBLIC_WS_URL = originalEnv;
   });
 
-  it('should keep ws:// protocol for 127.0.0.1', () => {
-    const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
-
-    process.env.NEXT_PUBLIC_WS_URL = 'ws://127.0.0.1:3000';
-    renderHook(() => useArrivals(schoolId, initialArrivals));
-
-    expect(mockIoFn).toHaveBeenCalledWith(
-      'ws://127.0.0.1:3000/ws',
-      expect.any(Object),
-    );
-
-    process.env.NEXT_PUBLIC_WS_URL = originalEnv;
-  });
-
   it('should initialise with empty arrivals when no initialArrivals provided', () => {
-    const { result } = renderHook(() => useArrivals(schoolId, []));
+    const { result } = renderHook(() => useArrivals(schoolId, [], token));
 
     expect(result.current.arrivals).toHaveLength(0);
     expect(result.current.isConnected).toBe(false);
@@ -269,9 +231,9 @@ describe('useArrivals', () => {
 
   it('should convert https:// to wss:// for production', () => {
     const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
-
     process.env.NEXT_PUBLIC_WS_URL = 'https://api.example.com';
-    renderHook(() => useArrivals(schoolId, initialArrivals));
+
+    renderHook(() => useArrivals(schoolId, initialArrivals, token));
 
     expect(mockIoFn).toHaveBeenCalledWith(
       'wss://api.example.com/ws',

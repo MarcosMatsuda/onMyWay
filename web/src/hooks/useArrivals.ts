@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Arrival } from '@/types';
-import { getToken } from '@/lib/auth';
 
 // Ensure secure WebSocket protocol in production
 function getSecureWsUrl(url: string): string {
@@ -52,6 +51,7 @@ function mapGatewayArrivals(payload: ArrivalsUpdatedPayload): Arrival[] {
 export function useArrivals(
   schoolId: string,
   initialArrivals: Arrival[],
+  token: string,
 ): {
   arrivals: Arrival[];
   isConnected: boolean;
@@ -66,7 +66,6 @@ export function useArrivals(
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => {
-    const token = getToken();
     const secureUrl = getSecureWsUrl(getWsUrl());
 
     const socket: Socket = io(secureUrl, {
@@ -97,7 +96,7 @@ export function useArrivals(
     return () => {
       socket.disconnect();
     };
-  }, [schoolId]);
+  }, [schoolId, token]);
 
   return { arrivals, isConnected, lastUpdatedAt };
 }
