@@ -20,6 +20,8 @@ export interface School {
   id: string;
   name: string;
   location: SchoolLocation;
+  geofenceRadiusMeters: number;
+  notificationThresholdMeters: number;
 }
 
 export interface Arrival {

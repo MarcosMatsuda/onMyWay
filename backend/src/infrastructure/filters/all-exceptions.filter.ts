@@ -2,6 +2,7 @@ import {
   ExceptionFilter,
   Catch,
   ArgumentsHost,
+  HttpException,
   HttpStatus,
   Logger,
 } from '@nestjs/common';
@@ -21,9 +22,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+    const statusCode =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
     const message =
-      exception instanceof Error ? exception.message : 'Internal server error';
+      exception instanceof HttpException
+        ? exception.message
+        : exception instanceof Error
+          ? exception.message
+          : 'Internal server error';
     const isProduction = process.env.NODE_ENV === 'production';
 
     // Log full error with stack trace (only used for debugging)
