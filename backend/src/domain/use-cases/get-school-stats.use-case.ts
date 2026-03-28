@@ -7,6 +7,7 @@ import {
   ISchoolRepository,
   SCHOOL_REPOSITORY,
 } from '../repositories/school.repository.interface';
+import { ETA_TTL_MINUTES } from '@infrastructure/config/eta.config';
 
 export interface GetSchoolStatsInput {
   schoolId: string;
@@ -44,7 +45,10 @@ export class GetSchoolStatsUseCase {
     const etaMinutes: number[] = [];
 
     for (const parentId of parentIdsWithinGeofence) {
-      const eta = await this.etaRepository.findLatestByParentId(parentId);
+      const eta = await this.etaRepository.findLatestByParentId(
+        parentId,
+        ETA_TTL_MINUTES,
+      );
       if (!eta || eta.schoolId !== input.schoolId) {
         continue;
       }

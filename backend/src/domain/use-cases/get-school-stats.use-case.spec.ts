@@ -105,6 +105,10 @@ describe('GetSchoolStatsUseCase', () => {
     expect(schoolRepositoryMock.findParentsWithinGeofence).toHaveBeenCalledWith(
       'school-456',
     );
+    expect(etaRepositoryMock.findLatestByParentId).toHaveBeenCalledWith(
+      'parent-1',
+      5, // ETA_TTL_MINUTES
+    );
 
     expect(result.totalParents).toBe(4);
     expect(result.avgETA).toBe(9.5); // (3 + 10 + 20 + 5) / 4 = 9.5
@@ -222,5 +226,65 @@ describe('GetSchoolStatsUseCase', () => {
 
     // Assert
     expect(result.avgETA).toBe(8); // (7 + 9) / 2 = 8
+  });
+
+  it('should return zero totalParents when all ETAs are stale (> 5 min TTL)', async () => {
+    // Arrange
+    const input = { schoolId: 'school-456' };
+
+    schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
+    schoolRepositoryMock.findParentsWithinGeofence.mockResolvedValue([
+      'parent-1',
+      'parent-2',
+    ]);
+
+    // Mock repository to return null for both parents (stale ETAs filtered out)
+    etaRepositoryMock.findLatestByParentId
+      .mockResolvedValueOnce(null) // parent-1: stale ETA (> 5 min)
+      .mockResolvedValueOnce(null); // parent-2: stale ETA (> 5 min)
+
+    // Act
+    const result = await useCase.execute(input);
+
+    // Assert
+    expect(etaRepositoryMock.findLatestByParentId).toHaveBeenCalledWith(
+      'parent-1',
+      5, // ETA_TTL_MINUTES
+    );
+    expect(etaRepositoryMock.findLatestByParentId).toHaveBeenCalledWith(
+      'parent-2',
+      5, // ETA_TTL_MINUTES
+    );
+    expect(result.totalParents).toBe(0);
+    expect(result.avgETA).toBe(0);
+    expect(result.etaLessThan5Min).toBe(0);
+    expect(result.eta5To15Min).toBe(0);
+    expect(result.etaGreaterThan15Min).toBe(0);
+  });
+
+  it('should only count parents with recent ETAs (within 5 min TTL)', async () => {
+    // Arrange
+    const input = { schoolId: 'school-456' };
+
+    schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
+    schoolRepositoryMock.findParentsWithinGeofence.mockResolvedValue([
+      'parent-1',
+      'parent-2',
+    ]);
+
+    // Only parent-2 has recent ETA, parent-1 has stale ETA
+    etaRepositoryMock.findLatestByParentId
+      .mockResolvedValueOnce(null) // parent-1: stale (> 5 min)
+      .mockResolvedValueOnce(mockETAs[1]); // parent-2: recent (10 minutes ETA)
+
+    // Act
+    const result = await useCase.execute(input);
+
+    // Assert
+    expect(result.totalParents).toBe(1); // Only parent-2
+    expect(result.avgETA).toBe(10);
+    expect(result.etaLessThan5Min).toBe(0);
+    expect(result.eta5To15Min).toBe(1);
+    expect(result.etaGreaterThan15Min).toBe(0);
   });
 });

@@ -24,11 +24,25 @@ export class ETARepository implements IETARepository {
     return model ? ETAMapper.toDomain(model) : null;
   }
 
-  async findLatestByParentId(parentId: string): Promise<ETA | null> {
-    const model = await this.repository.findOne({
-      where: { parentId },
-      order: { calculatedAt: 'DESC' },
-    });
+  async findLatestByParentId(
+    parentId: string,
+    maxAgeMinutes?: number,
+  ): Promise<ETA | null> {
+    const queryBuilder = this.repository
+      .createQueryBuilder('eta')
+      .where('eta.parentId = :parentId', { parentId });
+
+    if (maxAgeMinutes !== undefined && maxAgeMinutes !== null) {
+      queryBuilder.andWhere(
+        "eta.calculatedAt > NOW() - INTERVAL ':maxAgeMinutes minutes'",
+        { maxAgeMinutes },
+      );
+    }
+
+    const model = await queryBuilder
+      .orderBy('eta.calculatedAt', 'DESC')
+      .getOne();
+
     return model ? ETAMapper.toDomain(model) : null;
   }
 
@@ -42,15 +56,25 @@ export class ETARepository implements IETARepository {
 
   async findLatestBulkByParentIds(
     parentIds: string[],
+    maxAgeMinutes?: number,
   ): Promise<Map<string, ETA>> {
     if (parentIds.length === 0) {
       return new Map();
     }
 
     // Get latest ETA per parent ID using raw SQL for efficiency
-    const models = await this.repository
+    const queryBuilder = this.repository
       .createQueryBuilder('eta')
-      .where('eta.parentId IN (:...parentIds)', { parentIds })
+      .where('eta.parentId IN (:...parentIds)', { parentIds });
+
+    if (maxAgeMinutes !== undefined && maxAgeMinutes !== null) {
+      queryBuilder.andWhere(
+        "eta.calculatedAt > NOW() - INTERVAL ':maxAgeMinutes minutes'",
+        { maxAgeMinutes },
+      );
+    }
+
+    const models = await queryBuilder
       .orderBy('eta.parentId', 'ASC')
       .addOrderBy('eta.calculatedAt', 'DESC')
       .getMany();

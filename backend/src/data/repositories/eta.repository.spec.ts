@@ -21,6 +21,7 @@ describe('ETARepository', () => {
             find: jest.fn(),
             create: jest.fn(),
             save: jest.fn(),
+            createQueryBuilder: jest.fn(),
           },
         },
       ],
@@ -160,30 +161,104 @@ describe('ETARepository', () => {
         calculatedAt: now,
       };
 
-      jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(mockModel);
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockModel),
+      };
+
+      jest
+        .spyOn(etaRepositoryMock, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
       jest.spyOn(ETAMapper, 'toDomain').mockReturnValue(expectedEntity);
 
       const result = await repository.findLatestByParentId(parentId);
 
       expect(result).toEqual(expectedEntity);
-      expect(etaRepositoryMock.findOne).toHaveBeenCalledWith({
-        where: { parentId },
-        order: { calculatedAt: 'DESC' },
-      });
+      expect(etaRepositoryMock.createQueryBuilder).toHaveBeenCalledWith('eta');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'eta.parentId = :parentId',
+        { parentId },
+      );
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'eta.calculatedAt',
+        'DESC',
+      );
       expect(ETAMapper.toDomain).toHaveBeenCalledWith(mockModel);
     });
 
     it('should return null when no ETA exists for parent', async () => {
       const parentId = 'parent-1';
-      jest.spyOn(etaRepositoryMock, 'findOne').mockResolvedValue(null);
+
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(null),
+      };
+
+      jest
+        .spyOn(etaRepositoryMock, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
 
       const result = await repository.findLatestByParentId(parentId);
 
       expect(result).toBeNull();
-      expect(etaRepositoryMock.findOne).toHaveBeenCalledWith({
-        where: { parentId },
-        order: { calculatedAt: 'DESC' },
-      });
+      expect(etaRepositoryMock.createQueryBuilder).toHaveBeenCalledWith('eta');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'eta.parentId = :parentId',
+        { parentId },
+      );
+    });
+
+    it('should filter by maxAgeMinutes when provided', async () => {
+      const parentId = 'parent-1';
+      const maxAgeMinutes = 5;
+      const now = new Date();
+      const mockModel: ETAModel = {
+        id: 'eta-1',
+        parentId,
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
+        calculatedAt: now,
+      };
+
+      const expectedEntity: ETA = {
+        id: 'eta-1',
+        parentId,
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
+        calculatedAt: now,
+      };
+
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockModel),
+      };
+
+      jest
+        .spyOn(etaRepositoryMock, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
+      jest.spyOn(ETAMapper, 'toDomain').mockReturnValue(expectedEntity);
+
+      const result = await repository.findLatestByParentId(
+        parentId,
+        maxAgeMinutes,
+      );
+
+      expect(result).toEqual(expectedEntity);
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        "eta.calculatedAt > NOW() - INTERVAL ':maxAgeMinutes minutes'",
+        { maxAgeMinutes },
+      );
+      expect(ETAMapper.toDomain).toHaveBeenCalledWith(mockModel);
     });
   });
 
@@ -321,6 +396,195 @@ describe('ETARepository', () => {
       expect(result).toHaveLength(3);
       // Verify all ETAs are returned (sorting by calculatedAt DESC handled by DB)
       expect(result.map((e) => e.durationSeconds)).toEqual([300, 900, 600]);
+    });
+  });
+
+  describe('findLatestBulkByParentIds', () => {
+    it('should return empty Map when parentIds is empty', async () => {
+      const result = await repository.findLatestBulkByParentIds([]);
+
+      expect(result).toEqual(new Map());
+      expect(etaRepositoryMock.createQueryBuilder).not.toHaveBeenCalled();
+    });
+
+    it('should return Map of latest ETAs per parent', async () => {
+      const parentIds = ['parent-1', 'parent-2'];
+      const now = new Date();
+      const mockModels: ETAModel[] = [
+        {
+          id: 'eta-1',
+          parentId: 'parent-1',
+          schoolId: 'school-1',
+          distanceMeters: 5000,
+          durationSeconds: 900,
+          routePolyline: 'polyline123',
+          calculatedAt: now,
+        },
+        {
+          id: 'eta-2',
+          parentId: 'parent-2',
+          schoolId: 'school-1',
+          distanceMeters: 3000,
+          durationSeconds: 600,
+          routePolyline: 'polyline456',
+          calculatedAt: now,
+        },
+      ];
+
+      const expectedETAs: ETA[] = mockModels.map((m) => ({ ...m }));
+
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockModels),
+      };
+
+      jest
+        .spyOn(etaRepositoryMock, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
+      jest
+        .spyOn(ETAMapper, 'toDomain')
+        .mockImplementation(
+          (model) => expectedETAs.find((e) => e.id === model.id)!,
+        );
+
+      const result = await repository.findLatestBulkByParentIds(parentIds);
+
+      expect(etaRepositoryMock.createQueryBuilder).toHaveBeenCalledWith('eta');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'eta.parentId IN (:...parentIds)',
+        { parentIds },
+      );
+      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalled();
+      expect(result.size).toBe(2);
+      expect(result.get('parent-1')).toEqual(expectedETAs[0]);
+      expect(result.get('parent-2')).toEqual(expectedETAs[1]);
+    });
+
+    it('should apply TTL filter when maxAgeMinutes is provided', async () => {
+      const parentIds = ['parent-1'];
+      const maxAgeMinutes = 5;
+      const now = new Date();
+      const mockModel: ETAModel = {
+        id: 'eta-1',
+        parentId: 'parent-1',
+        schoolId: 'school-1',
+        distanceMeters: 5000,
+        durationSeconds: 900,
+        routePolyline: 'polyline123',
+        calculatedAt: now,
+      };
+
+      const expectedETA: ETA = { ...mockModel };
+
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([mockModel]),
+      };
+
+      jest
+        .spyOn(etaRepositoryMock, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
+      jest.spyOn(ETAMapper, 'toDomain').mockReturnValue(expectedETA);
+
+      const result = await repository.findLatestBulkByParentIds(
+        parentIds,
+        maxAgeMinutes,
+      );
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        "eta.calculatedAt > NOW() - INTERVAL ':maxAgeMinutes minutes'",
+        { maxAgeMinutes },
+      );
+      expect(result.size).toBe(1);
+      expect(result.get('parent-1')).toEqual(expectedETA);
+    });
+
+    it('should keep only latest ETA per parent when multiple records exist', async () => {
+      const parentIds = ['parent-1'];
+      const now = new Date();
+      const oneMinAgo = new Date(now.getTime() - 60000);
+
+      // DB returns ordered by calculatedAt DESC, so latest first
+      const mockModels: ETAModel[] = [
+        {
+          id: 'eta-latest',
+          parentId: 'parent-1',
+          schoolId: 'school-1',
+          distanceMeters: 2000,
+          durationSeconds: 300,
+          routePolyline: 'polyline-latest',
+          calculatedAt: now,
+        },
+        {
+          id: 'eta-older',
+          parentId: 'parent-1',
+          schoolId: 'school-1',
+          distanceMeters: 5000,
+          durationSeconds: 900,
+          routePolyline: 'polyline-older',
+          calculatedAt: oneMinAgo,
+        },
+      ];
+
+      const latestETA: ETA = { ...mockModels[0] };
+      const olderETA: ETA = { ...mockModels[1] };
+
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockModels),
+      };
+
+      jest
+        .spyOn(etaRepositoryMock, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
+      jest
+        .spyOn(ETAMapper, 'toDomain')
+        .mockImplementation((model) =>
+          model.id === 'eta-latest' ? latestETA : olderETA,
+        );
+
+      const result = await repository.findLatestBulkByParentIds(parentIds);
+
+      // Should keep only the latest (first) ETA per parent
+      expect(result.size).toBe(1);
+      expect(result.get('parent-1')).toEqual(latestETA);
+    });
+
+    it('should return empty Map when no ETAs match within TTL', async () => {
+      const parentIds = ['parent-1'];
+      const maxAgeMinutes = 5;
+
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+
+      jest
+        .spyOn(etaRepositoryMock, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder as any);
+
+      const result = await repository.findLatestBulkByParentIds(
+        parentIds,
+        maxAgeMinutes,
+      );
+
+      expect(result.size).toBe(0);
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        "eta.calculatedAt > NOW() - INTERVAL ':maxAgeMinutes minutes'",
+        { maxAgeMinutes },
+      );
     });
   });
 });
