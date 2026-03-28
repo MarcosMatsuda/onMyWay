@@ -87,6 +87,8 @@ export class SchoolsController {
         lat: school.lat,
         lng: school.lng,
       },
+      geofenceRadiusMeters: school.geofenceRadiusMeters,
+      notificationThresholdMeters: school.notificationThresholdMeters,
     }));
   }
 
@@ -108,6 +110,8 @@ export class SchoolsController {
         lat: school.lat,
         lng: school.lng,
       },
+      geofenceRadiusMeters: school.geofenceRadiusMeters,
+      notificationThresholdMeters: school.notificationThresholdMeters,
     };
   }
 
