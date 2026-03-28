@@ -17,7 +17,36 @@ function getSecureWsUrl(url: string): string {
 }
 
 function getWsUrl(): string {
-  return process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000';
+  const base = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000';
+  // Gateway uses /ws namespace
+  return base.endsWith('/ws') ? base : `${base}/ws`;
+}
+
+interface GatewayArrival {
+  parentId: string;
+  parentName?: string;
+  lat: number;
+  lng: number;
+  etaMinutes: number;
+  distanceMeters: number;
+  calculatedAt?: string;
+}
+
+interface ArrivalsUpdatedPayload {
+  schoolId: string;
+  schoolName: string;
+  totalCount: number;
+  arrivals: GatewayArrival[];
+  timestamp: string;
+}
+
+function mapGatewayArrivals(payload: ArrivalsUpdatedPayload): Arrival[] {
+  return payload.arrivals.map((a) => ({
+    parentId: a.parentId,
+    distanceMeters: a.distanceMeters,
+    durationMinutes: a.etaMinutes,
+    routePolyline: '',
+  }));
 }
 
 export function useArrivals(
@@ -49,15 +78,16 @@ export function useArrivals(
 
     socket.on('connect', () => {
       setIsConnected(true);
-      socket.emit('joinSchool', { schoolId, token });
+      socket.emit('school:join', { schoolId });
     });
 
     socket.on('disconnect', () => {
       setIsConnected(false);
     });
 
-    socket.on('arrivals:updated', (updatedArrivals: Arrival[]) => {
-      const sorted = [...updatedArrivals].sort(
+    socket.on('arrivals:updated', (payload: ArrivalsUpdatedPayload) => {
+      const mapped = mapGatewayArrivals(payload);
+      const sorted = [...mapped].sort(
         (a, b) => a.durationMinutes - b.durationMinutes,
       );
       setArrivals(sorted);

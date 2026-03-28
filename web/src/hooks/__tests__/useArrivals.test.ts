@@ -61,7 +61,7 @@ describe('useArrivals', () => {
     expect(result.current.lastUpdatedAt).toBeNull();
   });
 
-  it('should emit joinSchool with JWT token on connect event', () => {
+  it('should emit school:join on connect event', () => {
     renderHook(() => useArrivals(schoolId, initialArrivals));
 
     // Find the connect callback
@@ -76,10 +76,7 @@ describe('useArrivals', () => {
       connectCallback();
     });
 
-    expect(mockEmit).toHaveBeenCalledWith('joinSchool', {
-      schoolId,
-      token: 'mock-jwt-token',
-    });
+    expect(mockEmit).toHaveBeenCalledWith('school:join', { schoolId });
   });
 
   it('should update arrivals state on arrivals:updated event', async () => {
@@ -94,30 +91,41 @@ describe('useArrivals', () => {
 
     expect(arrivalsUpdatedCallback).toBeDefined();
 
-    const updatedArrivals: Arrival[] = [
-      {
-        parentId: 'parent-3',
-        distanceMeters: 200,
-        durationMinutes: 15,
-        routePolyline: '',
-      },
-      {
-        parentId: 'parent-4',
-        distanceMeters: 300,
-        durationMinutes: 3,
-        routePolyline: '',
-      },
-    ];
+    // Gateway sends payload in its own format
+    const gatewayPayload = {
+      schoolId: 'school-123',
+      schoolName: 'Escola Teste',
+      totalCount: 2,
+      arrivals: [
+        {
+          parentId: 'parent-3',
+          distanceMeters: 200,
+          etaMinutes: 15,
+          lat: -23.55,
+          lng: -46.63,
+        },
+        {
+          parentId: 'parent-4',
+          distanceMeters: 300,
+          etaMinutes: 3,
+          lat: -23.56,
+          lng: -46.64,
+        },
+      ],
+      timestamp: new Date().toISOString(),
+    };
 
     // Simulate arrivals:updated event
     act(() => {
-      arrivalsUpdatedCallback(updatedArrivals);
+      arrivalsUpdatedCallback(gatewayPayload);
     });
 
     await waitFor(() => {
       expect(result.current.arrivals).toHaveLength(2);
       expect(result.current.arrivals[0].parentId).toBe('parent-4'); // 3 min (sorted)
+      expect(result.current.arrivals[0].durationMinutes).toBe(3);
       expect(result.current.arrivals[1].parentId).toBe('parent-3'); // 15 min
+      expect(result.current.arrivals[1].durationMinutes).toBe(15);
       expect(result.current.lastUpdatedAt).toBeInstanceOf(Date);
     });
   });
@@ -181,15 +189,42 @@ describe('useArrivals', () => {
     );
   });
 
+  it('should connect to /ws namespace', () => {
+    const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
+
+    process.env.NEXT_PUBLIC_WS_URL = 'ws://localhost:3001';
+    renderHook(() => useArrivals(schoolId, initialArrivals));
+
+    expect(mockIoFn).toHaveBeenCalledWith(
+      'ws://localhost:3001/ws',
+      expect.any(Object),
+    );
+
+    process.env.NEXT_PUBLIC_WS_URL = originalEnv;
+  });
+
+  it('should not duplicate /ws if already in URL', () => {
+    const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
+
+    process.env.NEXT_PUBLIC_WS_URL = 'ws://localhost:3001/ws';
+    renderHook(() => useArrivals(schoolId, initialArrivals));
+
+    expect(mockIoFn).toHaveBeenCalledWith(
+      'ws://localhost:3001/ws',
+      expect.any(Object),
+    );
+
+    process.env.NEXT_PUBLIC_WS_URL = originalEnv;
+  });
+
   it('should use secure WebSocket protocol for production URLs', () => {
     const originalEnv = process.env.NEXT_PUBLIC_WS_URL;
 
-    // Test production URL gets converted to wss://
     process.env.NEXT_PUBLIC_WS_URL = 'ws://api.example.com';
     renderHook(() => useArrivals(schoolId, initialArrivals));
 
     expect(mockIoFn).toHaveBeenCalledWith(
-      'wss://api.example.com',
+      'wss://api.example.com/ws',
       expect.any(Object),
     );
 
@@ -203,7 +238,7 @@ describe('useArrivals', () => {
     renderHook(() => useArrivals(schoolId, initialArrivals));
 
     expect(mockIoFn).toHaveBeenCalledWith(
-      'ws://localhost:3000',
+      'ws://localhost:3000/ws',
       expect.any(Object),
     );
 
@@ -217,7 +252,7 @@ describe('useArrivals', () => {
     renderHook(() => useArrivals(schoolId, initialArrivals));
 
     expect(mockIoFn).toHaveBeenCalledWith(
-      'ws://127.0.0.1:3000',
+      'ws://127.0.0.1:3000/ws',
       expect.any(Object),
     );
 
@@ -239,7 +274,7 @@ describe('useArrivals', () => {
     renderHook(() => useArrivals(schoolId, initialArrivals));
 
     expect(mockIoFn).toHaveBeenCalledWith(
-      'wss://api.example.com',
+      'wss://api.example.com/ws',
       expect.any(Object),
     );
 
