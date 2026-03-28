@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { TOKEN_KEY } from '@/lib/auth';
+import { getSchool } from '@/lib/server-api';
 import { SchoolSettingsForm } from '@/components/settings/SchoolSettingsForm';
 
 interface SettingsPageProps {
@@ -17,6 +18,8 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     redirect('/login');
   }
 
+  const school = await getSchool(schoolId).catch(() => null);
+
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -26,7 +29,11 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
         </p>
       </div>
 
-      <SchoolSettingsForm schoolId={schoolId} />
+      <SchoolSettingsForm
+        schoolId={schoolId}
+        initialGeofenceRadius={school?.geofenceRadiusMeters ?? 500}
+        initialNotificationThreshold={school?.notificationThresholdMeters ?? 300}
+      />
     </div>
   );
 }

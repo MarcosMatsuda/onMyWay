@@ -5,11 +5,17 @@ import { updateSchoolConfigAction } from '@/app/actions/update-school-config.act
 
 interface SchoolSettingsFormProps {
   schoolId: string;
+  initialGeofenceRadius: number;
+  initialNotificationThreshold: number;
 }
 
-export function SchoolSettingsForm({ schoolId }: SchoolSettingsFormProps) {
-  const [geofenceRadiusMeters, setGeofenceRadiusMeters] = useState<string>('500');
-  const [notificationThresholdMeters, setNotificationThresholdMeters] = useState<string>('300');
+export function SchoolSettingsForm({
+  schoolId,
+  initialGeofenceRadius,
+  initialNotificationThreshold,
+}: SchoolSettingsFormProps) {
+  const [geofenceRadiusMeters, setGeofenceRadiusMeters] = useState<string>(String(initialGeofenceRadius));
+  const [notificationThresholdMeters, setNotificationThresholdMeters] = useState<string>(String(initialNotificationThreshold));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);

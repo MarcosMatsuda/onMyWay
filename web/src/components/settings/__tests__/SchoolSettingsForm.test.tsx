@@ -15,7 +15,7 @@ describe('SchoolSettingsForm', () => {
   });
 
   it('renders form with default values', () => {
-    render(<SchoolSettingsForm schoolId="school-123" />);
+    render(<SchoolSettingsForm schoolId="school-123" initialGeofenceRadius={500} initialNotificationThreshold={300} />);
 
     const geofenceInput = screen.getByLabelText(/raio do geofence/i);
     const notificationInput = screen.getByLabelText(/distância para notificação/i);
@@ -25,7 +25,7 @@ describe('SchoolSettingsForm', () => {
   });
 
   it('renders submit button', () => {
-    render(<SchoolSettingsForm schoolId="school-123" />);
+    render(<SchoolSettingsForm schoolId="school-123" initialGeofenceRadius={500} initialNotificationThreshold={300} />);
 
     const submitButton = screen.getByRole('button', {
       name: /salvar configurações/i,
@@ -34,7 +34,7 @@ describe('SchoolSettingsForm', () => {
   });
 
   it('shows validation error for geofence radius below minimum', async () => {
-    render(<SchoolSettingsForm schoolId="school-123" />);
+    render(<SchoolSettingsForm schoolId="school-123" initialGeofenceRadius={500} initialNotificationThreshold={300} />);
 
     const geofenceInput = screen.getByLabelText(/raio do geofence/i);
     const submitButton = screen.getByRole('button', {
@@ -54,7 +54,7 @@ describe('SchoolSettingsForm', () => {
   });
 
   it('shows validation error for geofence radius above maximum', async () => {
-    render(<SchoolSettingsForm schoolId="school-123" />);
+    render(<SchoolSettingsForm schoolId="school-123" initialGeofenceRadius={500} initialNotificationThreshold={300} />);
 
     const geofenceInput = screen.getByLabelText(/raio do geofence/i);
     const submitButton = screen.getByRole('button', {
@@ -74,7 +74,7 @@ describe('SchoolSettingsForm', () => {
   });
 
   it('shows validation error for notification threshold below minimum', async () => {
-    render(<SchoolSettingsForm schoolId="school-123" />);
+    render(<SchoolSettingsForm schoolId="school-123" initialGeofenceRadius={500} initialNotificationThreshold={300} />);
 
     const notificationInput = screen.getByLabelText(/distância para notificação/i);
     const submitButton = screen.getByRole('button', {
@@ -94,7 +94,7 @@ describe('SchoolSettingsForm', () => {
   });
 
   it('shows validation error for notification threshold above maximum', async () => {
-    render(<SchoolSettingsForm schoolId="school-123" />);
+    render(<SchoolSettingsForm schoolId="school-123" initialGeofenceRadius={500} initialNotificationThreshold={300} />);
 
     const notificationInput = screen.getByLabelText(/distância para notificação/i);
     const submitButton = screen.getByRole('button', {
@@ -122,7 +122,7 @@ describe('SchoolSettingsForm', () => {
       },
     });
 
-    render(<SchoolSettingsForm schoolId="school-123" />);
+    render(<SchoolSettingsForm schoolId="school-123" initialGeofenceRadius={500} initialNotificationThreshold={300} />);
 
     const geofenceInput = screen.getByLabelText(/raio do geofence/i);
     const notificationInput = screen.getByLabelText(/distância para notificação/i);
@@ -154,7 +154,7 @@ describe('SchoolSettingsForm', () => {
       error: 'Erro no servidor',
     });
 
-    render(<SchoolSettingsForm schoolId="school-123" />);
+    render(<SchoolSettingsForm schoolId="school-123" initialGeofenceRadius={500} initialNotificationThreshold={300} />);
 
     const submitButton = screen.getByRole('button', {
       name: /salvar configurações/i,
@@ -173,7 +173,7 @@ describe('SchoolSettingsForm', () => {
         new Promise((resolve) => setTimeout(() => resolve({ success: true }), 100))
     );
 
-    render(<SchoolSettingsForm schoolId="school-123" />);
+    render(<SchoolSettingsForm schoolId="school-123" initialGeofenceRadius={500} initialNotificationThreshold={300} />);
 
     const geofenceInput = screen.getByLabelText(/raio do geofence/i);
     const notificationInput = screen.getByLabelText(/distância para notificação/i);
