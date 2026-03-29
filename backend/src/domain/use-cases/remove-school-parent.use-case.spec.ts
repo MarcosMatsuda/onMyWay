@@ -98,9 +98,9 @@ describe('RemoveSchoolParentUseCase', () => {
       schoolId: 'other-school',
     });
 
-    await expect(
-      useCase.execute('school-123', 'parent-456'),
-    ).rejects.toThrow(NotFoundException);
+    await expect(useCase.execute('school-123', 'parent-456')).rejects.toThrow(
+      NotFoundException,
+    );
 
     expect(parentRepositoryMock.delete).not.toHaveBeenCalled();
   });
