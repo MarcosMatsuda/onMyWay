@@ -13,6 +13,7 @@ describe('UpdateSchoolConfigUseCase', () => {
     lng: -46.633308,
     geofenceRadiusMeters: 500,
     notificationThresholdMeters: 1000,
+    inviteCode: 'AB3X7Y2Z',
     createdAt: new Date(),
   };
 
@@ -20,6 +21,7 @@ describe('UpdateSchoolConfigUseCase', () => {
     ...mockSchool,
     geofenceRadiusMeters: 750,
     notificationThresholdMeters: 1500,
+    inviteCode: 'AB3X7Y2Z',
   };
 
   beforeEach(() => {
@@ -88,6 +90,7 @@ describe('UpdateSchoolConfigUseCase', () => {
     const partiallyUpdatedSchool: School = {
       ...mockSchool,
       geofenceRadiusMeters: 750,
+      inviteCode: 'AB3X7Y2Z',
       // notificationThresholdMeters remains 1000
     };
 
@@ -117,6 +120,7 @@ describe('UpdateSchoolConfigUseCase', () => {
       ...mockSchool,
       // geofenceRadiusMeters remains 500
       notificationThresholdMeters: 1500,
+      inviteCode: 'AB3X7Y2Z',
     };
 
     schoolRepositoryMock.findById.mockResolvedValue(mockSchool);
@@ -206,6 +210,7 @@ describe('UpdateSchoolConfigUseCase', () => {
       ...mockSchool,
       geofenceRadiusMeters: 100,
       notificationThresholdMeters: 10000,
+      inviteCode: 'AB3X7Y2Z',
     };
 
     schoolRepositoryMock.findById.mockResolvedValue(mockSchool);

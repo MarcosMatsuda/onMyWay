@@ -28,6 +28,7 @@ describe('SaveLocationUseCase', () => {
     lng: -46.633308,
     geofenceRadiusMeters: 500,
     notificationThresholdMeters: 1000,
+    inviteCode: 'AB3X7Y2Z',
     createdAt: new Date(),
   };
 
@@ -58,6 +59,7 @@ describe('SaveLocationUseCase', () => {
       update: jest.fn(),
       delete: jest.fn(),
       findParentsWithinGeofence: jest.fn(),
+      findByInviteCode: jest.fn(),
     } as jest.Mocked<ISchoolRepository>;
 
     parentRepositoryMock = {

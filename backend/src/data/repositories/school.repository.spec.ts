@@ -55,6 +55,7 @@ describe('SchoolRepository', () => {
         location: 'POINT(-74.006 40.7128)',
         geofenceRadiusMeters: 1000,
         notificationThresholdMeters: 500,
+        inviteCode: 'AB3X7Y2Z',
         createdAt: new Date(),
       };
 
@@ -65,6 +66,7 @@ describe('SchoolRepository', () => {
         lng: -74.006,
         geofenceRadiusMeters: 1000,
         notificationThresholdMeters: 500,
+        inviteCode: 'AB3X7Y2Z',
         createdAt: mockModel.createdAt,
       };
 
@@ -89,6 +91,7 @@ describe('SchoolRepository', () => {
         lng: -118.2437,
         geofenceRadiusMeters: 800,
         notificationThresholdMeters: 400,
+        inviteCode: 'AB3X7Y2Z',
       };
 
       const mockSavedModel: SchoolModel = {
@@ -99,6 +102,7 @@ describe('SchoolRepository', () => {
         location: 'POINT(-118.2437 34.0522)',
         geofenceRadiusMeters: 800,
         notificationThresholdMeters: 400,
+        inviteCode: 'AB3X7Y2Z',
         createdAt: new Date(),
       };
 
@@ -109,6 +113,7 @@ describe('SchoolRepository', () => {
         lng: -118.2437,
         geofenceRadiusMeters: 800,
         notificationThresholdMeters: 400,
+        inviteCode: 'AB3X7Y2Z',
         createdAt: mockSavedModel.createdAt,
       };
 
@@ -119,6 +124,7 @@ describe('SchoolRepository', () => {
         location: 'POINT(-118.2437 34.0522)',
         geofenceRadiusMeters: 800,
         notificationThresholdMeters: 400,
+        inviteCode: 'AB3X7Y2Z',
       };
 
       jest.spyOn(SchoolMapper, 'toPersistence').mockReturnValue(mockModelData);
