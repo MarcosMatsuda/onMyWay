@@ -1,12 +1,12 @@
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
-  parent: {
+  user: {
     id: string;
     name: string;
     email: string;
-    phone: string;
-    schoolId: string;
+    role: 'super_admin' | 'school_admin';
+    schoolId: string | null;
     createdAt: string;
   };
 }
