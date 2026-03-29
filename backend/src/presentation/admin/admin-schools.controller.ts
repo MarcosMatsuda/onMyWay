@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -24,6 +25,7 @@ import { GetSchoolInviteUseCase } from '../../domain/use-cases/get-school-invite
 import { RegenerateSchoolInviteUseCase } from '../../domain/use-cases/regenerate-school-invite.use-case';
 import { ListSchoolParentsUseCase } from '../../domain/use-cases/list-school-parents.use-case';
 import { ListSchoolAdminsUseCase } from '../../domain/use-cases/list-school-admins.use-case';
+import { RemoveSchoolParentUseCase } from '../../domain/use-cases/remove-school-parent.use-case';
 import {
   GetSchoolArrivalsUseCase,
   GetSchoolArrivalsInput,
@@ -60,6 +62,7 @@ export class AdminSchoolsController {
     private readonly regenerateSchoolInviteUseCase: RegenerateSchoolInviteUseCase,
     private readonly listSchoolParentsUseCase: ListSchoolParentsUseCase,
     private readonly listSchoolAdminsUseCase: ListSchoolAdminsUseCase,
+    private readonly removeSchoolParentUseCase: RemoveSchoolParentUseCase,
     private readonly getSchoolArrivalsUseCase: GetSchoolArrivalsUseCase,
     private readonly getSchoolStatsUseCase: GetSchoolStatsUseCase,
     private readonly updateSchoolConfigUseCase: UpdateSchoolConfigUseCase,
@@ -259,5 +262,16 @@ export class AdminSchoolsController {
       phone: parent.phone,
       createdAt: parent.createdAt,
     }));
+  }
+
+  @Delete(':schoolId/parents/:parentId')
+  @Roles('super_admin', 'school_admin')
+  @UseGuards(SchoolAccessGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeParent(
+    @Param('schoolId') schoolId: string,
+    @Param('parentId') parentId: string,
+  ): Promise<void> {
+    await this.removeSchoolParentUseCase.execute(schoolId, parentId);
   }
 }
