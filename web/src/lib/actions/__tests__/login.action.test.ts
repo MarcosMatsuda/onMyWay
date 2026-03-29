@@ -21,24 +21,28 @@ describe('loginAction', () => {
     mockedCookies.mockResolvedValue(mockCookieStore);
   });
 
-  it('returns success with schoolId on successful login', async () => {
+  it('returns success with schoolId and role on successful login', async () => {
     mockedAxios.post.mockResolvedValue({
       data: {
         accessToken: 'jwt-token-123',
-        parent: { schoolId: 'school-456' },
+        user: { schoolId: 'school-456', role: 'school_admin' },
       },
     });
 
     const result = await loginAction('test@example.com', 'password123');
 
-    expect(result).toEqual({ success: true, schoolId: 'school-456' });
+    expect(result).toEqual({
+      success: true,
+      schoolId: 'school-456',
+      role: 'school_admin',
+    });
   });
 
   it('sets onmyway_token cookie on successful login', async () => {
     mockedAxios.post.mockResolvedValue({
       data: {
         accessToken: 'jwt-token-123',
-        parent: { schoolId: 'school-456' },
+        user: { schoolId: 'school-456', role: 'school_admin' },
       },
     });
 
@@ -60,14 +64,14 @@ describe('loginAction', () => {
     mockedAxios.post.mockResolvedValue({
       data: {
         accessToken: 'jwt-token-123',
-        parent: { schoolId: 'school-456' },
+        user: { schoolId: 'school-456', role: 'school_admin' },
       },
     });
 
     await loginAction('test@example.com', 'password123');
 
     expect(mockedAxios.post).toHaveBeenCalledWith(
-      expect.stringContaining('/auth/login'),
+      expect.stringContaining('/admin/auth/login'),
       { email: 'test@example.com', password: 'password123' },
       expect.any(Object)
     );
@@ -155,7 +159,7 @@ describe('loginAction', () => {
     mockedAxios.post.mockResolvedValue({
       data: {
         accessToken: 'jwt-token-123',
-        parent: { schoolId: 'school-456' },
+        user: { schoolId: 'school-456', role: 'school_admin' },
       },
     });
 
