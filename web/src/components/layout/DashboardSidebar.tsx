@@ -22,6 +22,16 @@ export function DashboardSidebar({
       icon: '🚗',
     },
     {
+      href: `/dashboard/${schoolId}/parents`,
+      label: 'Pais',
+      icon: '👥',
+    },
+    {
+      href: `/dashboard/${schoolId}/invite`,
+      label: 'Código de Convite',
+      icon: '🔑',
+    },
+    {
       href: `/dashboard/${schoolId}/settings`,
       label: 'Configurações',
       icon: '⚙️',

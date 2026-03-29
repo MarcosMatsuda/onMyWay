@@ -43,3 +43,11 @@ export interface SchoolConfig {
   geofenceRadiusMeters: number;
   notificationThresholdMeters: number;
 }
+
+export interface SchoolParent {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  createdAt: string;
+}
