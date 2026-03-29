@@ -128,7 +128,7 @@ describe('useAuth', () => {
     const { result } = renderHook(() => useAuth());
 
     await act(async () => {
-      await result.current.register('Jane', 'jane@example.com', '456', 'password');
+      await result.current.register('Jane', 'jane@example.com', '456', 'password', 'AB3X7Y2Z');
     });
 
     expect(result.current.isAuthenticated).toBe(true);
