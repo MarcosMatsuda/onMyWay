@@ -25,7 +25,11 @@ describe('useLogin', () => {
 
   it('sets isLoading=true while loginAction is in flight', async () => {
     const mockLoginAction = loginModule.loginAction as jest.Mock;
-    mockLoginAction.mockResolvedValue({ success: true, schoolId: 'school-123' });
+    mockLoginAction.mockResolvedValue({
+      success: true,
+      schoolId: 'school-123',
+      role: 'school_admin',
+    });
 
     const { result } = renderHook(() => useLogin());
 
@@ -46,9 +50,13 @@ describe('useLogin', () => {
     expect(result.current.isLoading).toBe(true);
   });
 
-  it('calls router.push with correct dashboard URL on success', async () => {
+  it('calls router.push with dashboard URL for school_admin', async () => {
     const mockLoginAction = loginModule.loginAction as jest.Mock;
-    mockLoginAction.mockResolvedValue({ success: true, schoolId: 'school-456' });
+    mockLoginAction.mockResolvedValue({
+      success: true,
+      schoolId: 'school-456',
+      role: 'school_admin',
+    });
 
     const { result } = renderHook(() => useLogin());
 
@@ -57,6 +65,23 @@ describe('useLogin', () => {
     });
 
     expect(mockRouter.push).toHaveBeenCalledWith('/dashboard/school-456/arrivals');
+  });
+
+  it('calls router.push with admin URL for super_admin', async () => {
+    const mockLoginAction = loginModule.loginAction as jest.Mock;
+    mockLoginAction.mockResolvedValue({
+      success: true,
+      schoolId: null,
+      role: 'super_admin',
+    });
+
+    const { result } = renderHook(() => useLogin());
+
+    await act(async () => {
+      await result.current.login('test@example.com', 'password');
+    });
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/admin/schools');
   });
 
   it('sets error message on login failure', async () => {
@@ -88,7 +113,11 @@ describe('useLogin', () => {
     expect(result.current.error).toBe('Error');
 
     // Second login attempt clears error during submission
-    mockLoginAction.mockResolvedValue({ success: true, schoolId: 'school-123' });
+    mockLoginAction.mockResolvedValue({
+      success: true,
+      schoolId: 'school-123',
+      role: 'school_admin',
+    });
     await act(async () => {
       await result.current.login('test@example.com', 'correctpassword');
     });
@@ -98,7 +127,11 @@ describe('useLogin', () => {
 
   it('does not set isLoading to false on success (router.push handles navigation)', async () => {
     const mockLoginAction = loginModule.loginAction as jest.Mock;
-    mockLoginAction.mockResolvedValue({ success: true, schoolId: 'school-123' });
+    mockLoginAction.mockResolvedValue({
+      success: true,
+      schoolId: 'school-123',
+      role: 'school_admin',
+    });
 
     const { result } = renderHook(() => useLogin());
 

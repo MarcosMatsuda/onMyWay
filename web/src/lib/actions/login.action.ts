@@ -8,10 +8,13 @@ const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 export async function loginAction(
   email: string,
   password: string,
-): Promise<{ success: true; schoolId: string } | { success: false; error: string }> {
+): Promise<
+  { success: true; schoolId: string | null; role: string }
+  | { success: false; error: string }
+> {
   try {
     const response = await axios.post(
-      `${baseURL}/auth/login`,
+      `${baseURL}/admin/auth/login`,
       { email, password },
       {
         timeout: 10000,
@@ -21,7 +24,7 @@ export async function loginAction(
       },
     );
 
-    const { accessToken, parent } = response.data;
+    const { accessToken, user } = response.data;
 
     // Set the cookie on the server
     const cookieStore = await cookies();
@@ -33,7 +36,11 @@ export async function loginAction(
       sameSite: 'strict',
     });
 
-    return { success: true, schoolId: parent.schoolId };
+    return {
+      success: true,
+      schoolId: user.schoolId || null,
+      role: user.role,
+    };
   } catch (error) {
     // Handle different error scenarios
     if (axios.isAxiosError(error)) {

@@ -1,4 +1,6 @@
 export interface JWTPayload {
+  sub?: string;
+  role?: string;
   schoolId?: string;
   [key: string]: any;
 }
