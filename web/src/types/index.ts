@@ -51,3 +51,11 @@ export interface SchoolParent {
   phone: string;
   createdAt: string;
 }
+
+export interface SchoolAdmin {
+  id: string;
+  name: string;
+  email: string;
+  schoolId: string | null;
+  createdAt: string;
+}
