@@ -10,6 +10,7 @@ export class SchoolMapper {
       lng: model.lng,
       geofenceRadiusMeters: model.geofenceRadiusMeters,
       notificationThresholdMeters: model.notificationThresholdMeters,
+      inviteCode: model.inviteCode,
       createdAt: model.createdAt,
     };
   }
@@ -24,6 +25,7 @@ export class SchoolMapper {
       location: `POINT(${entity.lng} ${entity.lat})`,
       geofenceRadiusMeters: entity.geofenceRadiusMeters,
       notificationThresholdMeters: entity.notificationThresholdMeters,
+      inviteCode: entity.inviteCode,
     };
   }
 }
