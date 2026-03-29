@@ -217,9 +217,15 @@ export class AdminSchoolsController {
   @Get(':schoolId/parents')
   @Roles('super_admin', 'school_admin')
   @UseGuards(SchoolAccessGuard)
-  async listParents(
-    @Param('schoolId') schoolId: string,
-  ): Promise<{ id: string; name: string; email: string; phone: string; createdAt: Date }[]> {
+  async listParents(@Param('schoolId') schoolId: string): Promise<
+    {
+      id: string;
+      name: string;
+      email: string;
+      phone: string;
+      createdAt: Date;
+    }[]
+  > {
     const result = await this.listSchoolParentsUseCase.execute(schoolId);
 
     return result.parents.map((parent) => ({

@@ -78,7 +78,9 @@ describe('ListSchoolParentsUseCase', () => {
     expect(result.parents[0].name).toBe('John Doe');
     expect(result.parents[1].name).toBe('Jane Smith');
     expect(schoolRepositoryMock.findById).toHaveBeenCalledWith('school-1');
-    expect(parentRepositoryMock.findBySchoolId).toHaveBeenCalledWith('school-1');
+    expect(parentRepositoryMock.findBySchoolId).toHaveBeenCalledWith(
+      'school-1',
+    );
   });
 
   it('should return empty array when no parents registered', async () => {
@@ -93,7 +95,9 @@ describe('ListSchoolParentsUseCase', () => {
   it('should throw NotFoundException when school does not exist', async () => {
     schoolRepositoryMock.findById.mockResolvedValue(null);
 
-    await expect(useCase.execute('nonexistent')).rejects.toThrow(NotFoundException);
+    await expect(useCase.execute('nonexistent')).rejects.toThrow(
+      NotFoundException,
+    );
     expect(parentRepositoryMock.findBySchoolId).not.toHaveBeenCalled();
   });
 });
