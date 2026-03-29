@@ -19,23 +19,44 @@ function decodeJWT(token: string) {
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('onmyway_token')?.value;
+  const pathname = request.nextUrl.pathname;
 
-  // Protected paths
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
+  // Protect /admin/* paths - requires super_admin role
+  if (pathname.startsWith('/admin')) {
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+    const payload = decodeJWT(token);
+    if (payload?.role !== 'super_admin') {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+  }
+
+  // Protect /dashboard/* paths - requires authentication
+  if (pathname.startsWith('/dashboard')) {
     if (!token) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
   }
 
-  // Public paths: redirect to dashboard if already authenticated
-  if (request.nextUrl.pathname === '/login') {
+  // Public paths: redirect to appropriate dashboard based on role if already authenticated
+  if (pathname === '/login') {
     if (token) {
       const payload = decodeJWT(token);
-      const schoolId = payload?.schoolId;
-      if (schoolId) {
-        return NextResponse.redirect(new URL(`/dashboard/${schoolId}/arrivals`, request.url));
+
+      if (payload?.role === 'super_admin') {
+        return NextResponse.redirect(new URL('/admin/schools', request.url));
       }
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+
+      if (payload?.role === 'school_admin' && payload?.schoolId) {
+        return NextResponse.redirect(
+          new URL(`/dashboard/${payload.schoolId}/arrivals`, request.url),
+        );
+      }
+
+      // Fallback for unknown roles
+      return NextResponse.redirect(new URL('/login', request.url));
     }
   }
 
@@ -43,5 +64,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/login'],
 };
