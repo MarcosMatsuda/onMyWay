@@ -21,8 +21,10 @@ describe('UserRepository', () => {
           provide: getRepositoryToken(UserModel),
           useValue: {
             findOne: jest.fn(),
+            find: jest.fn(),
             create: jest.fn(),
             save: jest.fn(),
+            delete: jest.fn(),
           },
         },
       ],
@@ -250,6 +252,80 @@ describe('UserRepository', () => {
       });
       expect(bcrypt.compare).toHaveBeenCalledWith(password, 'hashed-password');
       expect(UserMapper.toDomain).toHaveBeenCalledWith(mockModel);
+    });
+  });
+
+  describe('findBySchoolId', () => {
+    it('should return empty array when no users found for school', async () => {
+      const schoolId = 'school-123';
+      jest.spyOn(userRepositoryMock, 'find').mockResolvedValue([]);
+
+      const result = await repository.findBySchoolId(schoolId);
+
+      expect(result).toEqual([]);
+      expect(userRepositoryMock.find).toHaveBeenCalledWith({
+        where: { schoolId },
+      });
+    });
+
+    it('should return mapped domain entities for existing school admins', async () => {
+      const schoolId = 'school-123';
+      const mockModels: UserModel[] = [
+        {
+          id: 'user-1',
+          name: 'Admin One',
+          email: 'admin1@school.com',
+          role: 'school_admin',
+          schoolId,
+          passwordHash: 'hash1',
+          createdAt: new Date(),
+        },
+        {
+          id: 'user-2',
+          name: 'Admin Two',
+          email: 'admin2@school.com',
+          role: 'school_admin',
+          schoolId,
+          passwordHash: 'hash2',
+          createdAt: new Date(),
+        },
+      ];
+
+      const expectedEntities: User[] = mockModels.map((m) => ({
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        role: m.role,
+        schoolId: m.schoolId,
+        createdAt: m.createdAt,
+      }));
+
+      jest.spyOn(userRepositoryMock, 'find').mockResolvedValue(mockModels);
+      jest
+        .spyOn(UserMapper, 'toDomain')
+        .mockReturnValueOnce(expectedEntities[0])
+        .mockReturnValueOnce(expectedEntities[1]);
+
+      const result = await repository.findBySchoolId(schoolId);
+
+      expect(result).toEqual(expectedEntities);
+      expect(userRepositoryMock.find).toHaveBeenCalledWith({
+        where: { schoolId },
+      });
+    });
+  });
+
+  describe('delete', () => {
+    it('should call delete on the TypeORM repository', async () => {
+      const userId = 'user-456';
+      jest.spyOn(userRepositoryMock, 'delete').mockResolvedValue({
+        affected: 1,
+        raw: {},
+      });
+
+      await repository.delete(userId);
+
+      expect(userRepositoryMock.delete).toHaveBeenCalledWith(userId);
     });
   });
 });
