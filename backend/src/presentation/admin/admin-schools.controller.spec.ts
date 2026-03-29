@@ -5,6 +5,7 @@ import { CreateSchoolUseCase } from '../../domain/use-cases/create-school.use-ca
 import { GetSchoolUseCase } from '../../domain/use-cases/get-school.use-case';
 import { GetSchoolInviteUseCase } from '../../domain/use-cases/get-school-invite.use-case';
 import { RegenerateSchoolInviteUseCase } from '../../domain/use-cases/regenerate-school-invite.use-case';
+import { ListSchoolParentsUseCase } from '../../domain/use-cases/list-school-parents.use-case';
 import { GetSchoolArrivalsUseCase } from '../../domain/use-cases/get-school-arrivals.use-case';
 import { GetSchoolStatsUseCase } from '../../domain/use-cases/get-school-stats.use-case';
 import { UpdateSchoolConfigUseCase } from '../../domain/use-cases/update-school-config.use-case';
@@ -70,6 +71,9 @@ describe('AdminSchoolsController', () => {
     const mockRegenerateSchoolInviteUseCase = {
       execute: jest.fn(),
     };
+    const mockListSchoolParentsUseCase = {
+      execute: jest.fn(),
+    };
     const mockGetSchoolArrivalsUseCase = {
       execute: jest.fn(),
     };
@@ -93,6 +97,10 @@ describe('AdminSchoolsController', () => {
         {
           provide: RegenerateSchoolInviteUseCase,
           useValue: mockRegenerateSchoolInviteUseCase,
+        },
+        {
+          provide: ListSchoolParentsUseCase,
+          useValue: mockListSchoolParentsUseCase,
         },
         {
           provide: GetSchoolArrivalsUseCase,
