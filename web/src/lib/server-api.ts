@@ -1,4 +1,4 @@
-import { Arrival, School, SchoolStats, SchoolConfig } from '@/types';
+import { Arrival, School, SchoolStats, SchoolConfig, SchoolParent } from '@/types';
 
 export class UnauthorizedError extends Error {
   constructor() {
@@ -84,4 +84,32 @@ export async function createSchool(
     method: 'POST',
     body: JSON.stringify(data),
   });
+}
+
+export async function getSchoolInvite(
+  schoolId: string,
+  token: string,
+): Promise<{ inviteCode: string }> {
+  return serverFetch<{ inviteCode: string }>(
+    `/admin/schools/${schoolId}/invite`,
+    token,
+  );
+}
+
+export async function regenerateSchoolInvite(
+  schoolId: string,
+  token: string,
+): Promise<{ inviteCode: string }> {
+  return serverFetch<{ inviteCode: string }>(
+    `/admin/schools/${schoolId}/regenerate-invite`,
+    token,
+    { method: 'POST' },
+  );
+}
+
+export async function getSchoolParents(
+  schoolId: string,
+  token: string,
+): Promise<SchoolParent[]> {
+  return serverFetch<SchoolParent[]>(`/admin/schools/${schoolId}/parents`, token);
 }
