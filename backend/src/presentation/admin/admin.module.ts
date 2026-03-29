@@ -4,9 +4,16 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { DataModule } from '@data/data.module';
 import { AdminAuthController } from './admin-auth.controller';
+import { AdminSchoolsController } from './admin-schools.controller';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminJwtStrategy } from '@infrastructure/auth/admin-jwt.strategy';
 import { parseJwtExpiresIn } from '@infrastructure/auth/jwt.constants';
+import { ListSchoolsUseCase } from '@domain/use-cases/list-schools.use-case';
+import { CreateSchoolUseCase } from '@domain/use-cases/create-school.use-case';
+import { GetSchoolUseCase } from '@domain/use-cases/get-school.use-case';
+import { GetSchoolArrivalsUseCase } from '@domain/use-cases/get-school-arrivals.use-case';
+import { GetSchoolStatsUseCase } from '@domain/use-cases/get-school-stats.use-case';
+import { UpdateSchoolConfigUseCase } from '@domain/use-cases/update-school-config.use-case';
 
 @Module({
   imports: [
@@ -24,8 +31,17 @@ import { parseJwtExpiresIn } from '@infrastructure/auth/jwt.constants';
       }),
     }),
   ],
-  controllers: [AdminAuthController],
-  providers: [AdminAuthService, AdminJwtStrategy],
+  controllers: [AdminAuthController, AdminSchoolsController],
+  providers: [
+    AdminAuthService,
+    AdminJwtStrategy,
+    ListSchoolsUseCase,
+    CreateSchoolUseCase,
+    GetSchoolUseCase,
+    GetSchoolArrivalsUseCase,
+    GetSchoolStatsUseCase,
+    UpdateSchoolConfigUseCase,
+  ],
   exports: [AdminAuthService],
 })
 export class AdminModule {}
