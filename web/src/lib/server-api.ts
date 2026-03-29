@@ -75,3 +75,13 @@ export async function updateSchoolConfig(
     body: JSON.stringify(config),
   });
 }
+
+export async function createSchool(
+  data: Omit<School, 'id'>,
+  token: string,
+): Promise<School> {
+  return serverFetch<School>('/schools', token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
