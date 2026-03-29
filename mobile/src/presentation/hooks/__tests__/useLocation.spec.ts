@@ -5,7 +5,12 @@ import { useLocation } from '../useLocation';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 jest.mock('@infrastructure/geolocation', () => ({
   geolocationService: {
-    startWatching: jest.fn((schoolLocation, onLocation, onError) => {
+    startWatching: jest.fn(
+      (
+        schoolLocation: { lat: number; lng: number },
+        onLocation: (location: { lat: number; lng: number; accuracy: number; timestamp: number }, withinPrivacyRadius: boolean) => void,
+        onError: (error: Error) => void,
+      ) => {
       // Simulate location update after a small delay
       setTimeout(() => {
         const mockLocation = {
@@ -89,7 +94,11 @@ describe('useLocation', () => {
     const { geolocationService } = require('@infrastructure/geolocation');
 
     geolocationService.startWatching.mockImplementationOnce(
-      (schoolLocation, onLocation, onError) => {
+      (
+        schoolLocation: { lat: number; lng: number },
+        onLocation: (location: { lat: number; lng: number; accuracy: number; timestamp: number }, withinPrivacyRadius: boolean) => void,
+        onError: (error: Error) => void,
+      ) => {
         setTimeout(() => {
           onError(new Error('Location permission denied'));
         }, 10);

@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export function SchoolSelectionScreen({ navigation }: SchoolSelectionScreenProps): JSX.Element {
+export function SchoolSelectionScreen({ navigation }: SchoolSelectionScreenProps): React.JSX.Element {
   const [schools, setSchools] = useState<School[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

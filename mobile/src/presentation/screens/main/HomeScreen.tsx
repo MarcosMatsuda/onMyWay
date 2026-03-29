@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
+export function HomeScreen({ navigation }: HomeScreenProps): React.JSX.Element {
   const { parent } = useAuth();
   const {
     currentLocation,

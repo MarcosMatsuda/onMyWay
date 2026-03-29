@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios from 'axios';
+import type { AxiosInstance } from 'axios';
 import { HttpClient, RequestConfig, HttpError, AuthenticationError } from './http-client';
 import type { AuthTokenService } from './auth-token.service';
 import { API_BASE_URL } from './config';
@@ -14,7 +15,8 @@ export class AxiosHttpClient implements HttpClient {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    this.client.interceptors.request.use(async (config) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (this.client as any).interceptors.request.use(async (config: any) => {
       if (this.tokenService) {
         const token = await this.tokenService.getAccessToken();
         if (token) {
@@ -78,9 +80,16 @@ export class AxiosHttpClient implements HttpClient {
   }
 
   private handleError(error: unknown): HttpError {
-    if (error instanceof AxiosError && error.response) {
-      const status = error.response.status;
-      const message = error.response.data?.message || error.message;
+    const axiosErr = error as {
+      isAxiosError?: boolean;
+      response?: { status: number; data?: { message?: string } };
+      code?: string;
+      message?: string;
+    };
+
+    if (axiosErr.isAxiosError && axiosErr.response) {
+      const status = axiosErr.response.status;
+      const message = axiosErr.response.data?.message ?? axiosErr.message ?? 'Request failed';
 
       if (status === 401) {
         return new AuthenticationError(message);
@@ -88,7 +97,7 @@ export class AxiosHttpClient implements HttpClient {
       return new HttpError(status, message);
     }
 
-    if (error instanceof AxiosError && error.code === 'ERR_NETWORK') {
+    if (axiosErr.isAxiosError && axiosErr.code === 'ERR_NETWORK') {
       return new HttpError(0, 'Network error — check if the backend is running');
     }
 
