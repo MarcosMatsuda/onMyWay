@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export function ProfileScreen(): JSX.Element {
+export function ProfileScreen(): React.JSX.Element {
   const { parent, logout, isLoading } = useAuth();
 
   if (!parent) {

@@ -5,21 +5,30 @@ import { useLocation } from '../useLocation';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 jest.mock('@infrastructure/geolocation', () => ({
   geolocationService: {
-    startWatching: jest.fn((schoolLocation, onLocation, onError) => {
-      // Simulate location update after a small delay
-      setTimeout(() => {
-        const mockLocation = {
-          lat: -23.5505,
-          lng: -46.6333,
-          accuracy: 10,
-          timestamp: Date.now(),
-        };
-        onLocation(mockLocation, true); // within privacy radius
-      }, 10);
+    startWatching: jest.fn(
+      (
+        schoolLocation: { lat: number; lng: number },
+        onLocation: (
+          location: { lat: number; lng: number; accuracy: number; timestamp: number },
+          withinPrivacyRadius: boolean,
+        ) => void,
+        onError: (error: Error) => void,
+      ) => {
+        // Simulate location update after a small delay
+        setTimeout(() => {
+          const mockLocation = {
+            lat: -23.5505,
+            lng: -46.6333,
+            accuracy: 10,
+            timestamp: Date.now(),
+          };
+          onLocation(mockLocation, true); // within privacy radius
+        }, 10);
 
-      // Return unsubscribe function
-      return jest.fn();
-    }),
+        // Return unsubscribe function
+        return jest.fn();
+      },
+    ),
     stopWatching: jest.fn(),
   },
 }));
@@ -89,7 +98,14 @@ describe('useLocation', () => {
     const { geolocationService } = require('@infrastructure/geolocation');
 
     geolocationService.startWatching.mockImplementationOnce(
-      (schoolLocation, onLocation, onError) => {
+      (
+        schoolLocation: { lat: number; lng: number },
+        onLocation: (
+          location: { lat: number; lng: number; accuracy: number; timestamp: number },
+          withinPrivacyRadius: boolean,
+        ) => void,
+        onError: (error: Error) => void,
+      ) => {
         setTimeout(() => {
           onError(new Error('Location permission denied'));
         }, 10);

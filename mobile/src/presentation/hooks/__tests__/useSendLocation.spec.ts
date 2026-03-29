@@ -151,7 +151,7 @@ describe('useSendLocation', () => {
 
     // Complete the first send
     if (resolveFirstSend) {
-      resolveFirstSend();
+      (resolveFirstSend as () => void)();
     }
 
     await act(async () => {

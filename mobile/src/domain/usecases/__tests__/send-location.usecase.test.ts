@@ -10,6 +10,7 @@ describe('SendLocationUseCase', () => {
     mockLocationRepository = {
       sendLocation: jest.fn(),
       getMyLocation: jest.fn(),
+      stopSharing: jest.fn(),
     };
     useCase = new SendLocationUseCase(mockLocationRepository);
   });
