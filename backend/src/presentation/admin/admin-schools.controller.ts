@@ -23,6 +23,7 @@ import { GetSchoolUseCase } from '../../domain/use-cases/get-school.use-case';
 import { GetSchoolInviteUseCase } from '../../domain/use-cases/get-school-invite.use-case';
 import { RegenerateSchoolInviteUseCase } from '../../domain/use-cases/regenerate-school-invite.use-case';
 import { ListSchoolParentsUseCase } from '../../domain/use-cases/list-school-parents.use-case';
+import { ListSchoolAdminsUseCase } from '../../domain/use-cases/list-school-admins.use-case';
 import {
   GetSchoolArrivalsUseCase,
   GetSchoolArrivalsInput,
@@ -58,6 +59,7 @@ export class AdminSchoolsController {
     private readonly getSchoolInviteUseCase: GetSchoolInviteUseCase,
     private readonly regenerateSchoolInviteUseCase: RegenerateSchoolInviteUseCase,
     private readonly listSchoolParentsUseCase: ListSchoolParentsUseCase,
+    private readonly listSchoolAdminsUseCase: ListSchoolAdminsUseCase,
     private readonly getSchoolArrivalsUseCase: GetSchoolArrivalsUseCase,
     private readonly getSchoolStatsUseCase: GetSchoolStatsUseCase,
     private readonly updateSchoolConfigUseCase: UpdateSchoolConfigUseCase,
@@ -125,6 +127,28 @@ export class AdminSchoolsController {
       geofenceRadiusMeters: school.geofenceRadiusMeters,
       notificationThresholdMeters: school.notificationThresholdMeters,
     };
+  }
+
+  @Get(':schoolId/admins')
+  @Roles('super_admin')
+  async listAdmins(@Param('schoolId') schoolId: string): Promise<
+    {
+      id: string;
+      name: string;
+      email: string;
+      schoolId: string | null;
+      createdAt: Date;
+    }[]
+  > {
+    const result = await this.listSchoolAdminsUseCase.execute(schoolId);
+
+    return result.admins.map((admin) => ({
+      id: admin.id,
+      name: admin.name,
+      email: admin.email,
+      schoolId: admin.schoolId,
+      createdAt: admin.createdAt,
+    }));
   }
 
   @Get(':schoolId/arrivals')

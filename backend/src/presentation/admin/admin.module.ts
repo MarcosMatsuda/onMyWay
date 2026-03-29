@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { DataModule } from '@data/data.module';
 import { AdminAuthController } from './admin-auth.controller';
 import { AdminSchoolsController } from './admin-schools.controller';
+import { AdminUsersController } from './admin-users.controller';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminJwtStrategy } from '@infrastructure/auth/admin-jwt.strategy';
 import { parseJwtExpiresIn } from '@infrastructure/auth/jwt.constants';
@@ -14,6 +15,9 @@ import { GetSchoolUseCase } from '@domain/use-cases/get-school.use-case';
 import { GetSchoolInviteUseCase } from '@domain/use-cases/get-school-invite.use-case';
 import { RegenerateSchoolInviteUseCase } from '@domain/use-cases/regenerate-school-invite.use-case';
 import { ListSchoolParentsUseCase } from '@domain/use-cases/list-school-parents.use-case';
+import { CreateSchoolAdminUseCase } from '@domain/use-cases/create-school-admin.use-case';
+import { ListSchoolAdminsUseCase } from '@domain/use-cases/list-school-admins.use-case';
+import { DeleteAdminUserUseCase } from '@domain/use-cases/delete-admin-user.use-case';
 import { GetSchoolArrivalsUseCase } from '@domain/use-cases/get-school-arrivals.use-case';
 import { GetSchoolStatsUseCase } from '@domain/use-cases/get-school-stats.use-case';
 import { UpdateSchoolConfigUseCase } from '@domain/use-cases/update-school-config.use-case';
@@ -34,7 +38,11 @@ import { UpdateSchoolConfigUseCase } from '@domain/use-cases/update-school-confi
       }),
     }),
   ],
-  controllers: [AdminAuthController, AdminSchoolsController],
+  controllers: [
+    AdminAuthController,
+    AdminSchoolsController,
+    AdminUsersController,
+  ],
   providers: [
     AdminAuthService,
     AdminJwtStrategy,
@@ -44,6 +52,9 @@ import { UpdateSchoolConfigUseCase } from '@domain/use-cases/update-school-confi
     GetSchoolInviteUseCase,
     RegenerateSchoolInviteUseCase,
     ListSchoolParentsUseCase,
+    ListSchoolAdminsUseCase,
+    CreateSchoolAdminUseCase,
+    DeleteAdminUserUseCase,
     GetSchoolArrivalsUseCase,
     GetSchoolStatsUseCase,
     UpdateSchoolConfigUseCase,

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeleteResult } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { UserModel } from '../models/user.model';
 import { UserMapper } from '../mappers/user.mapper';
@@ -24,6 +24,11 @@ export class UserRepository implements IUserRepository {
     return model ? UserMapper.toDomain(model) : null;
   }
 
+  async findBySchoolId(schoolId: string): Promise<User[]> {
+    const models = await this.userRepository.find({ where: { schoolId } });
+    return models.map((model) => UserMapper.toDomain(model));
+  }
+
   async create(
     data: Omit<User, 'id' | 'createdAt'> & { passwordHash: string },
   ): Promise<User> {
@@ -31,6 +36,10 @@ export class UserRepository implements IUserRepository {
     const model = this.userRepository.create(modelData);
     const savedModel = await this.userRepository.save(model);
     return UserMapper.toDomain(savedModel);
+  }
+
+  async delete(id: string): Promise<void> {
+    (await this.userRepository.delete(id)) as DeleteResult;
   }
 
   async validateCredentials(
