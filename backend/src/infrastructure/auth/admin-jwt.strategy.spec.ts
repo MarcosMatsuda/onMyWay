@@ -26,7 +26,9 @@ describe('AdminJwtStrategy', () => {
     userRepositoryMock = {
       findById: jest.fn(),
       findByEmail: jest.fn(),
+      findBySchoolId: jest.fn(),
       create: jest.fn(),
+      delete: jest.fn(),
       validateCredentials: jest.fn(),
     } as jest.Mocked<IUserRepository>;
 
