@@ -15,6 +15,14 @@ export interface CreateSchoolInput {
 
 export interface CreateSchoolOutput extends School {}
 
+function generateInviteCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  return Array.from(
+    { length: 8 },
+    () => chars[Math.floor(Math.random() * chars.length)],
+  ).join('');
+}
+
 @Injectable()
 export class CreateSchoolUseCase {
   constructor(
@@ -29,6 +37,7 @@ export class CreateSchoolUseCase {
       lng: input.lng,
       geofenceRadiusMeters: input.geofenceRadiusMeters || 1000,
       notificationThresholdMeters: input.notificationThresholdMeters || 500,
+      inviteCode: generateInviteCode(),
     });
 
     return school;

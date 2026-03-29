@@ -40,8 +40,21 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
-    // Validate school exists if provided
-    if (registerDto.schoolId) {
+    let schoolId = registerDto.schoolId;
+
+    // Resolve inviteCode to schoolId if provided (takes priority)
+    if (registerDto.inviteCode) {
+      const school = await this.schoolRepository.findByInviteCode(
+        registerDto.inviteCode,
+      );
+      if (!school) {
+        throw new NotFoundException(
+          `School with invite code ${registerDto.inviteCode} not found`,
+        );
+      }
+      schoolId = school.id;
+    } else if (registerDto.schoolId) {
+      // Validate school exists if schoolId provided without inviteCode
       const school = await this.schoolRepository.findById(registerDto.schoolId);
       if (!school) {
         throw new NotFoundException(
@@ -59,7 +72,7 @@ export class AuthService {
       name: registerDto.name,
       email: registerDto.email,
       phone: registerDto.phone,
-      schoolId: registerDto.schoolId,
+      schoolId,
       passwordHash,
     });
 

@@ -56,4 +56,18 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   schoolId?: string;
+
+  @ApiProperty({
+    example: 'AB3X7Y2Z',
+    description:
+      'School invite code (8 uppercase alphanumeric characters, optional)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(8, { message: 'Invite code must be 8 characters long' })
+  @Matches(/^[A-Z0-9]{8}$/, {
+    message: 'Invite code must be 8 uppercase alphanumeric characters',
+  })
+  inviteCode?: string;
 }

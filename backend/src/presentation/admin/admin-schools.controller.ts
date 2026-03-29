@@ -20,6 +20,8 @@ import {
   CreateSchoolInput,
 } from '../../domain/use-cases/create-school.use-case';
 import { GetSchoolUseCase } from '../../domain/use-cases/get-school.use-case';
+import { GetSchoolInviteUseCase } from '../../domain/use-cases/get-school-invite.use-case';
+import { RegenerateSchoolInviteUseCase } from '../../domain/use-cases/regenerate-school-invite.use-case';
 import {
   GetSchoolArrivalsUseCase,
   GetSchoolArrivalsInput,
@@ -52,6 +54,8 @@ export class AdminSchoolsController {
     private readonly listSchoolsUseCase: ListSchoolsUseCase,
     private readonly createSchoolUseCase: CreateSchoolUseCase,
     private readonly getSchoolUseCase: GetSchoolUseCase,
+    private readonly getSchoolInviteUseCase: GetSchoolInviteUseCase,
+    private readonly regenerateSchoolInviteUseCase: RegenerateSchoolInviteUseCase,
     private readonly getSchoolArrivalsUseCase: GetSchoolArrivalsUseCase,
     private readonly getSchoolStatsUseCase: GetSchoolStatsUseCase,
     private readonly updateSchoolConfigUseCase: UpdateSchoolConfigUseCase,
@@ -178,6 +182,33 @@ export class AdminSchoolsController {
     return {
       geofenceRadiusMeters: result.geofenceRadiusMeters,
       notificationThresholdMeters: result.notificationThresholdMeters,
+    };
+  }
+
+  @Get(':schoolId/invite')
+  @Roles('super_admin', 'school_admin')
+  @UseGuards(SchoolAccessGuard)
+  async getInvite(
+    @Param('schoolId') schoolId: string,
+  ): Promise<{ inviteCode: string }> {
+    const result = await this.getSchoolInviteUseCase.execute(schoolId);
+
+    return {
+      inviteCode: result.inviteCode,
+    };
+  }
+
+  @Post(':schoolId/regenerate-invite')
+  @Roles('super_admin', 'school_admin')
+  @UseGuards(SchoolAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  async regenerateInvite(
+    @Param('schoolId') schoolId: string,
+  ): Promise<{ inviteCode: string }> {
+    const result = await this.regenerateSchoolInviteUseCase.execute(schoolId);
+
+    return {
+      inviteCode: result.inviteCode,
     };
   }
 }
