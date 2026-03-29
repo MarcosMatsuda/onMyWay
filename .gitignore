@@ -37,3 +37,6 @@ android/
 # Docker (secrets in prod configs)
 *.pem
 *.key
+
+# Documentation (generated during planning/implementation)
+docs/MULTI-ROLE-ARCHITECTURE.md

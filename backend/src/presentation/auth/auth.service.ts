@@ -111,6 +111,7 @@ export class AuthService {
     const payload: JwtPayload = {
       sub: parent.id,
       email: parent.email,
+      role: 'parent',
       schoolId: parent.schoolId ?? null,
     };
 
