@@ -8,23 +8,27 @@ jest.mock('@infrastructure/geolocation', () => ({
     startWatching: jest.fn(
       (
         schoolLocation: { lat: number; lng: number },
-        onLocation: (location: { lat: number; lng: number; accuracy: number; timestamp: number }, withinPrivacyRadius: boolean) => void,
+        onLocation: (
+          location: { lat: number; lng: number; accuracy: number; timestamp: number },
+          withinPrivacyRadius: boolean,
+        ) => void,
         onError: (error: Error) => void,
       ) => {
-      // Simulate location update after a small delay
-      setTimeout(() => {
-        const mockLocation = {
-          lat: -23.5505,
-          lng: -46.6333,
-          accuracy: 10,
-          timestamp: Date.now(),
-        };
-        onLocation(mockLocation, true); // within privacy radius
-      }, 10);
+        // Simulate location update after a small delay
+        setTimeout(() => {
+          const mockLocation = {
+            lat: -23.5505,
+            lng: -46.6333,
+            accuracy: 10,
+            timestamp: Date.now(),
+          };
+          onLocation(mockLocation, true); // within privacy radius
+        }, 10);
 
-      // Return unsubscribe function
-      return jest.fn();
-    }),
+        // Return unsubscribe function
+        return jest.fn();
+      },
+    ),
     stopWatching: jest.fn(),
   },
 }));
@@ -96,7 +100,10 @@ describe('useLocation', () => {
     geolocationService.startWatching.mockImplementationOnce(
       (
         schoolLocation: { lat: number; lng: number },
-        onLocation: (location: { lat: number; lng: number; accuracy: number; timestamp: number }, withinPrivacyRadius: boolean) => void,
+        onLocation: (
+          location: { lat: number; lng: number; accuracy: number; timestamp: number },
+          withinPrivacyRadius: boolean,
+        ) => void,
         onError: (error: Error) => void,
       ) => {
         setTimeout(() => {
