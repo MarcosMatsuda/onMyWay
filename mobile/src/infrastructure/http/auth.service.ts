@@ -15,6 +15,7 @@ export interface AuthService {
     email: string;
     phone: string;
     password: string;
+    inviteCode: string;
   }): Promise<AuthResponse>;
   logout(refreshToken: string): Promise<void>;
 }
@@ -35,6 +36,7 @@ export class HttpAuthService implements AuthService {
     email: string;
     phone: string;
     password: string;
+    inviteCode: string;
   }): Promise<AuthResponse> {
     const response = await this.http.post<AuthResponse>('/auth/register', data);
     return response;

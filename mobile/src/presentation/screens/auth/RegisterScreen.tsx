@@ -25,6 +25,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -50,6 +51,12 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       errors.phone = 'Phone must be at least 10 characters';
     }
 
+    if (!inviteCode.trim()) {
+      errors.inviteCode = 'School invite code is required';
+    } else if (!/^[A-Z0-9]{8}$/.test(inviteCode.trim())) {
+      errors.inviteCode = 'Invite code must be 8 uppercase letters and numbers';
+    }
+
     if (!password) {
       errors.password = 'Password is required';
     } else if (password.length < 6) {
@@ -72,7 +79,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     try {
-      await register(name, email, phone, password);
+      await register(name, email, phone, password, inviteCode.trim());
     } catch {
       // Error is already stored in useAuth().error
     }
@@ -132,6 +139,24 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             textContentType="telephoneNumber"
           />
           {validationErrors.phone && <Text style={styles.errorText}>{validationErrors.phone}</Text>}
+        </View>
+
+        {/* Invite Code Input */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>School Invite Code</Text>
+          <TextInput
+            style={[styles.input, validationErrors.inviteCode ? styles.inputError : undefined]}
+            placeholder="AB3X7Y2Z"
+            placeholderTextColor="#9ca3af"
+            value={inviteCode}
+            onChangeText={(text) => setInviteCode(text.toUpperCase())}
+            editable={!isLoading}
+            autoCapitalize="characters"
+            maxLength={8}
+          />
+          {validationErrors.inviteCode && (
+            <Text style={styles.errorText}>{validationErrors.inviteCode}</Text>
+          )}
         </View>
 
         {/* Password Input */}

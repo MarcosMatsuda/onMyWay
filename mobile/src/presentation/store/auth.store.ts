@@ -10,7 +10,7 @@ interface AuthStoreState {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, phone: string, password: string) => Promise<void>;
+  register: (name: string, email: string, phone: string, password: string, inviteCode: string) => Promise<void>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
   setError: (error: string | null) => void;
@@ -55,7 +55,7 @@ export const useAuthStore = create<AuthStoreState>((set) => {
       }
     },
 
-    register: async (name: string, email: string, phone: string, password: string) => {
+    register: async (name: string, email: string, phone: string, password: string, inviteCode: string) => {
       set({ isLoading: true, error: null });
       try {
         const response = await authService.register({
@@ -63,6 +63,7 @@ export const useAuthStore = create<AuthStoreState>((set) => {
           email,
           phone,
           password,
+          inviteCode,
         });
 
         // Save tokens
