@@ -22,6 +22,7 @@ import {
 import { GetSchoolUseCase } from '../../domain/use-cases/get-school.use-case';
 import { GetSchoolInviteUseCase } from '../../domain/use-cases/get-school-invite.use-case';
 import { RegenerateSchoolInviteUseCase } from '../../domain/use-cases/regenerate-school-invite.use-case';
+import { ListSchoolParentsUseCase } from '../../domain/use-cases/list-school-parents.use-case';
 import {
   GetSchoolArrivalsUseCase,
   GetSchoolArrivalsInput,
@@ -56,6 +57,7 @@ export class AdminSchoolsController {
     private readonly getSchoolUseCase: GetSchoolUseCase,
     private readonly getSchoolInviteUseCase: GetSchoolInviteUseCase,
     private readonly regenerateSchoolInviteUseCase: RegenerateSchoolInviteUseCase,
+    private readonly listSchoolParentsUseCase: ListSchoolParentsUseCase,
     private readonly getSchoolArrivalsUseCase: GetSchoolArrivalsUseCase,
     private readonly getSchoolStatsUseCase: GetSchoolStatsUseCase,
     private readonly updateSchoolConfigUseCase: UpdateSchoolConfigUseCase,
@@ -210,5 +212,22 @@ export class AdminSchoolsController {
     return {
       inviteCode: result.inviteCode,
     };
+  }
+
+  @Get(':schoolId/parents')
+  @Roles('super_admin', 'school_admin')
+  @UseGuards(SchoolAccessGuard)
+  async listParents(
+    @Param('schoolId') schoolId: string,
+  ): Promise<{ id: string; name: string; email: string; phone: string; createdAt: Date }[]> {
+    const result = await this.listSchoolParentsUseCase.execute(schoolId);
+
+    return result.parents.map((parent) => ({
+      id: parent.id,
+      name: parent.name,
+      email: parent.email,
+      phone: parent.phone,
+      createdAt: parent.createdAt,
+    }));
   }
 }
