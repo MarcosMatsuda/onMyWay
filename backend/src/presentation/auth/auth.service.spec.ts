@@ -35,6 +35,7 @@ describe('AuthService', () => {
     lng: -46.6333,
     geofenceRadiusMeters: 1000,
     notificationThresholdMeters: 500,
+    inviteCode: 'AB3X7Y2Z',
     createdAt: new Date(),
   };
 
@@ -48,6 +49,7 @@ describe('AuthService', () => {
 
     schoolRepositoryMock = {
       findById: jest.fn(),
+      findByInviteCode: jest.fn(),
       findAll: jest.fn(),
       create: jest.fn(),
     } as any;

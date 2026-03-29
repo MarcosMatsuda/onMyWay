@@ -8,6 +8,7 @@ export interface ISchoolRepository {
   findAll(): Promise<School[]>;
   update(id: string, data: Partial<School>): Promise<School>;
   delete(id: string): Promise<void>;
+  findByInviteCode(inviteCode: string): Promise<School | null>;
 
   // TASK-011: Geofence query capabilities
   findParentsWithinGeofence(schoolId: string): Promise<string[]>;

@@ -43,6 +43,13 @@ export class SchoolRepository implements ISchoolRepository {
     await this.schoolRepository.delete(id);
   }
 
+  async findByInviteCode(inviteCode: string): Promise<School | null> {
+    const model = await this.schoolRepository.findOne({
+      where: { inviteCode },
+    });
+    return model ? SchoolMapper.toDomain(model) : null;
+  }
+
   async findParentsWithinGeofence(schoolId: string): Promise<string[]> {
     // Get school to get its location and geofence radius
     const school = await this.findById(schoolId);

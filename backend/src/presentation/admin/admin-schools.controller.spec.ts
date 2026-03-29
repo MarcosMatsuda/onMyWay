@@ -3,6 +3,8 @@ import { AdminSchoolsController } from './admin-schools.controller';
 import { ListSchoolsUseCase } from '../../domain/use-cases/list-schools.use-case';
 import { CreateSchoolUseCase } from '../../domain/use-cases/create-school.use-case';
 import { GetSchoolUseCase } from '../../domain/use-cases/get-school.use-case';
+import { GetSchoolInviteUseCase } from '../../domain/use-cases/get-school-invite.use-case';
+import { RegenerateSchoolInviteUseCase } from '../../domain/use-cases/regenerate-school-invite.use-case';
 import { GetSchoolArrivalsUseCase } from '../../domain/use-cases/get-school-arrivals.use-case';
 import { GetSchoolStatsUseCase } from '../../domain/use-cases/get-school-stats.use-case';
 import { UpdateSchoolConfigUseCase } from '../../domain/use-cases/update-school-config.use-case';
@@ -14,6 +16,7 @@ const mockSchool = {
   lng: -46.6333,
   geofenceRadiusMeters: 500,
   notificationThresholdMeters: 1000,
+  inviteCode: 'AB3X7Y2Z',
   createdAt: new Date(),
 };
 
@@ -61,6 +64,12 @@ describe('AdminSchoolsController', () => {
     const mockGetSchoolUseCase = {
       execute: jest.fn(),
     };
+    const mockGetSchoolInviteUseCase = {
+      execute: jest.fn(),
+    };
+    const mockRegenerateSchoolInviteUseCase = {
+      execute: jest.fn(),
+    };
     const mockGetSchoolArrivalsUseCase = {
       execute: jest.fn(),
     };
@@ -77,6 +86,14 @@ describe('AdminSchoolsController', () => {
         { provide: ListSchoolsUseCase, useValue: mockListSchoolsUseCase },
         { provide: CreateSchoolUseCase, useValue: mockCreateSchoolUseCase },
         { provide: GetSchoolUseCase, useValue: mockGetSchoolUseCase },
+        {
+          provide: GetSchoolInviteUseCase,
+          useValue: mockGetSchoolInviteUseCase,
+        },
+        {
+          provide: RegenerateSchoolInviteUseCase,
+          useValue: mockRegenerateSchoolInviteUseCase,
+        },
         {
           provide: GetSchoolArrivalsUseCase,
           useValue: mockGetSchoolArrivalsUseCase,

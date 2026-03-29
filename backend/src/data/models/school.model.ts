@@ -41,6 +41,14 @@ export class SchoolModel {
   })
   notificationThresholdMeters: number;
 
+  @Column({
+    name: 'invite_code',
+    length: 8,
+    unique: true,
+    nullable: true,
+  })
+  inviteCode: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

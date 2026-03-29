@@ -65,6 +65,7 @@ describe('SchoolsController', () => {
     lng: -46.6333,
     geofenceRadiusMeters: 1000,
     notificationThresholdMeters: 500,
+    inviteCode: 'AB3X7Y2Z',
     createdAt: new Date('2024-03-20T10:00:00Z'),
   };
 
@@ -77,6 +78,7 @@ describe('SchoolsController', () => {
         lng: -46.6333,
         geofenceRadiusMeters: 1000,
         notificationThresholdMeters: 500,
+        inviteCode: 'AB3X7Y2Z',
         createdAt: new Date('2024-03-20T10:00:00Z'),
       },
       {
@@ -86,6 +88,7 @@ describe('SchoolsController', () => {
         lng: -46.634,
         geofenceRadiusMeters: 1000,
         notificationThresholdMeters: 500,
+        inviteCode: 'AB3X7Y2Z',
         createdAt: new Date('2024-03-20T10:00:00Z'),
       },
     ],

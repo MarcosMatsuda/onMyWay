@@ -5,5 +5,6 @@ export interface School {
   lng: number;
   geofenceRadiusMeters: number;
   notificationThresholdMeters: number;
+  inviteCode: string;
   createdAt: Date;
 }
