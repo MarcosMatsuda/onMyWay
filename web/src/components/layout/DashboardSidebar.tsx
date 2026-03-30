@@ -27,6 +27,11 @@ export function DashboardSidebar({
       icon: '👥',
     },
     {
+      href: `/dashboard/${schoolId}/admins`,
+      label: 'Administradores',
+      icon: '👤',
+    },
+    {
       href: `/dashboard/${schoolId}/invite`,
       label: 'Código de Convite',
       icon: '🔑',

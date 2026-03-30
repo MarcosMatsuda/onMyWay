@@ -18,6 +18,7 @@ import { ListSchoolParentsUseCase } from '@domain/use-cases/list-school-parents.
 import { CreateSchoolAdminUseCase } from '@domain/use-cases/create-school-admin.use-case';
 import { ListSchoolAdminsUseCase } from '@domain/use-cases/list-school-admins.use-case';
 import { DeleteAdminUserUseCase } from '@domain/use-cases/delete-admin-user.use-case';
+import { RemoveSchoolParentUseCase } from '@domain/use-cases/remove-school-parent.use-case';
 import { GetSchoolArrivalsUseCase } from '@domain/use-cases/get-school-arrivals.use-case';
 import { GetSchoolStatsUseCase } from '@domain/use-cases/get-school-stats.use-case';
 import { UpdateSchoolConfigUseCase } from '@domain/use-cases/update-school-config.use-case';
@@ -55,6 +56,7 @@ import { UpdateSchoolConfigUseCase } from '@domain/use-cases/update-school-confi
     ListSchoolAdminsUseCase,
     CreateSchoolAdminUseCase,
     DeleteAdminUserUseCase,
+    RemoveSchoolParentUseCase,
     GetSchoolArrivalsUseCase,
     GetSchoolStatsUseCase,
     UpdateSchoolConfigUseCase,

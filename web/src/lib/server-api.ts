@@ -1,4 +1,4 @@
-import { Arrival, School, SchoolStats, SchoolConfig, SchoolParent } from '@/types';
+import { Arrival, School, SchoolStats, SchoolConfig, SchoolParent, SchoolAdmin } from '@/types';
 
 export class UnauthorizedError extends Error {
   constructor() {
@@ -112,4 +112,40 @@ export async function getSchoolParents(
   token: string,
 ): Promise<SchoolParent[]> {
   return serverFetch<SchoolParent[]>(`/admin/schools/${schoolId}/parents`, token);
+}
+
+export async function removeSchoolParent(
+  schoolId: string,
+  parentId: string,
+  token: string,
+): Promise<void> {
+  await serverFetch<void>(
+    `/admin/schools/${schoolId}/parents/${parentId}`,
+    token,
+    { method: 'DELETE' },
+  );
+}
+
+export async function getSchoolAdmins(
+  schoolId: string,
+  token: string,
+): Promise<SchoolAdmin[]> {
+  return serverFetch<SchoolAdmin[]>(`/admin/schools/${schoolId}/admins`, token);
+}
+
+export async function createSchoolAdmin(
+  data: { name: string; email: string; password: string; schoolId: string },
+  token: string,
+): Promise<SchoolAdmin> {
+  return serverFetch<SchoolAdmin>('/admin/users', token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteAdminUser(
+  userId: string,
+  token: string,
+): Promise<void> {
+  await serverFetch<void>(`/admin/users/${userId}`, token, { method: 'DELETE' });
 }

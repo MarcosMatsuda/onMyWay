@@ -7,6 +7,7 @@ import { GetSchoolInviteUseCase } from '../../domain/use-cases/get-school-invite
 import { RegenerateSchoolInviteUseCase } from '../../domain/use-cases/regenerate-school-invite.use-case';
 import { ListSchoolParentsUseCase } from '../../domain/use-cases/list-school-parents.use-case';
 import { ListSchoolAdminsUseCase } from '../../domain/use-cases/list-school-admins.use-case';
+import { RemoveSchoolParentUseCase } from '../../domain/use-cases/remove-school-parent.use-case';
 import { GetSchoolArrivalsUseCase } from '../../domain/use-cases/get-school-arrivals.use-case';
 import { GetSchoolStatsUseCase } from '../../domain/use-cases/get-school-stats.use-case';
 import { UpdateSchoolConfigUseCase } from '../../domain/use-cases/update-school-config.use-case';
@@ -78,6 +79,9 @@ describe('AdminSchoolsController', () => {
     const mockListSchoolAdminsUseCase = {
       execute: jest.fn(),
     };
+    const mockRemoveSchoolParentUseCase = {
+      execute: jest.fn(),
+    };
     const mockGetSchoolArrivalsUseCase = {
       execute: jest.fn(),
     };
@@ -109,6 +113,10 @@ describe('AdminSchoolsController', () => {
         {
           provide: ListSchoolAdminsUseCase,
           useValue: mockListSchoolAdminsUseCase,
+        },
+        {
+          provide: RemoveSchoolParentUseCase,
+          useValue: mockRemoveSchoolParentUseCase,
         },
         {
           provide: GetSchoolArrivalsUseCase,
