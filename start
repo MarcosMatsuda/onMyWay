@@ -1,7 +1,7 @@
 #!/bin/bash
 # ═══════════════════════════════════════════
 # onMyWay - Start script
-# NestJS backend (port 3000)
+# NestJS backend (port 3000) + PostgreSQL + PostGIS + OSRM
 # ═══════════════════════════════════════════
 
 echo ""
@@ -24,13 +24,44 @@ if [ -f backend/.env ]; then
   echo "   ✅ .env configured"
 else
   echo "   ⚠️  backend/.env missing — copy from .env.example"
+  exit 1
 fi
 
-# ─── Docker (OSRM) ──────────────────────
+# ─── Check Docker ────────────────────────
+if docker info > /dev/null 2>&1; then
+  echo "   ✅ Docker running"
+else
+  echo "   🔄 Starting Colima..."
+  colima start 2>/dev/null
+  sleep 5
+  if docker info > /dev/null 2>&1; then
+    echo "   ✅ Colima started"
+  else
+    echo "   ❌ Docker not available — PostgreSQL needs Docker"
+    exit 1
+  fi
+fi
+
+# ─── PostgreSQL + PostGIS ────────────────
+if docker ps 2>/dev/null | grep -q postgres; then
+  echo "   ✅ PostgreSQL container running"
+else
+  echo "   🔄 Starting PostgreSQL + PostGIS..."
+  cd backend && docker-compose up -d 2>/dev/null && cd ..
+  sleep 3
+  if docker ps 2>/dev/null | grep -q postgres; then
+    echo "   ✅ PostgreSQL started"
+  else
+    echo "   ❌ PostgreSQL failed to start — check backend/docker-compose.yml"
+    exit 1
+  fi
+fi
+
+# ─── OSRM ────────────────────────────────
 if docker ps 2>/dev/null | grep -q osrm; then
   echo "   ✅ OSRM container running"
 else
-  echo "   ⚠️  OSRM container not running (routing may not work)"
+  echo "   ⚠️  OSRM container not running (routing/ETA may not work)"
 fi
 
 echo ""
