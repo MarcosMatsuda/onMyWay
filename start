@@ -1,0 +1,40 @@
+#!/bin/bash
+# ═══════════════════════════════════════════
+# onMyWay - Start script
+# NestJS backend (port 3000)
+# ═══════════════════════════════════════════
+
+echo ""
+echo "🗺️ onMyWay — Starting..."
+echo ""
+
+# Kill existing processes
+for port in 3000; do
+  pid=$(lsof -ti:$port 2>/dev/null)
+  if [ -n "$pid" ]; then
+    kill -9 $pid 2>/dev/null
+    echo "   🔪 Killed process on port $port"
+  fi
+done
+
+sleep 1
+
+# ─── Check .env ──────────────────────────
+if [ -f backend/.env ]; then
+  echo "   ✅ .env configured"
+else
+  echo "   ⚠️  backend/.env missing — copy from .env.example"
+fi
+
+# ─── Docker (OSRM) ──────────────────────
+if docker ps 2>/dev/null | grep -q osrm; then
+  echo "   ✅ OSRM container running"
+else
+  echo "   ⚠️  OSRM container not running (routing may not work)"
+fi
+
+echo ""
+echo "   Starting backend..."
+echo ""
+
+cd backend && npm run start:dev
