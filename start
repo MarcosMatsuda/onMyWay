@@ -42,17 +42,25 @@ else
   fi
 fi
 
+# ─── Check port 5432 conflict ────────────
+other_pg=$(docker ps --format '{{.Names}}' 2>/dev/null | grep -v onmyway-postgres | grep -i postgres)
+if [ -n "$other_pg" ]; then
+  echo "   🔄 Stopping conflicting PostgreSQL: $other_pg"
+  docker stop $other_pg 2>/dev/null
+  sleep 1
+fi
+
 # ─── PostgreSQL + PostGIS ────────────────
-if docker ps 2>/dev/null | grep -q postgres; then
-  echo "   ✅ PostgreSQL container running"
+if docker ps 2>/dev/null | grep -q onmyway-postgres; then
+  echo "   ✅ PostgreSQL (onmyway-postgres) running"
 else
   echo "   🔄 Starting PostgreSQL + PostGIS..."
   cd backend && docker-compose up -d 2>/dev/null && cd ..
   sleep 3
-  if docker ps 2>/dev/null | grep -q postgres; then
+  if docker ps 2>/dev/null | grep -q onmyway-postgres; then
     echo "   ✅ PostgreSQL started"
   else
-    echo "   ❌ PostgreSQL failed to start — check backend/docker-compose.yml"
+    echo "   ❌ PostgreSQL failed — check backend/docker-compose.yml"
     exit 1
   fi
 fi
@@ -61,7 +69,7 @@ fi
 if docker ps 2>/dev/null | grep -q osrm; then
   echo "   ✅ OSRM container running"
 else
-  echo "   ⚠️  OSRM container not running (routing/ETA may not work)"
+  echo "   ⚠️  OSRM not running (routing/ETA may not work)"
 fi
 
 echo ""
